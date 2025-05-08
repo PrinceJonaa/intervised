@@ -1,0 +1,33 @@
+Project Understanding
+
+Based on the files examined (`package.json`, file structure), here is an overview of the project's tech stack and how its components connect:
+
+Tech Stack:
+- **Framework:** Next.js (a React framework for server-side rendering, static site generation, and routing)
+- **Language:** TypeScript (adds static typing to JavaScript for improved code quality and maintainability)
+- **Styling:** Tailwind CSS (a utility-first CSS framework), PostCSS, and Autoprefixer (used for processing CSS, likely integrating Tailwind)
+- **Animation:** Framer Motion (a library for creating animations and interactive components)
+
+How things connect:
+- **Next.js** provides the core structure and routing for the application, utilizing the `app/` directory for defining routes and pages (`app/page.tsx`, `app/blog/page.tsx`, etc.). It handles server-side rendering or static generation depending on the configuration.
+- **React** is the foundation for building the user interface components within the Next.js application.
+- **TypeScript** is used throughout the codebase, providing type safety and enhancing developer experience. The `tsconfig.json` file configures the TypeScript compiler settings.
+- **Tailwind CSS** is the primary method for styling. It's configured via `tailwind.config.js` and integrated into the CSS processing pipeline using PostCSS and Autoprefixer. Global styles are defined in `styles/globals.css`.
+- **Framer Motion** is integrated into React components to add animations and transitions, enhancing the user experience.
+- The `package.json` file lists all project dependencies (like Next.js, React, Tailwind CSS, Framer Motion) and defines scripts for development (`dev`), building (`build`), starting the production server (`start`), and linting (`lint`).
+- `next-env.d.ts` is a TypeScript declaration file specific to Next.js, providing type definitions for environment variables.
+
+In summary, this is a modern web application built with Next.js and React using TypeScript, styled with Tailwind CSS, and enhanced with animations via Framer Motion. The `app/` directory structure indicates the use of Next.js's App Router for routing and page management.
+
+Detailed Structure and Connections:
+- **`app/layout.tsx`**: Defines the root HTML structure, including metadata, and integrates the global CSS (`styles/globals.css`). It provides a consistent header with navigation links (Home, Services, Booking, Team, Contact, Blog) and a footer, wrapping the main content (`{children}`). This file is crucial for the overall page layout and navigation.
+- **`app/page.tsx`**: Represents the Home page. It includes sections for service categories, calls to action linking to other pages (Booking, Team, Services), and a placeholder for blog posts. It demonstrates the use of React components and Tailwind CSS for layout and styling.
+- **`app/blog/page.tsx`**: The Blog index page. It displays a list of blog posts using placeholder data and links to individual post pages. This shows how the application handles listing content.
+- **`app/blog/[slug]/page.tsx`**: Handles the dynamic routing for individual blog posts. It uses placeholder data for post content and `generateStaticParams` for static generation. This file illustrates Next.js's dynamic routing capabilities and how individual content pages are structured.
+- **`app/booking/page.tsx`**: The Booking page. It primarily contains a link to an external Square booking portal, indicating integration with a third-party service for scheduling.
+- **`app/contact/page.tsx`**: The Contact page. It provides contact information (phone and email) and includes a placeholder for a contact form, suggesting future functionality for direct inquiries.
+- **`app/services/page.tsx`**: The Services page. It expands on the service categories mentioned on the Home page, providing brief descriptions for each. It also includes a call to action to book a service.
+- **`app/team/page.tsx`**: The Team page. It displays placeholder information for the project's owners, collaborators, and partners, including images, titles, bios, and social links. This page outlines the people involved in the project.
+- **`styles/globals.css`**: Imports Tailwind CSS and includes basic global styles applied to the body, demonstrating the integration and usage of Tailwind for styling the entire application.
+
+Placeholder Data: Several pages (`app/blog/page.tsx`, `app/blog/[slug]/page.tsx`, `app/team/page.tsx`, `app/booking/page.tsx`) currently use placeholder data or links, indicating that these sections are set up structurally but require integration with actual content sources (like a CMS for blog posts or a live booking system).

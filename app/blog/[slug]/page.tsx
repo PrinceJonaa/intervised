@@ -13,7 +13,7 @@ const placeholderPost = {
 }
 
 // Function to generate static params for dynamic routes
-export async function generateStaticParams() {
+export async function generateStaticParams(): Promise<{ slug: string }[]> {
   // In a real application, you would fetch slugs from your CMS (e.g., Sanity)
   const posts = [
     { slug: 'placeholder-post-1' },
@@ -25,7 +25,13 @@ export async function generateStaticParams() {
   }))
 }
 
-export default function BlogPostPage({ params }: { params: { slug: string } }) {
+export async function generateMetadata({ params }) {
+  return {
+    title: `Blog: ${params.slug}`,
+  };
+}
+
+export default function BlogPostPage({ params }) {
   // In a real application, you would fetch the post content based on the slug
   // For this MVP, we'll just use the placeholder data
   const post = placeholderPost // In a real app: fetchPostBySlug(params.slug)
