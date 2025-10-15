@@ -3,6 +3,7 @@ import '../styles/globals.css'
 import React, { type ReactNode } from 'react'
 import AuthProvider from './components/AuthProvider'
 import ConditionalFooter from './components/ConditionalFooter'
+import HeaderAuth from './components/HeaderAuth'
 
 export const metadata: Metadata = {
   title: 'Intervised LLC',
@@ -21,7 +22,7 @@ export default function RootLayout({
           <header className="bg-gray-900 text-white p-4 shadow-md">
           <div className="container mx-auto flex justify-between items-center">
             <h1 className="text-xl font-bold">Intervised LLC</h1>
-            <nav>
+            <nav className="flex items-center gap-8">
               <ul className="flex space-x-6">
                 <li>
                   <a href="/" className="hover:underline">
@@ -54,6 +55,7 @@ export default function RootLayout({
                   </a>
                 </li>
               </ul>
+              <HeaderAuth />
             </nav>
           </div>
         </header>

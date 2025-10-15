@@ -1,13 +1,19 @@
-import { auth } from '@/app/api/auth/[...nextauth]/route'
+import { auth } from '@/lib/next-auth'
 import { redirect } from 'next/navigation'
 import React, { type ReactNode } from 'react'
 import Link from 'next/link'
+import { isAdmin } from '@/lib/auth'
 
 export default async function ProtectedAdminLayout({ children }: { children: ReactNode }) {
   const session = await auth()
 
   if (!session) {
     redirect('/admin/signin')
+  }
+
+  // Check if user's email is in the admin list
+  if (!isAdmin(session.user?.email)) {
+    redirect('/')
   }
 
   return (

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@/app/api/auth/[...nextauth]/route'
+import { auth } from '@/lib/next-auth'
 import { getPostBySlug, updatePost, deletePost } from '@/lib/blog'
+import { isAdmin } from '@/lib/auth'
 
 // GET single blog post
 export async function GET(
@@ -28,7 +29,7 @@ export async function PUT(
   try {
     const session = await auth()
     
-    if (!session) {
+    if (!session || !isAdmin(session.user?.email)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -49,7 +50,7 @@ export async function DELETE(
   try {
     const session = await auth()
     
-    if (!session) {
+    if (!session || !isAdmin(session.user?.email)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
