@@ -1,4 +1,5 @@
-import React from 'react'
+import React from 'react';
+import PrimaryButton from '../components/PrimaryButton'; // Assuming components is at app/components
 
 export default function TeamPage() {
   const owners = [
@@ -134,12 +135,9 @@ export default function TeamPage() {
           If you're interested in collaborating or partnering, please reach out!
         </p>
         {/* Replace with actual form link or DM link */}
-        <a
-          href="/contact"
-          className="inline-block px-8 py-4 bg-blue-600 text-white rounded-lg text-lg font-semibold hover:bg-blue-700 transition mt-4"
-        >
+        <PrimaryButton href="/contact" className="mt-4">
           Contact Us
-        </a>
+        </PrimaryButton>
       </section>
     </section>
   )

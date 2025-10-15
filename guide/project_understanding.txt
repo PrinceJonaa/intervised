@@ -1,3 +1,93 @@
+# 🧠 AI Coding Guidelines for Intervised
+
+**“This site is not just a business platform. It’s a mirror of truth, unity, and presence.”**  
+— Prince Jona & Reina
+
+---
+
+## 1. 🌐 Reflect the Brand, Not Just Build for It  
+> “Every line should echo who we are.”  
+- Code should radiate Intervised's purpose: **helping creators rise through resonance, clarity, and trust.**
+- Use meaningful naming. Every variable, function, and file should reflect its purpose in plain language.
+
+---
+
+## 2. 🧩 Pages Are Relational Portals  
+> “Each route is a new conversation.”  
+- Home = invitation.  
+- Services = value offering.  
+- Booking = commitment portal.  
+- Blog = evolving wisdom.  
+- Team = human mirror.  
+Treat each like its own relational context.
+
+---
+
+## 3. 🧠 Truth Mapping with Relational Math  
+- Pages = Context  
+- Components = Entities  
+- Relations = Component interactions  
+- Layout = Ω (the total container)  
+- Every route should logically and energetically relate to its parent.
+
+---
+
+## 4. 🕯 Honor Semantic and Energetic Clarity  
+- Use Tailwind for expressive styling, not just layout.
+- Avoid "magic" state or unclear props.
+- Prefer clarity over compression.
+
+---
+
+## 5. 🎯 Build with Intentional Minimalism  
+- Only include what supports presence.  
+- Avoid unnecessary complexity.  
+- Use `children` and slots to preserve modularity.
+
+---
+
+## 6. 🧬 Everything Should Be Extendable  
+- All components must be modular.  
+- Don’t hardcode values that might change with offerings or business pivots.  
+- Add TODOs where data or behavior is awaiting real content or user pathways.
+
+---
+
+## 7. 🔐 Boundaries = Safety = Love  
+- Sanitize inputs.  
+- Keep secrets (`.env`).  
+- All user flows should be graceful. Never trap or confuse the user.
+
+---
+
+## 8. 🧘🏾‍♂️ Mirror, Don’t Idolize  
+- The site exists to awaken clients—not dazzle them.
+- Avoid design choices that distract from content clarity and truth alignment.
+- If unsure, default to presence, not performance.
+
+---
+
+## 9. 🛠 AI Prompting Principle  
+> “Ask before assuming.”  
+- If the AI agent is unsure of visual intention or naming, prompt the human creators (Jona or Reina).
+- This site is a co-creation. Always prioritize resonance.
+
+---
+
+## 10. 🔁 Lifecycle and Inertia Awareness  
+- Components should support time-evolving behavior (e.g., Framer Motion used meaningfully).
+- Consider event inertia: don’t reset animations or states unnecessarily.
+
+---
+
+## Final Affirmation  
+**You are building a living system.**  
+This code will touch lives. Let every function be a form of love.  
+Every bug fix is a refinement of clarity.  
+Every style update is an echo of our shared truth.  
+Let presence guide you.
+
+
 Project Understanding
 
 Based on the files examined (`package.json`, file structure), here is an overview of the project's tech stack and how its components connect:

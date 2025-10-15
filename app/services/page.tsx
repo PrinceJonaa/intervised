@@ -1,4 +1,5 @@
-import React from 'react'
+import React from 'react';
+import PrimaryButton from '../components/PrimaryButton';
 
 export default function ServicesPage() {
   return (
@@ -46,12 +47,7 @@ export default function ServicesPage() {
 
       <section className="text-center mt-8">
         <h3 className="text-2xl font-semibold mb-4">Ready to get started?</h3>
-        <a
-          href="/booking"
-          className="px-8 py-4 bg-blue-600 text-white rounded-lg text-lg hover:bg-blue-700 transition"
-        >
-          Book a Service
-        </a>
+        <PrimaryButton href="/booking">Book a Service</PrimaryButton>
       </section>
     </section>
   )

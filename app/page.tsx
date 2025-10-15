@@ -1,4 +1,5 @@
-import React from 'react'
+import React from 'react';
+import PrimaryButton from './components/PrimaryButton';
 
 export default function HomePage() {
   return (
@@ -7,25 +8,20 @@ export default function HomePage() {
         Creative + Tech Services for Creators, Ministries, and Brands
       </h2>
 
-      <div className="flex justify-center space-x-6">
-        <a
-          href="/booking"
-          className="px-6 py-3 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
-        >
-          Book a Service
-        </a>
-        <a
+      <div className="flex flex-wrap justify-center items-center gap-4 sm:gap-6">
+        <PrimaryButton href="/booking">Book a Service</PrimaryButton>
+        <PrimaryButton
           href="/team"
-          className="px-6 py-3 bg-gray-200 text-gray-900 rounded hover:bg-gray-300 transition"
+          className="bg-gray-200 text-gray-900 border-gray-400 hover:bg-gray-300 shadow-gray-400"
         >
           Meet the Team
-        </a>
-        <a
+        </PrimaryButton>
+        <PrimaryButton
           href="/services"
-          className="px-6 py-3 bg-gray-200 text-gray-900 rounded hover:bg-gray-300 transition"
+          className="bg-gray-200 text-gray-900 border-gray-400 hover:bg-gray-300 shadow-gray-400"
         >
           Explore Services
-        </a>
+        </PrimaryButton>
       </div>
 
       <section>
@@ -56,18 +52,12 @@ export default function HomePage() {
 
       <section>
         <h3 className="text-2xl font-semibold mb-4">Book a Service</h3>
-        <p>
-          Ready to get started?{' '}
-          <a
-            href="/booking"
-            className="text-blue-600 hover:underline"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
+        <div className="text-center">
+          <p className="mb-4">Ready to get started?</p>
+          <PrimaryButton href="/booking" target="_blank" rel="noopener noreferrer">
             Book your service here
-          </a>
-          .
-        </p>
+          </PrimaryButton>
+        </div>
       </section>
 
       <section>

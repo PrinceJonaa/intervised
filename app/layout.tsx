@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 import '../styles/globals.css'
 import React, { type ReactNode } from 'react'
+import AuthProvider from './components/AuthProvider'
+import ConditionalFooter from './components/ConditionalFooter'
 
 export const metadata: Metadata = {
   title: 'Intervised LLC',
@@ -15,7 +17,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="min-h-screen flex flex-col">
-        <header className="bg-gray-900 text-white p-4 shadow-md">
+        <AuthProvider>
+          <header className="bg-gray-900 text-white p-4 shadow-md">
           <div className="container mx-auto flex justify-between items-center">
             <h1 className="text-xl font-bold">Intervised LLC</h1>
             <nav>
@@ -55,11 +58,8 @@ export default function RootLayout({
           </div>
         </header>
         <main className="grow container mx-auto px-4 py-8">{children}</main>
-        <footer className="bg-gray-900 text-white p-4 mt-12">
-          <div className="container mx-auto text-center text-sm">
-            &copy; {new Date().getFullYear()} Intervised LLC. All rights reserved.
-          </div>
-        </footer>
+        <ConditionalFooter />
+        </AuthProvider>
       </body>
     </html>
   )
