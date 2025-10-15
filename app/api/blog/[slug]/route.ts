@@ -6,10 +6,11 @@ import { isAdmin } from '@/lib/auth'
 // GET single blog post
 export async function GET(
   request: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
-    const post = getPostBySlug(params.slug)
+    const { slug } = await params
+    const post = getPostBySlug(slug)
     
     if (!post) {
       return NextResponse.json({ error: 'Post not found' }, { status: 404 })
@@ -24,7 +25,7 @@ export async function GET(
 // PUT update blog post (protected)
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
     const session = await auth()
@@ -33,8 +34,9 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const { slug } = await params
     const body = await request.json()
-    const post = updatePost(params.slug, body)
+    const post = updatePost(slug, body)
     
     return NextResponse.json(post)
   } catch (error: any) {
@@ -45,7 +47,7 @@ export async function PUT(
 // DELETE blog post (protected)
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
     const session = await auth()
@@ -54,7 +56,8 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    deletePost(params.slug)
+    const { slug } = await params
+    deletePost(slug)
     
     return NextResponse.json({ success: true })
   } catch (error: any) {

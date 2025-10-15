@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
       idempotencyKey: crypto.randomUUID(),
       batches: [
         {
-          objects: batches,
+          objects: batches as any,
         },
       ],
     })
