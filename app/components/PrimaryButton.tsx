@@ -22,15 +22,16 @@ const PrimaryButton: React.FC<PrimaryButtonProps> = ({
       target={target}
       rel={rel}
       className={`
-        relative inline-block px-6 py-3 
+        relative inline-block px-5 sm:px-6 py-3 
         bg-deep-blue text-white 
         border-2 border-light-gold rounded-lg 
-        text-lg font-semibold 
+        text-base sm:text-lg font-semibold 
         transition-all duration-250 ease-in-out 
-        hover:bg-deep-blue-hover hover:scale-110 
-        focus:bg-deep-blue-hover focus:scale-110 focus:outline-none
+        hover:bg-deep-blue-hover hover:scale-105 sm:hover:scale-110 
+        focus:bg-deep-blue-hover focus:scale-105 sm:focus:scale-110 focus:outline-none
         shadow-light-gold /* This sets --tw-shadow-color for the glow */
         cta-button-glow
+        min-h-[44px]
         ${className}
       `}
     >

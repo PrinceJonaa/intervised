@@ -16,8 +16,8 @@ export default async function EditBlogPostPage({ params }: { params: Promise<{ s
 
   return (
     <ProtectedAdminLayout>
-      <div className="space-y-6">
-        <h1 className="text-3xl font-bold">Edit Blog Post</h1>
+      <div className="space-y-4 sm:space-y-6 px-4 sm:px-6">
+        <h1 className="text-2xl sm:text-3xl font-bold">Edit Blog Post</h1>
         <BlogPostForm post={post} isEditing={true} />
       </div>
     </ProtectedAdminLayout>

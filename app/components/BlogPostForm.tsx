@@ -61,9 +61,9 @@ export default function BlogPostForm({ post, isEditing = false }: BlogPostFormPr
   }
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-4xl mx-auto space-y-6">
+    <form onSubmit={handleSubmit} className="max-w-4xl mx-auto space-y-4 sm:space-y-6">
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-3 sm:px-4 py-3 rounded text-sm sm:text-base">
           {error}
         </div>
       )}
@@ -75,7 +75,7 @@ export default function BlogPostForm({ post, isEditing = false }: BlogPostFormPr
           required
           value={formData.title}
           onChange={e => setFormData({ ...formData, title: e.target.value })}
-          className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-deep-blue focus:border-transparent"
+          className="w-full px-3 sm:px-4 py-3 border rounded-lg focus:ring-2 focus:ring-deep-blue focus:border-transparent text-base"
           placeholder="Your Post Title"
         />
       </div>
@@ -86,7 +86,7 @@ export default function BlogPostForm({ post, isEditing = false }: BlogPostFormPr
           <select
             value={formData.author}
             onChange={e => setFormData({ ...formData, author: e.target.value as any })}
-            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-deep-blue focus:border-transparent"
+            className="w-full px-3 sm:px-4 py-3 border rounded-lg focus:ring-2 focus:ring-deep-blue focus:border-transparent text-base"
           >
             <option value="Jona">Jona</option>
             <option value="Reina">Reina</option>
@@ -101,7 +101,7 @@ export default function BlogPostForm({ post, isEditing = false }: BlogPostFormPr
             required
             value={formData.date}
             onChange={e => setFormData({ ...formData, date: e.target.value })}
-            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-deep-blue focus:border-transparent"
+            className="w-full px-3 sm:px-4 py-3 border rounded-lg focus:ring-2 focus:ring-deep-blue focus:border-transparent text-base"
           />
         </div>
 
@@ -110,7 +110,7 @@ export default function BlogPostForm({ post, isEditing = false }: BlogPostFormPr
           <select
             value={formData.pillar}
             onChange={e => setFormData({ ...formData, pillar: e.target.value as any })}
-            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-deep-blue focus:border-transparent"
+            className="w-full px-3 sm:px-4 py-3 border rounded-lg focus:ring-2 focus:ring-deep-blue focus:border-transparent text-base"
           >
             <option value="Creative">🎤 Creative</option>
             <option value="Tech">🧠 Tech</option>
@@ -127,7 +127,7 @@ export default function BlogPostForm({ post, isEditing = false }: BlogPostFormPr
           required
           value={formData.excerpt}
           onChange={e => setFormData({ ...formData, excerpt: e.target.value })}
-          className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-deep-blue focus:border-transparent"
+          className="w-full px-3 sm:px-4 py-3 border rounded-lg focus:ring-2 focus:ring-deep-blue focus:border-transparent text-base"
           rows={2}
           placeholder="Brief description for listing page"
         />
@@ -139,7 +139,7 @@ export default function BlogPostForm({ post, isEditing = false }: BlogPostFormPr
           type="text"
           value={formData.tags}
           onChange={e => setFormData({ ...formData, tags: e.target.value })}
-          className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-deep-blue focus:border-transparent"
+          className="w-full px-3 sm:px-4 py-3 border rounded-lg focus:ring-2 focus:ring-deep-blue focus:border-transparent text-base"
           placeholder="worship, tech, tutorial"
         />
       </div>
@@ -150,7 +150,7 @@ export default function BlogPostForm({ post, isEditing = false }: BlogPostFormPr
             type="checkbox"
             checked={formData.featured}
             onChange={e => setFormData({ ...formData, featured: e.target.checked })}
-            className="w-4 h-4 text-deep-blue focus:ring-deep-blue"
+            className="w-5 h-5 text-deep-blue focus:ring-deep-blue"
           />
           <span className="text-sm font-semibold">Featured Post</span>
         </label>
@@ -162,27 +162,27 @@ export default function BlogPostForm({ post, isEditing = false }: BlogPostFormPr
           required
           value={formData.content}
           onChange={e => setFormData({ ...formData, content: e.target.value })}
-          className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-deep-blue focus:border-transparent font-mono text-sm"
+          className="w-full px-3 sm:px-4 py-3 border rounded-lg focus:ring-2 focus:ring-deep-blue focus:border-transparent font-mono text-sm sm:text-base"
           rows={20}
           placeholder="# Your Post Content Here&#10;&#10;Write in **Markdown** format..."
         />
-        <p className="text-sm text-gray-500 mt-1">
+        <p className="text-xs sm:text-sm text-gray-500 mt-1">
           Use Markdown formatting: # Headers, **bold**, *italic*, [links](url), etc.
         </p>
       </div>
 
-      <div className="flex gap-4">
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
         <button
           type="submit"
           disabled={loading}
-          className="px-6 py-3 bg-deep-blue text-white rounded-lg font-semibold hover:bg-deep-blue-hover transition disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full sm:w-auto px-6 py-3 bg-deep-blue text-white rounded-lg font-semibold hover:bg-deep-blue-hover transition disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px] text-sm sm:text-base"
         >
           {loading ? 'Saving...' : isEditing ? 'Update Post' : 'Create Post'}
         </button>
         <button
           type="button"
           onClick={() => router.back()}
-          className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition"
+          className="w-full sm:w-auto px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition min-h-[44px] text-sm sm:text-base"
         >
           Cancel
         </button>

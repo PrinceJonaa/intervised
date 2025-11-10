@@ -48,22 +48,22 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   }
 
   return (
-    <article className="max-w-3xl mx-auto space-y-8">
-      <div className="space-y-4">
-        <h1 className="text-4xl font-bold text-center">{post.title}</h1>
+    <article className="max-w-3xl mx-auto space-y-6 sm:space-y-8 px-4 sm:px-6">
+      <div className="space-y-3 sm:space-y-4">
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-center">{post.title}</h1>
         
-        <div className="flex items-center justify-center gap-3 text-sm">
-          <span className="px-3 py-1 bg-blue-100 text-blue-800 font-semibold rounded">
+        <div className="flex items-center justify-center gap-2 sm:gap-3 text-xs sm:text-sm flex-wrap">
+          <span className="px-2 sm:px-3 py-1 bg-blue-100 text-blue-800 font-semibold rounded">
             {getPillarEmoji(post.pillar)} {post.pillar}
           </span>
           {post.featured && (
-            <span className="px-3 py-1 bg-yellow-100 text-yellow-800 font-semibold rounded">
+            <span className="px-2 sm:px-3 py-1 bg-yellow-100 text-yellow-800 font-semibold rounded">
               Featured
             </span>
           )}
         </div>
 
-        <p className="text-gray-600 text-center text-sm">
+        <p className="text-gray-600 text-center text-xs sm:text-sm">
           By {post.author} on {new Date(post.date).toLocaleDateString()}
         </p>
 
@@ -78,16 +78,16 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         )}
       </div>
 
-      <div className="prose prose-lg max-w-none">
+      <div className="prose prose-sm sm:prose-base lg:prose-lg max-w-none">
         <ReactMarkdown remarkPlugins={[remarkGfm]}>
           {post.content}
         </ReactMarkdown>
       </div>
 
-      <div className="border-t pt-6">
+      <div className="border-t pt-4 sm:pt-6">
         <a
           href="/blog"
-          className="text-deep-blue hover:text-deep-blue-hover font-semibold transition"
+          className="text-deep-blue hover:text-deep-blue-hover font-semibold transition text-sm sm:text-base inline-flex items-center min-h-[44px]"
         >
           ← Back to Blog
         </a>

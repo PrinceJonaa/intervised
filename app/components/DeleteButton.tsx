@@ -36,7 +36,7 @@ export default function DeleteButton({ slug }: DeleteButtonProps) {
     <button
       onClick={handleDelete}
       disabled={loading}
-      className="px-3 py-1 text-sm bg-red-100 text-red-700 rounded hover:bg-red-200 transition disabled:opacity-50"
+      className="flex-1 sm:flex-none px-3 py-2 text-xs sm:text-sm bg-red-100 text-red-700 rounded hover:bg-red-200 transition disabled:opacity-50 min-h-[44px] flex items-center justify-center"
     >
       {loading ? 'Deleting...' : 'Delete'}
     </button>
