@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import '../styles/globals.css'
 import React, { type ReactNode } from 'react'
 import AuthProvider from './components/AuthProvider'
@@ -9,7 +9,12 @@ import MobileMenu from './components/MobileMenu'
 export const metadata: Metadata = {
   title: 'Intervised LLC',
   description: 'Creative + Tech Services for Creators, Ministries, and Brands',
-  viewport: 'width=device-width, initial-scale=1, maximum-scale=5',
+}
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
 }
 
 export default function RootLayout({
