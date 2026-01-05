@@ -1,0 +1,8 @@
+{
+  "name": "Intervised",
+  "description": "A collaborative intelligence agency bridging vision and execution through creative services and ministry tech.",
+  "requestFramePermissions": [
+    "microphone",
+    "camera"
+  ]
+}

@@ -1,34 +1,27 @@
 {
-  "name": "intervised-llc",
-  "version": "0.1.0",
+  "name": "intervised",
   "private": true,
+  "version": "0.0.0",
+  "type": "module",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
   },
   "dependencies": {
-    "@tailwindcss/typography": "^0.5.19",
-    "framer-motion": "^12.10.4",
-    "gray-matter": "^4.0.3",
-    "next": "^15.3.2",
-    "next-auth": "^5.0.0-beta.29",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0",
-    "react-markdown": "^10.1.0",
-    "remark-gfm": "^4.0.1",
-    "square": "^43.1.0"
+    "framer-motion": "^12.23.25",
+    "react": "^19.2.1",
+    "react-dom": "^19.2.1",
+    "@react-three/fiber": "^9.4.2",
+    "@react-three/drei": "^10.7.7",
+    "lucide-react": "^0.556.0",
+    "@google/genai": "^1.32.0",
+    "three": "^0.181.2"
   },
   "devDependencies": {
-    "@tailwindcss/cli": "^4.1.5",
-    "@tailwindcss/postcss": "^4.1.5",
-    "@types/node": "22.14.1",
-    "@types/react": "19.1.2",
-    "autoprefixer": "^10.4.21",
-    "eslint": "8.44.0",
-    "eslint-config-next": "13.4.7",
-    "postcss": "^8.5.3",
-    "tailwindcss": "^4.1.5"
+    "@types/node": "^22.14.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "typescript": "~5.8.2",
+    "vite": "^6.2.0"
   }
 }

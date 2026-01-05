@@ -1,0 +1,438 @@
+
+import React, { useState, useRef, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  Edit3, Save, Bold, Italic, Heading1, Heading2, Heading3, Quote, Code, 
+  Image as ImageIcon, List, Layout, Eye, Type, Settings, Globe, Hash, 
+  ArrowLeft, Terminal, Sparkles, X, Plus, Trash2, Upload, Link as LinkIcon
+} from 'lucide-react';
+import { BlogPost, User as UserType } from '../../../types';
+import { MarkdownRenderer } from './reader/MarkdownRenderer';
+import { useToast } from '../../../components/ToastSystem';
+
+const calculateReadTime = (text: string) => Math.ceil(text.trim().split(/\s+/).length / 200);
+
+export const Editor = ({ 
+  initialPost, 
+  onCancel, 
+  onSave, 
+  currentUser, 
+  categories 
+}: { 
+  initialPost?: BlogPost, 
+  onCancel: () => void, 
+  onSave: (p: BlogPost) => void, 
+  currentUser: UserType | null, 
+  categories: string[] 
+}) => {
+  const { addToast } = useToast();
+  const [activeTab, setActiveTab] = useState<'write' | 'preview' | 'metadata'>('write');
+  const [formData, setFormData] = useState<Partial<BlogPost>>(initialPost || {
+    title: '', 
+    content: '', 
+    tags: [], 
+    category: 'Creative', 
+    imageUrl: `https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=1200&grayscale`, 
+    status: 'draft', 
+    excerpt: '', 
+    slug: '', 
+    metaDescription: '', 
+    keywords: [], 
+    authorRole: currentUser?.isAdmin ? 'Technologist' : 'Contributor'
+  });
+
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [toc, setToc] = useState<{level: number, text: string}[]>([]);
+
+  // Update TOC and Read Time on content change
+  useEffect(() => {
+    const lines = (formData.content || '').split('\n');
+    const headings = lines
+      .filter(line => line.startsWith('#'))
+      .map(line => {
+        const level = line.match(/^#+/)?.[0].length || 0;
+        const text = line.replace(/^#+\s/, '').trim();
+        return { level, text };
+      });
+    setToc(headings);
+  }, [formData.content]);
+
+  const handleSave = () => {
+    if (!formData.title || !formData.content) {
+      addToast('Title and content are required to broadcast.', 'error');
+      return;
+    }
+    let slug = formData.slug || formData.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+    
+    const postToSave: BlogPost = {
+       id: initialPost?.id || Date.now().toString(),
+       title: formData.title,
+       slug: slug,
+       content: formData.content,
+       excerpt: formData.excerpt || formData.content.substring(0, 150).replace(/[#*`]/g, '') + '...',
+       imageUrl: formData.imageUrl!,
+       tags: formData.tags || [],
+       category: formData.category || 'Creative',
+       status: formData.status as 'draft' | 'published' || 'draft',
+       author: initialPost?.author || currentUser?.name || 'Admin',
+       authorRole: formData.authorRole || 'Contributor',
+       date: initialPost?.date || new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+       timestamp: initialPost?.timestamp || Date.now(),
+       lastModified: Date.now(),
+       readTime: calculateReadTime(formData.content),
+       views: initialPost?.views || 0,
+       likes: initialPost?.likes || 0,
+       comments: initialPost?.comments || [],
+       metaDescription: formData.metaDescription || formData.excerpt || '',
+       keywords: formData.keywords || []
+    };
+    onSave(postToSave);
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData({ ...formData, imageUrl: reader.result as string });
+        addToast('Visual anchor updated successfully.', 'success');
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const insertMarkdown = (prefix: string, suffix: string = '') => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const text = textarea.value;
+    const before = text.substring(0, start);
+    const selection = text.substring(start, end);
+    const after = text.substring(end);
+    
+    const newContent = before + prefix + (selection || 'text') + suffix + after;
+    setFormData({ ...formData, content: newContent });
+    
+    // Focus back and select
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(start + prefix.length, end + prefix.length);
+    }, 0);
+  };
+
+  const handleTagAdd = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && (e.target as HTMLInputElement).value) {
+      e.preventDefault();
+      const val = (e.target as HTMLInputElement).value.trim();
+      if (!formData.tags?.includes(val)) {
+        setFormData({ ...formData, tags: [...(formData.tags || []), val] });
+      }
+      (e.target as HTMLInputElement).value = '';
+    }
+  };
+
+  const VisualAnchorSection = () => (
+    <div>
+      <h4 className="text-[10px] font-mono text-gray-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+         <Layout size={12} /> Visual Anchor
+      </h4>
+      <div className="aspect-video rounded-xl border border-white/10 overflow-hidden bg-black/40 group relative">
+         <img src={formData.imageUrl} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt="cover"/>
+         <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-4 gap-3">
+            <button 
+              onClick={() => fileInputRef.current?.click()}
+              className="flex items-center gap-2 px-4 py-2 bg-accent text-void rounded-lg text-xs font-bold hover:bg-white transition-colors"
+            >
+              <Upload size={14}/> Upload Photo
+            </button>
+            <div className="flex items-center gap-2 w-full">
+              <div className="h-px flex-1 bg-white/10" />
+              <span className="text-[10px] text-gray-500 font-mono">OR URL</span>
+              <div className="h-px flex-1 bg-white/10" />
+            </div>
+            <input 
+              type="text" 
+              placeholder="Paste External URL"
+              value={formData.imageUrl?.startsWith('data:') ? '' : formData.imageUrl}
+              onChange={e => setFormData({...formData, imageUrl: e.target.value})}
+              className="w-full bg-black/80 border border-white/20 rounded px-3 py-2 text-[10px] text-white outline-none focus:border-accent"
+            />
+         </div>
+      </div>
+      <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" accept="image/*" />
+    </div>
+  );
+
+  const CategorySection = () => (
+    <div>
+      <h4 className="text-[10px] font-mono text-gray-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+         <Hash size={12} /> Categories
+      </h4>
+      <div className="flex flex-wrap gap-2">
+         {categories.map(c => (
+            <button 
+              key={c}
+              onClick={() => setFormData({...formData, category: c})}
+              className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase transition-all border ${formData.category === c ? 'bg-accent/20 border-accent text-accent' : 'bg-white/5 border-white/5 text-gray-500 hover:border-white/20'}`}
+            >
+               {c}
+            </button>
+         ))}
+      </div>
+    </div>
+  );
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0 }} 
+      animate={{ opacity: 1 }} 
+      className="fixed inset-0 z-[200] bg-[#050505] flex flex-col overflow-hidden"
+    >
+      {/* Top Header Navigation - Fully Opaque Void Color to hide global header */}
+      <header className="h-16 md:h-20 border-b border-white/10 bg-void flex items-center justify-between px-4 md:px-8 shrink-0 relative z-[210]">
+        <div className="flex items-center gap-3 md:gap-6 min-w-0">
+          <button onClick={onCancel} className="p-2 hover:bg-white/5 rounded-full text-gray-400 hover:text-white transition-colors flex-shrink-0">
+            <ArrowLeft size={20} />
+          </button>
+          <div className="hidden sm:block h-6 w-px bg-white/10 flex-shrink-0" />
+          <div className="flex items-center gap-2 md:gap-3 min-w-0">
+             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-secondary to-accent flex items-center justify-center shadow-lg flex-shrink-0">
+                <Terminal size={18} className="text-white" />
+             </div>
+             <span className="hidden xs:block font-display font-bold text-white tracking-tight uppercase text-xs md:text-base truncate">Neural Publishing</span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 md:gap-4 flex-shrink-0">
+           <div className="flex bg-black/40 p-1 rounded-xl border border-white/10">
+              <button 
+                onClick={() => setActiveTab('write')} 
+                className={`px-2 md:px-4 py-1.5 rounded-lg text-[10px] md:text-xs font-bold transition-all flex items-center gap-2 ${activeTab === 'write' ? 'bg-white/10 text-white shadow-sm' : 'text-gray-500 hover:text-gray-300'}`}
+              >
+                <Edit3 size={14}/> <span className="hidden md:inline">Write</span>
+              </button>
+              <button 
+                onClick={() => setActiveTab('preview')} 
+                className={`px-2 md:px-4 py-1.5 rounded-lg text-[10px] md:text-xs font-bold transition-all flex items-center gap-2 ${activeTab === 'preview' ? 'bg-white/10 text-white shadow-sm' : 'text-gray-500 hover:text-gray-300'}`}
+              >
+                <Eye size={14}/> <span className="hidden md:inline">Preview</span>
+              </button>
+              <button 
+                onClick={() => setActiveTab('metadata')} 
+                className={`px-2 md:px-4 py-1.5 rounded-lg text-[10px] md:text-xs font-bold transition-all flex items-center gap-2 ${activeTab === 'metadata' ? 'bg-white/10 text-white shadow-sm' : 'text-gray-500 hover:text-gray-300'}`}
+              >
+                <Settings size={14}/> <span className="hidden md:inline">Config</span>
+              </button>
+           </div>
+           <button 
+             onClick={handleSave} 
+             className="px-4 md:px-6 py-2 bg-accent text-void font-bold rounded-xl hover:bg-white transition-all flex items-center gap-2 text-xs md:text-sm shadow-[0_0_20px_rgba(244,201,93,0.2)]"
+           >
+             <Save size={16} /> <span className="hidden xs:inline">Publish</span>
+           </button>
+        </div>
+      </header>
+
+      {/* Main Content Area */}
+      <div className="flex-1 flex overflow-hidden">
+        
+        {/* Left Sidebar: Structure & Media (Visible only on LG screens) */}
+        <aside className="hidden lg:flex w-80 border-r border-white/10 bg-black/20 flex-col overflow-y-auto custom-scrollbar p-8 space-y-10">
+           <VisualAnchorSection />
+
+           <div>
+              <h4 className="text-[10px] font-mono text-gray-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                 <List size={12} /> Neural Map
+              </h4>
+              <div className="space-y-3 relative">
+                 <div className="absolute left-[7px] top-1 bottom-1 w-[1px] bg-white/5" />
+                 {toc.length > 0 ? toc.map((h, i) => (
+                    <div key={i} className="flex gap-2 items-center pl-4" style={{ marginLeft: `${(h.level - 1) * 8}px` }}>
+                       <div className="w-1.5 h-1.5 rounded-full bg-accent/40" />
+                       <span className="text-[11px] text-gray-400 truncate">{h.text}</span>
+                    </div>
+                 )) : (
+                    <p className="text-[11px] text-gray-600 italic pl-2">No headings detected.</p>
+                 )}
+              </div>
+           </div>
+
+           <CategorySection />
+        </aside>
+
+        {/* Center: The Editor / Preview Pane */}
+        <main className="flex-1 flex flex-col bg-[#050505] relative overflow-hidden">
+           
+           {/* Tab Content */}
+           <AnimatePresence mode="wait">
+              {activeTab === 'write' && (
+                <motion.div 
+                   key="write"
+                   initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                   className="flex-1 flex flex-col"
+                >
+                   {/* Editor Toolbar */}
+                   <div className="h-12 border-b border-white/10 bg-black/40 flex items-center px-4 gap-1 overflow-x-auto scrollbar-hide shrink-0">
+                      <ToolbarBtn icon={Heading1} onClick={() => insertMarkdown('# ', '')} label="H1" />
+                      <ToolbarBtn icon={Heading2} onClick={() => insertMarkdown('## ', '')} label="H2" />
+                      <ToolbarBtn icon={Heading3} onClick={() => insertMarkdown('### ', '')} label="H3" />
+                      <div className="h-6 w-px bg-white/10 mx-1 shrink-0" />
+                      <ToolbarBtn icon={Bold} onClick={() => insertMarkdown('**', '**')} />
+                      <ToolbarBtn icon={Italic} onClick={() => insertMarkdown('*', '*')} />
+                      <ToolbarBtn icon={Code} onClick={() => insertMarkdown('`', '`')} />
+                      <div className="h-6 w-px bg-white/10 mx-1 shrink-0" />
+                      <ToolbarBtn icon={Quote} onClick={() => insertMarkdown('> ', '')} />
+                      <ToolbarBtn icon={List} onClick={() => insertMarkdown('- ', '')} />
+                      <ToolbarBtn icon={ImageIcon} onClick={() => insertMarkdown('![Image Alt Text](', ')')} />
+                      <div className="h-6 w-px bg-white/10 mx-1 shrink-0" />
+                      <ToolbarBtn icon={Sparkles} onClick={() => {}} color="text-accent" label="AI" />
+                   </div>
+
+                   <div className="flex-1 relative p-6 md:p-12 overflow-y-auto custom-scrollbar">
+                      <div className="max-w-4xl mx-auto space-y-6">
+                         <input 
+                            type="text" 
+                            placeholder="Signal Title..."
+                            value={formData.title}
+                            onChange={e => setFormData({...formData, title: e.target.value})}
+                            className="w-full bg-transparent text-3xl md:text-6xl font-display font-bold placeholder:text-white/10 outline-none text-white selection:bg-accent/30"
+                         />
+                         
+                         <textarea 
+                            ref={textareaRef}
+                            value={formData.content}
+                            onChange={e => setFormData({...formData, content: e.target.value})}
+                            placeholder="Initialize content transmission... Use Markdown for sophisticated formatting."
+                            className="w-full min-h-[60vh] bg-transparent text-base md:text-xl font-serif text-gray-300 placeholder:text-white/10 outline-none resize-none leading-relaxed selection:bg-accent/30"
+                         />
+                      </div>
+                   </div>
+                </motion.div>
+              )}
+
+              {activeTab === 'preview' && (
+                 <motion.div 
+                    key="preview"
+                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                    className="flex-1 overflow-y-auto custom-scrollbar p-6 md:p-12"
+                 >
+                    <div className="max-w-4xl mx-auto">
+                       <div className="relative aspect-video rounded-2xl md:rounded-3xl overflow-hidden mb-8 md:mb-12 border border-white/10 shadow-2xl">
+                          <img src={formData.imageUrl} className="w-full h-full object-cover" alt="preview"/>
+                          <div className="absolute inset-0 bg-gradient-to-t from-void via-void/40 to-transparent" />
+                          <div className="absolute bottom-6 left-6 md:bottom-10 md:left-10 right-6">
+                             <span className="bg-accent text-void px-2 py-0.5 md:px-3 md:py-1 rounded text-[10px] md:text-xs font-bold uppercase tracking-widest mb-2 md:mb-4 inline-block">{formData.category}</span>
+                             <h1 className="text-2xl md:text-6xl font-display font-bold text-white drop-shadow-lg leading-tight">{formData.title || 'Untitled Transmission'}</h1>
+                          </div>
+                       </div>
+                       <MarkdownRenderer content={formData.content || ''} />
+                    </div>
+                 </motion.div>
+              )}
+
+              {activeTab === 'metadata' && (
+                 <motion.div 
+                    key="meta"
+                    initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
+                    className="flex-1 p-6 md:p-12 overflow-y-auto custom-scrollbar"
+                 >
+                    <div className="max-w-2xl mx-auto space-y-12">
+                       {/* Mobile-only sections that are normally in the sidebar */}
+                       <div className="lg:hidden space-y-8">
+                          <VisualAnchorSection />
+                          <CategorySection />
+                          <div className="h-px bg-white/10" />
+                       </div>
+
+                       <div className="space-y-4">
+                          <h3 className="text-xl font-display font-bold text-white flex items-center gap-3">
+                             <Type size={20} className="text-accent"/> Editorial Metadata
+                          </h3>
+                          <div className="space-y-6 bg-white/5 border border-white/10 p-6 md:p-8 rounded-3xl">
+                             <MetaInput label="Custom Slug" placeholder="the-theology-of-automation" value={formData.slug} onChange={val => setFormData({...formData, slug: val})} />
+                             <MetaTextArea label="Excerpt (Summary)" placeholder="A brief hook for the list view..." value={formData.excerpt} onChange={val => setFormData({...formData, excerpt: val})} />
+                          </div>
+                       </div>
+
+                       <div className="space-y-4">
+                          <h3 className="text-xl font-display font-bold text-white flex items-center gap-3">
+                             <Globe size={20} className="text-accent"/> Signal Optimization (SEO)
+                          </h3>
+                          <div className="space-y-6 bg-white/5 border border-white/10 p-6 md:p-8 rounded-3xl">
+                             <MetaTextArea label="Meta Description" placeholder="Brief description for search engines..." value={formData.metaDescription} onChange={val => setFormData({...formData, metaDescription: val})} />
+                             
+                             <div>
+                                <label className="block text-[10px] font-mono text-gray-500 uppercase tracking-widest mb-3">Transmission Tags</label>
+                                <div className="flex flex-wrap gap-2 mb-3">
+                                   {formData.tags?.map(t => (
+                                      <span key={t} className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-accent/10 border border-accent/20 text-accent text-xs font-bold uppercase tracking-wider">
+                                         {t} <button onClick={() => setFormData({...formData, tags: formData.tags?.filter(tag => tag !== t)})} className="hover:text-white"><X size={12}/></button>
+                                      </span>
+                                   ))}
+                                </div>
+                                <input 
+                                  type="text" 
+                                  placeholder="Type tag and press Enter..."
+                                  onKeyDown={handleTagAdd}
+                                  className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-sm text-gray-300 outline-none focus:border-accent"
+                                />
+                             </div>
+                          </div>
+                       </div>
+
+                       <div className="bg-red-500/10 border border-red-500/20 p-6 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                          <div>
+                             <h4 className="text-red-400 font-bold text-sm">Destructive Action</h4>
+                             <p className="text-red-500/60 text-xs">Purge this draft entirely from local storage.</p>
+                          </div>
+                          <button onClick={onCancel} className="w-full sm:w-auto px-4 py-2 bg-red-500/20 hover:bg-red-500 text-red-400 hover:text-white rounded-lg transition-all flex items-center justify-center gap-2 text-xs font-bold">
+                             <Trash2 size={14}/> Discard Draft
+                          </button>
+                       </div>
+                    </div>
+                 </motion.div>
+              )}
+           </AnimatePresence>
+        </main>
+      </div>
+    </motion.div>
+  );
+};
+
+const ToolbarBtn = ({ icon: Icon, onClick, color = "text-gray-400", label }: any) => (
+  <button 
+    onClick={onClick}
+    className={`p-2 md:p-2 hover:bg-white/10 rounded-lg transition-colors flex items-center gap-2 group shrink-0 ${color}`}
+    title={label}
+  >
+    <Icon size={18} className="group-hover:scale-110 transition-transform md:w-4 md:h-4" />
+    {label && <span className="text-[10px] font-bold uppercase hidden sm:inline">{label}</span>}
+  </button>
+);
+
+const MetaInput = ({ label, placeholder, value, onChange }: any) => (
+  <div className="space-y-2">
+    <label className="block text-[10px] font-mono text-gray-500 uppercase tracking-widest">{label}</label>
+    <input 
+      type="text" 
+      placeholder={placeholder}
+      value={value}
+      onChange={e => onChange(e.target.value)}
+      className="w-full bg-black/40 border border-white/10 rounded-xl p-4 text-sm text-gray-200 outline-none focus:border-accent/50 transition-all"
+    />
+  </div>
+);
+
+const MetaTextArea = ({ label, placeholder, value, onChange }: any) => (
+  <div className="space-y-2">
+    <label className="block text-[10px] font-mono text-gray-500 uppercase tracking-widest">{label}</label>
+    <textarea 
+      placeholder={placeholder}
+      value={value}
+      onChange={e => onChange(e.target.value)}
+      className="w-full h-24 bg-black/40 border border-white/10 rounded-xl p-4 text-sm text-gray-200 outline-none focus:border-accent/50 transition-all resize-none"
+    />
+  </div>
+);
