@@ -6,16 +6,24 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "prerender": "node scripts/prerender.mjs",
+    "build:ssg": "npm run build && npm run prerender",
+    "generate-sitemap": "node scripts/generate-sitemap.mjs"
   },
   "dependencies": {
+    "@google/genai": "^1.32.0",
+    "@prerenderer/prerenderer": "^1.2.5",
+    "@prerenderer/renderer-puppeteer": "^1.2.4",
+    "@prerenderer/rollup-plugin": "^0.3.12",
+    "@react-three/drei": "^10.7.7",
+    "@react-three/fiber": "^9.4.2",
+    "@supabase/supabase-js": "^2.89.0",
     "framer-motion": "^12.23.25",
+    "lucide-react": "^0.556.0",
     "react": "^19.2.1",
     "react-dom": "^19.2.1",
-    "@react-three/fiber": "^9.4.2",
-    "@react-three/drei": "^10.7.7",
-    "lucide-react": "^0.556.0",
-    "@google/genai": "^1.32.0",
+    "react-router-dom": "^7.11.0",
     "three": "^0.181.2"
   },
   "devDependencies": {

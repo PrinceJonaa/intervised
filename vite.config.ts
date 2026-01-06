@@ -18,6 +18,23 @@ export default defineConfig(({ mode }) => {
         alias: {
           '@': path.resolve(__dirname, '.'),
         }
-      }
+      },
+      build: {
+        // Generate clean URLs for SPA
+        rollupOptions: {
+          output: {
+            manualChunks: {
+              'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+              'three-vendor': ['three', '@react-three/fiber', '@react-three/drei'],
+              'motion-vendor': ['framer-motion'],
+            },
+          },
+        },
+        // Copy public folder to dist
+        copyPublicDir: true,
+        // Enable source maps for production debugging
+        sourcemap: mode === 'development',
+      },
     };
 });
+

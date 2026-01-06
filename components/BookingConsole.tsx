@@ -2,9 +2,10 @@
 
 import React, { useRef, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Calendar as CalendarIcon, Cpu, ChevronRight, CheckCircle2, Zap, User, Clock, Settings2, FileText, Copy, Mail, RefreshCw, MessageSquare } from 'lucide-react';
+import { Calendar as CalendarIcon, Cpu, ChevronRight, CheckCircle2, Zap, User, Clock, Settings2, FileText, Copy, Mail, RefreshCw, MessageSquare, AlertCircle } from 'lucide-react';
 import { ServiceItem, ServiceOption, Page } from '../types';
 import { useToast } from './ToastSystem';
+import { submitBooking, type BookingData } from '../lib/supabase/bookingService';
 
 interface BookingConsoleProps {
   selectedService: ServiceItem | null;
@@ -22,6 +23,8 @@ export const BookingConsole: React.FC<BookingConsoleProps> = ({
   const { addToast } = useToast();
   const [holdProgress, setHoldProgress] = useState(0);
   const holdIntervalRef = useRef<any>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [bookingReference, setBookingReference] = useState<string | null>(null);
 
   // Configuration States
   const [selectedProvider, setSelectedProvider] = useState<string | null>(null);
@@ -32,6 +35,37 @@ export const BookingConsole: React.FC<BookingConsoleProps> = ({
   // Computed States
   const [totalPrice, setTotalPrice] = useState(0);
 
+  // Submit booking to Supabase
+  const handleBookingSubmit = async () => {
+    if (!selectedService || !selectedDate || isSubmitting) return;
+    
+    setIsSubmitting(true);
+    
+    try {
+      const bookingData: BookingData = {
+        serviceId: selectedService.id,
+        serviceTitle: selectedService.title,
+        provider: selectedProvider || undefined,
+        durationMinutes: selectedService.durationMinutes * durationMultiplier,
+        selectedOptions: selectedOptions,
+        projectContext: projectContext || undefined,
+        selectedDate: selectedDate,
+        totalPrice: totalPrice,
+      };
+
+      const booking = await submitBooking(bookingData);
+      setBookingReference(booking.reference_number || null);
+      setIsBooked(true);
+      addToast('Configuration transmitted successfully.', 'success');
+    } catch (error) {
+      console.error('Booking submission failed:', error);
+      addToast('Transmission failed. Please try again.', 'error');
+      setHoldProgress(0);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   // Reset local configuration states when service ID changes
   useEffect(() => {
     if (selectedService) {
@@ -39,6 +73,7 @@ export const BookingConsole: React.FC<BookingConsoleProps> = ({
       setDurationMultiplier(1);
       setSelectedOptions([]);
       setProjectContext('');
+      setBookingReference(null);
       // Note: isBooked and selectedDate are managed by parent component (Services.tsx) and reset on click there.
     }
   }, [selectedService ? selectedService.id : 'none']); 
@@ -75,14 +110,15 @@ export const BookingConsole: React.FC<BookingConsoleProps> = ({
 
   const startHold = (e: React.SyntheticEvent) => {
     e.preventDefault();
-    if (!selectedDate || isBooked) return;
+    if (!selectedDate || isBooked || isSubmitting) return;
     if (holdIntervalRef.current) clearInterval(holdIntervalRef.current);
 
     holdIntervalRef.current = setInterval(() => {
       setHoldProgress(prev => {
         if (prev >= 100) {
           clearInterval(holdIntervalRef.current);
-          setIsBooked(true);
+          // Trigger async booking submission
+          handleBookingSubmit();
           return 100;
         }
         return prev + 3; // Slightly faster for better feel
@@ -92,7 +128,7 @@ export const BookingConsole: React.FC<BookingConsoleProps> = ({
 
   const endHold = (e: React.SyntheticEvent) => {
     e.preventDefault();
-    if (holdProgress < 100 && !isBooked) {
+    if (holdProgress < 100 && !isBooked && !isSubmitting) {
       clearInterval(holdIntervalRef.current);
       setHoldProgress(0);
     }
@@ -125,6 +161,7 @@ Mission: ${projectContext || 'N/A'}`;
     setIsBooked(false);
     setSelectedDate(null);
     setHoldProgress(0);
+    setBookingReference(null);
   };
 
   return (
@@ -187,7 +224,7 @@ Mission: ${projectContext || 'N/A'}`;
                       </div>
                       <div className="flex justify-between border-b border-white/10 pb-2 mb-2">
                          <span className="text-gray-500 uppercase tracking-widest text-[10px]">Reference</span>
-                         <span className="text-accent font-bold">#IV-{Date.now().toString().slice(-6)}</span>
+                         <span className="text-accent font-bold">{bookingReference || `#IV-${Date.now().toString().slice(-6)}`}</span>
                       </div>
                       <div className="flex justify-between">
                          <span className="text-gray-400">Service</span>
@@ -344,11 +381,12 @@ Mission: ${projectContext || 'N/A'}`;
 
                   <div className="pt-4 border-t border-white/10 space-y-4 shrink-0">
                     <div className="relative touch-none">
-                      <button disabled={!selectedDate || isBooked} onMouseDown={startHold} onMouseUp={endHold} onMouseLeave={endHold} onTouchStart={startHold} onTouchEnd={endHold} className={`relative w-full py-4 font-bold rounded-xl overflow-hidden transition-all select-none ${isBooked ? 'bg-green-500 text-black' : !selectedDate ? 'bg-white/10 text-gray-500 cursor-not-allowed' : 'bg-white text-black active:scale-[0.98]'}`}>
+                      <button disabled={!selectedDate || isBooked || isSubmitting} onMouseDown={startHold} onMouseUp={endHold} onMouseLeave={endHold} onTouchStart={startHold} onTouchEnd={endHold} className={`relative w-full py-4 font-bold rounded-xl overflow-hidden transition-all select-none ${isBooked ? 'bg-green-500 text-black' : !selectedDate ? 'bg-white/10 text-gray-500 cursor-not-allowed' : isSubmitting ? 'bg-accent/50 text-black cursor-wait' : 'bg-white text-black active:scale-[0.98]'}`}>
                         <div className="absolute inset-0 bg-accent z-0 transition-all duration-75 ease-linear" style={{ width: `${holdProgress}%` }} />
-                        <div className="relative z-10 flex items-center justify-center gap-2">{isBooked ? <><CheckCircle2 size={18} /> REQUEST TRANSMITTED</> : selectedDate ? <><Zap size={18} className={holdProgress > 0 ? "fill-void" : ""} /> HOLD TO INITIATE</> : 'SELECT DATE TO PROCEED'}</div>
+                        <div className="relative z-10 flex items-center justify-center gap-2">{isBooked ? <><CheckCircle2 size={18} /> REQUEST TRANSMITTED</> : isSubmitting ? <><RefreshCw size={18} className="animate-spin" /> TRANSMITTING...</> : selectedDate ? <><Zap size={18} className={holdProgress > 0 ? "fill-void" : ""} /> HOLD TO INITIATE</> : 'SELECT DATE TO PROCEED'}</div>
                       </button>
-                      {selectedDate && !isBooked && <div className="text-center mt-2 text-[10px] font-mono text-gray-500 uppercase tracking-widest">{holdProgress > 0 ? `ENCRYPTING... ${holdProgress}%` : 'Hold to Confirm Configuration'}</div>}
+                      {selectedDate && !isBooked && !isSubmitting && <div className="text-center mt-2 text-[10px] font-mono text-gray-500 uppercase tracking-widest">{holdProgress > 0 ? `ENCRYPTING... ${holdProgress}%` : 'Hold to Confirm Configuration'}</div>}
+                      {isSubmitting && <div className="text-center mt-2 text-[10px] font-mono text-accent uppercase tracking-widest animate-pulse">SAVING TO DATABASE...</div>}
                     </div>
                   </div>
                 </motion.div>

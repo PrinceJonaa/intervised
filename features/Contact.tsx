@@ -2,8 +2,9 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, CheckCircle2, Loader2, Mail, MapPin, Clock, Globe, ArrowRight, DollarSign, Calendar } from 'lucide-react';
+import { Send, CheckCircle2, Loader2, Mail, MapPin, Clock, Globe, ArrowRight, DollarSign, Calendar, AlertCircle } from 'lucide-react';
 import { useToast } from '../components/ToastSystem';
+import { submitContactMessage } from '../lib/supabase/contactService';
 
 const ContactInput = ({ label, value, onChange, placeholder, type = "text", disabled }: any) => (
   <div className="group">
@@ -46,7 +47,7 @@ export const ContactSection = () => {
     message: ''
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.email || !formData.message) {
       addToast('Identity and transmission content required.', 'error');
@@ -55,13 +56,27 @@ export const ContactSection = () => {
 
     setIsSubmitting(true);
 
-    // Simulate Network Request with "Encryption" delay
-    setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      // Submit to Supabase
+      await submitContactMessage({
+        name: formData.name,
+        email: formData.email,
+        company: formData.company || undefined,
+        category: formData.category,
+        budget: formData.budget,
+        timeline: formData.timeline,
+        message: formData.message,
+      });
+
       setIsSuccess(true);
       addToast('Secure transmission received.', 'success');
       setFormData({ name: '', email: '', company: '', category: 'Creative Services', budget: 'Growth', timeline: 'Flexible', message: '' });
-    }, 2000);
+    } catch (error) {
+      console.error('Contact form submission failed:', error);
+      addToast('Transmission failed. Please try again.', 'error');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (

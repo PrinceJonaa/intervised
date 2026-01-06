@@ -1,0 +1,75 @@
+/**
+ * Dynamic Sitemap Generator for Intervised
+ * 
+ * Generates sitemap.xml with all static routes and dynamic blog posts.
+ * Run: npm run generate-sitemap
+ */
+
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const BASE_URL = 'https://intervised.com';
+const TODAY = new Date().toISOString().split('T')[0];
+
+// Static routes configuration
+const STATIC_ROUTES = [
+  { path: '/', changefreq: 'weekly', priority: '1.0' },
+  { path: '/services', changefreq: 'monthly', priority: '0.9' },
+  { path: '/team', changefreq: 'monthly', priority: '0.8' },
+  { path: '/blog', changefreq: 'daily', priority: '0.8' },
+  { path: '/contact', changefreq: 'monthly', priority: '0.7' },
+];
+
+// Generate URL entry for sitemap
+function generateUrlEntry(route) {
+  return `  <url>
+    <loc>${BASE_URL}${route.path}</loc>
+    <lastmod>${route.lastmod || TODAY}</lastmod>
+    <changefreq>${route.changefreq}</changefreq>
+    <priority>${route.priority}</priority>
+  </url>`;
+}
+
+// Generate the full sitemap XML
+function generateSitemap(routes) {
+  const urlEntries = routes.map(generateUrlEntry).join('\n');
+  
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${urlEntries}
+</urlset>`;
+}
+
+async function main() {
+  console.log('🗺️  Generating sitemap...');
+  
+  // Start with static routes
+  const allRoutes = [...STATIC_ROUTES];
+  
+  // TODO: Add dynamic blog post routes from database
+  // When you have the blog database connected, you can fetch posts here:
+  // const blogPosts = await fetchBlogPosts();
+  // blogPosts.forEach(post => {
+  //   allRoutes.push({
+  //     path: `/blog/${post.slug}`,
+  //     changefreq: 'weekly',
+  //     priority: '0.6',
+  //     lastmod: post.updatedAt,
+  //   });
+  // });
+  
+  const sitemap = generateSitemap(allRoutes);
+  
+  // Write to public folder
+  const outputPath = path.resolve(__dirname, '../public/sitemap.xml');
+  fs.writeFileSync(outputPath, sitemap);
+  
+  console.log(`✅ Sitemap generated with ${allRoutes.length} URLs`);
+  console.log(`📁 Output: ${outputPath}`);
+}
+
+main().catch(console.error);
