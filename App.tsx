@@ -4,6 +4,7 @@ import { motion, AnimatePresence, } from 'framer-motion';
 import { BrowserRouter, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 
 import { Page } from './types';
+import { initializeSpeedInsights } from './lib/speedInsights';
 
 // Feature Modules
 import { HomeView } from './features/Home';
@@ -202,26 +203,35 @@ function AppContent() {
 }
 
 export default function App() {
-  // Initialize Vercel Analytics and Speed Insights for Vite (client-side only)
+  // Initialize Vercel Analytics and Speed Insights on app mount
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    
     (async () => {
+      // Initialize Vercel Analytics
       try {
         const { inject } = await import('@vercel/analytics');
         inject();
-        console.log('Vercel Analytics initialized');
+        if (process.env.NODE_ENV === 'development') {
+          console.log('✓ Vercel Analytics initialized');
+        }
       } catch (err) {
-        console.warn('Vercel Analytics failed to load:', err);
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('⚠ Vercel Analytics failed to load:', err);
+        }
       }
+
+      // Initialize Vercel Speed Insights
       try {
-        const { injectSpeedInsights } = await import('@vercel/speed-insights');
-        injectSpeedInsights();
-        console.log('Vercel Speed Insights initialized via injectSpeedInsights');
+        await initializeSpeedInsights();
       } catch (err) {
-        console.warn('Vercel Speed Insights failed to load:', err);
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('⚠ Vercel Speed Insights failed to load:', err);
+        }
       }
     })();
   }, []);
+
   return (
     <BrowserRouter>
       <AuthProvider>
