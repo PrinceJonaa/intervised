@@ -20,6 +20,8 @@ export default defineConfig(({ mode }) => {
         }
       },
       build: {
+        // Increase chunk size warning limit to 1.5MB
+        chunkSizeWarningLimit: 1500,
         // Generate clean URLs for SPA
         rollupOptions: {
           output: {
@@ -27,6 +29,9 @@ export default defineConfig(({ mode }) => {
               'react-vendor': ['react', 'react-dom', 'react-router-dom'],
               'three-vendor': ['three', '@react-three/fiber', '@react-three/drei'],
               'motion-vendor': ['framer-motion'],
+              'supabase-vendor': ['@supabase/supabase-js'],
+              'ui-vendor': ['lucide-react'],
+              'analytics-vendor': ['@vercel/analytics', '@vercel/speed-insights'],
             },
           },
         },
