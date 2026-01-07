@@ -209,12 +209,14 @@ export default function App() {
       try {
         const { inject } = await import('@vercel/analytics');
         inject();
+        console.log('Vercel Analytics initialized');
       } catch (err) {
         console.warn('Vercel Analytics failed to load:', err);
       }
       try {
-        const { inject: injectSpeed } = await import('@vercel/speed-insights');
-        injectSpeed();
+        const { injectSpeedInsights } = await import('@vercel/speed-insights');
+        injectSpeedInsights();
+        console.log('Vercel Speed Insights initialized via injectSpeedInsights');
       } catch (err) {
         console.warn('Vercel Speed Insights failed to load:', err);
       }
