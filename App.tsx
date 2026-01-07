@@ -212,11 +212,11 @@ export default function App() {
       try {
         const { inject } = await import('@vercel/analytics');
         inject();
-        if (process.env.NODE_ENV === 'development') {
+        if (import.meta.env.DEV) {
           console.log('✓ Vercel Analytics initialized');
         }
       } catch (err) {
-        if (process.env.NODE_ENV === 'development') {
+        if (import.meta.env.DEV) {
           console.warn('⚠ Vercel Analytics failed to load:', err);
         }
       }
@@ -230,7 +230,7 @@ export default function App() {
           <AppContent />
         </ToastProvider>
       </AuthProvider>
-      <SpeedInsights />
+      <SpeedInsights debug={import.meta.env.DEV} />
     </BrowserRouter>
   );
 }
