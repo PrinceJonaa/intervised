@@ -2,8 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence, } from 'framer-motion';
 import { BrowserRouter, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
-import { Analytics } from '@vercel/analytics/next';
-import { SpeedInsights } from '@vercel/speed-insights/next';
 
 import { Page } from './types';
 
@@ -204,6 +202,23 @@ function AppContent() {
 }
 
 export default function App() {
+  // Dynamically import Vercel telemetry packages on the client only.
+  // Static imports of the Next.js entrypoints cause build-time errors in non-Next apps.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    (async () => {
+      try {
+        await import('@vercel/analytics');
+      } catch (err) {
+        // ignore if not available or incompatible
+      }
+      try {
+        await import('@vercel/speed-insights');
+      } catch (err) {
+        // ignore if not available or incompatible
+      }
+    })();
+  }, []);
   return (
     <BrowserRouter>
       <AuthProvider>
@@ -211,8 +226,6 @@ export default function App() {
           <AppContent />
         </ToastProvider>
       </AuthProvider>
-      <Analytics />
-      <SpeedInsights />
     </BrowserRouter>
   );
 }
