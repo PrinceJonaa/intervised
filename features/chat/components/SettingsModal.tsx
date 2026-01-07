@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Settings, Cpu, User, Zap, Database, Volume2, Shield, X, Menu } from 'lucide-react';
 import { ChatSettings, ToolDefinition, ChatSession } from '../../../types';
 import { db } from '../../../lib/mockDb';
+import { useAuthContext } from '../../../components/AuthProvider';
+import { getChatSessions, deleteChatSession, deleteChatMessages } from '../../../lib/supabase/chatService';
 import { ToolEditor } from './ToolEditor';
 
 // Modular Components
@@ -30,6 +32,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   isOpen, onClose, settings, setSettings, tools, setTools, 
   systemInstruction, setSystemInstruction, sessions, refreshSessions, generateRaw
 }) => {
+   const { user } = useAuthContext();
   const [tab, setTab] = useState<'general' | 'persona' | 'tools' | 'memory' | 'voice'>('general');
   const [editingToolIndex, setEditingToolIndex] = useState<number | null>(null);
   const [toolEditForm, setToolEditForm] = useState<ToolDefinition | null>(null);
@@ -67,18 +70,44 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   };
 
   const handleFactoryReset = () => {
-    if(confirm('Reset all memory?')) { 
-      db.clearJournal(); 
-      refreshSessions(); 
-      onClose(); 
-    }
+      if(confirm('Reset all memory?')) {
+         db.clearJournal();
+         (async () => {
+            try {
+               if (user?.id) {
+                  const loaded = await getChatSessions(user.id);
+                  for (const s of loaded) {
+                     await deleteChatMessages(s.id);
+                     await deleteChatSession(s.id);
+                  }
+               }
+            } catch (err) {
+               console.error('Failed to purge Supabase sessions during factory reset', err);
+            }
+            try { refreshSessions(); } catch {};
+            onClose();
+         })();
+      }
   };
 
   const handleMemoryPurge = () => {
-    if(confirm('Purge all sessions?')) { 
-      db.clearJournal(); 
-      refreshSessions(); 
-    }
+      if(confirm('Purge all sessions?')) { 
+         db.clearJournal(); 
+         (async () => {
+            try {
+               if (user?.id) {
+                  const loaded = await getChatSessions(user.id);
+                  for (const s of loaded) {
+                     await deleteChatMessages(s.id);
+                     await deleteChatSession(s.id);
+                  }
+               }
+            } catch (err) {
+               console.error('Failed to purge Supabase sessions', err);
+            }
+            try { refreshSessions(); } catch {};
+         })();
+      }
   };
 
   if (!isOpen) return null;

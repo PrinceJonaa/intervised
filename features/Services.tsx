@@ -3,9 +3,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { Camera, Cpu, Video, Hash, Mic, Filter, ArrowDownCircle, CheckCircle2, Clock, HelpCircle, ChevronDown, ArrowRight, Sparkles } from 'lucide-react';
-import { SERVICES_DATA, FAQ_DATA, PAST_PROJECTS } from '../constants';
 import { ServiceItem, ServiceOption, Page } from '../types';
 import { ServiceSkeleton, SkeletonPulse } from '../components/Loading';
+import { getServices, getFAQItems, getProjects, type Service, type FAQItem, type Project } from '../lib/supabase/referenceService';
 
 // Modular Components - Updated path
 import { BookingConsole } from '../components/BookingConsole';
@@ -39,13 +39,39 @@ export const ServicesSection = ({ onCategoryChange, setPage }: ServicesSectionPr
   const [isBooked, setIsBooked] = useState(false);
   const bookingRef = useRef<HTMLDivElement>(null);
 
-  const categories = Array.from(new Set(SERVICES_DATA.map(s => s.category)));
+  // Data from Supabase
+  const [services, setServices] = useState<Service[]>([]);
+  const [faqItems, setFaqItems] = useState<FAQItem[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
+
+  // Load data from Supabase
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [servicesData, faqData, projectsData] = await Promise.all([
+          getServices(),
+          getFAQItems(),
+          getProjects()
+        ]);
+        setServices(servicesData);
+        setFaqItems(faqData);
+        setProjects(projectsData);
+      } catch (error) {
+        console.error('Failed to load services data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadData();
+  }, []);
+
+  const categories = Array.from(new Set(services.map(s => s.category)));
   const days = Array.from({ length: 31 }, (_, i) => i + 1);
   const displayedCategories = activeFilter === 'All' ? categories : [activeFilter];
   
   // Find related project based on selected service's category
   const relatedProject = selectedService 
-    ? PAST_PROJECTS.find(p => p.category.toLowerCase().includes(selectedService.category.toLowerCase()) || selectedService.category.toLowerCase().includes(p.category.toLowerCase())) 
+    ? projects.find(p => p.category.toLowerCase().includes(selectedService.category.toLowerCase()) || selectedService.category.toLowerCase().includes(p.category.toLowerCase())) 
     : null;
 
   useEffect(() => { onCategoryChange(selectedService ? selectedService.category : null); }, [selectedService, onCategoryChange]);
@@ -77,13 +103,13 @@ export const ServicesSection = ({ onCategoryChange, setPage }: ServicesSectionPr
                  <motion.div key={category} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.1 }}>
                    <div className="flex items-center gap-3 mb-6 border-b border-white/10 pb-2 sticky top-16 bg-void/90 z-20 backdrop-blur-md lg:static lg:bg-transparent">{getIcon(category)}<h3 className="text-lg sm:text-xl font-bold font-display uppercase tracking-wider text-gray-200">{category}</h3></div>
                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                     {SERVICES_DATA.filter(s => s.category === category).map(service => (
-                       <motion.div key={service.id} variants={cardVariants} initial="idle" whileHover="hover" animate={selectedService?.id === service.id ? "active" : "idle"} layoutId={`card-${service.id}`} onClick={() => { setSelectedService(service); setIsBooked(false); setSelectedDate(null); }} className="relative p-5 sm:p-6 rounded-2xl cursor-pointer overflow-hidden border touch-manipulation">
+                     {services.filter(s => s.category === category).map(service => (
+                       <motion.div key={service.id} variants={cardVariants} initial="idle" whileHover="hover" animate={selectedService?.id === service.id ? "active" : "idle"} layoutId={`card-${service.id}`} onClick={() => { setSelectedService(service as ServiceItem); setIsBooked(false); setSelectedDate(null); }} className="relative p-5 sm:p-6 rounded-2xl cursor-pointer overflow-hidden border touch-manipulation">
                          {selectedService?.id === service.id && <motion.div className="absolute inset-0 bg-gradient-to-b from-transparent via-accent/10 to-transparent pointer-events-none" initial={{ y: "-100%" }} animate={{ y: "100%" }} transition={{ repeat: Infinity, duration: 2, ease: "linear" }} />}
                          <div className="relative z-10">
-                           <div className="flex justify-between items-start mb-2 gap-4"><h4 className={`font-bold text-base sm:text-lg leading-tight ${selectedService?.id === service.id ? 'text-white' : 'text-gray-200'}`}>{service.title}</h4><span className={`font-mono text-xs px-2 py-1 rounded-full whitespace-nowrap ${selectedService?.id === service.id ? 'bg-black/20 text-accent' : 'bg-white/10'}`}>${service.price}</span></div>
+                           <div className="flex justify-between items-start mb-2 gap-4"><h4 className={`font-bold text-base sm:text-lg leading-tight ${selectedService?.id === service.id ? 'text-white' : 'text-gray-200'}`}>{service.name}</h4><span className={`font-mono text-xs px-2 py-1 rounded-full whitespace-nowrap ${selectedService?.id === service.id ? 'bg-black/20 text-accent' : 'bg-white/10'}`}>${service.base_price}</span></div>
                            <p className={`text-sm mb-4 line-clamp-2 ${selectedService?.id === service.id ? 'text-gray-300' : 'text-gray-400'}`}>{service.description}</p>
-                           <div className={`flex items-center gap-2 text-xs font-mono uppercase tracking-wider ${selectedService?.id === service.id ? 'text-accent' : 'text-gray-500'}`}><Clock size={12} />{service.durationMinutes} MIN</div>
+                           <div className={`flex items-center gap-2 text-xs font-mono uppercase tracking-wider ${selectedService?.id === service.id ? 'text-accent' : 'text-gray-500'}`}><Clock size={12} />{service.duration || 60} MIN</div>
                          </div>
                          {selectedService?.id === service.id && <div className="absolute bottom-4 right-4 text-accent"><CheckCircle2 size={20} /></div>}
                        </motion.div>
@@ -141,7 +167,7 @@ export const ServicesSection = ({ onCategoryChange, setPage }: ServicesSectionPr
 
       <div className="max-w-3xl mx-auto w-full mt-12">
         <div className="flex items-center gap-2 mb-8 justify-center"><HelpCircle className="text-accent" /><h3 className="text-2xl sm:text-3xl font-display font-bold">FREQUENTLY ASKED</h3></div>
-        <div className="space-y-4">{FAQ_DATA.map((faq, i) => <FAQCard key={i} question={faq.question} answer={faq.answer} />)}</div>
+        <div className="space-y-4">{faqItems.map((faq, i) => <FAQCard key={faq.id} question={faq.question} answer={faq.answer} />)}</div>
       </div>
     </section>
   );

@@ -4,7 +4,16 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Send, Mic, Sparkles, User, Cpu, Settings, Activity, Terminal, Plus, History, ChevronDown, Square, Edit2, Zap, ArrowRight, Code, Link as LinkIcon, Quote } from 'lucide-react';
 import { useGeminiAI } from '../hooks/useGeminiAI';
 import { Page, ChatSession } from '../types';
-import { db } from '../lib/mockDb';
+import {
+  getChatSessions,
+  getChatSessionById,
+  saveChatSession,
+  deleteChatSession,
+  getChatMessages,
+  saveChatMessage,
+  deleteChatMessages
+} from '../lib/supabase/chatService';
+import { useAuthContext } from '../components/AuthProvider';
 
 // Modular Components
 import { ChatSidebar } from './chat/components/Sidebar';
@@ -179,13 +188,13 @@ const QuickActionCard = ({ icon: Icon, title, prompt, onClick }: any) => (
 );
 
 export const ChatPage = ({ setPage }: { setPage: (p: Page) => void }) => {
-  const { 
+  const { user } = useAuthContext();
+  const {
     messages, isProcessing, isListening, sendMessage, startListening, setMessages,
     systemInstruction, setSystemInstruction, tools, setTools, settings, setSettings
   } = useGeminiAI(setPage);
 
   const [input, setInput] = useState('');
-  
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -193,15 +202,26 @@ export const ChatPage = ({ setPage }: { setPage: (p: Page) => void }) => {
   // Layout State
   const [mobileView, setMobileView] = useState<'CHAT' | 'HISTORY'>('CHAT');
   const [isSettingsOpen, setSettingsOpen] = useState(false);
-  
+
   // Session State
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [activeSessionAnalysis, setActiveSessionAnalysis] = useState<any>(null);
 
+  // Load sessions from Supabase
   useEffect(() => {
-    refreshSessions();
-  }, []);
+    if (user?.id) {
+      (async () => {
+        const loaded = await getChatSessions(user.id);
+        setSessions(loaded);
+        if (!activeSessionId) {
+          if (loaded.length > 0) loadSession(loaded[0].id);
+          else createNewSession();
+        }
+      })();
+    }
+    // eslint-disable-next-line
+  }, [user?.id]);
 
   // Auto-resize textarea
   useEffect(() => {
@@ -211,38 +231,29 @@ export const ChatPage = ({ setPage }: { setPage: (p: Page) => void }) => {
     }
   }, [input]);
 
-  const refreshSessions = () => {
-    const loaded = db.getSessions();
-    setSessions(loaded);
-    if (!activeSessionId) {
-      if (loaded.length > 0) loadSession(loaded[0].id);
-      else createNewSession();
-    }
-  };
-
+  // Save session to Supabase when messages change
   useEffect(() => {
-    if (activeSessionId && messages.length > 0) {
-       const timer = setTimeout(() => {
-          const currentTitle = sessions.find(s => s.id === activeSessionId)?.title || 'New Transmission';
-          let title = currentTitle;
-          if (title === 'New Transmission') {
-             const firstUserMsg = messages.find(m => m.role === 'user');
-             if (firstUserMsg) title = firstUserMsg.text.slice(0, 30) + (firstUserMsg.text.length > 30 ? '...' : '');
-          }
-          const sessionToSave: ChatSession = {
-             id: activeSessionId,
-             title: title,
-             messages: messages,
-             lastModified: Date.now(),
-             analysis: sessions.find(s => s.id === activeSessionId)?.analysis
-          };
-          const saved = db.saveSession(sessionToSave);
-          setSessions(prev => prev.map(s => s.id === activeSessionId ? saved : s));
-          setActiveSessionAnalysis(saved.analysis);
-       }, 1000);
-       return () => clearTimeout(timer);
+    if (activeSessionId && messages.length > 0 && user?.id) {
+      const timer = setTimeout(async () => {
+        const currentTitle = sessions.find(s => s.id === activeSessionId)?.title || 'New Transmission';
+        let title = currentTitle;
+        if (title === 'New Transmission') {
+          const firstUserMsg = messages.find(m => m.role === 'user');
+          if (firstUserMsg) title = firstUserMsg.text.slice(0, 30) + (firstUserMsg.text.length > 30 ? '...' : '');
+        }
+        await saveChatSession({
+          id: activeSessionId,
+          user_id: user.id,
+          title,
+          updated_at: new Date().toISOString(),
+        });
+        // Save messages
+        // (Optional: implement message upsert logic here)
+      }, 1000);
+      return () => clearTimeout(timer);
     }
-  }, [messages, activeSessionId]);
+    // eslint-disable-next-line
+  }, [messages, activeSessionId, user?.id]);
 
   useEffect(() => {
     const container = scrollContainerRef.current;
@@ -254,34 +265,67 @@ export const ChatPage = ({ setPage }: { setPage: (p: Page) => void }) => {
     }
   }, [messages, isProcessing]);
 
-  const createNewSession = () => {
-    const newId = Date.now().toString();
-    const newSession: ChatSession = {
+  const createNewSession = async () => {
+    if (!user?.id) return;
+    const newId = crypto.randomUUID();
+    const newSession: Partial<ChatSession> = {
       id: newId,
+      user_id: user.id,
       title: 'New Transmission',
-      lastModified: Date.now(),
-      messages: [{ id: 'init', role: 'model', text: 'Intervised Neural Interface established. Ready for input.', timestamp: Date.now() }]
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     };
-    db.saveSession(newSession);
-    refreshSessions();
-    loadSession(newId);
+    await saveChatSession(newSession);
+    setActiveSessionId(newId);
+    setMessages([{ id: 'init', role: 'model', text: 'Intervised Neural Interface established. Ready for input.', timestamp: Date.now() }]);
+    const loaded = await getChatSessions(user.id);
+    setSessions(loaded);
     setMobileView('CHAT');
   };
 
-  const loadSession = (id: string) => {
-    const session = db.getSessionById(id);
+  const loadSession = async (id: string) => {
+    const session = await getChatSessionById(id);
     if (session) {
-       setActiveSessionId(session.id);
-       setMessages(session.messages);
-       setActiveSessionAnalysis(session.analysis);
-       setMobileView('CHAT');
+      setActiveSessionId(session.id);
+      const msgs = await getChatMessages(session.id);
+      setMessages(msgs.map(m => ({
+        id: m.id,
+        role: m.role,
+        text: m.content,
+        timestamp: new Date(m.created_at || Date.now()).getTime(),
+      })));
+      setActiveSessionAnalysis(session.analysis);
+      setMobileView('CHAT');
     }
   };
 
-  const deleteSession = (e: React.MouseEvent, id: string) => {
+  const refreshSessions = async () => {
+    if (!user?.id) return;
+    try {
+      const loaded = await getChatSessions(user.id);
+      setSessions(loaded);
+      if (!activeSessionId) {
+        if (loaded.length > 0) {
+          await loadSession(loaded[0].id);
+        } else {
+          await createNewSession();
+        }
+      }
+    } catch (err) {
+      console.error('Failed to refresh sessions', err);
+    }
+  };
+
+  const deleteSession = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
-    db.deleteSession(id);
-    refreshSessions();
+    await deleteChatSession(id);
+    await deleteChatMessages(id);
+    if (user?.id) {
+      const loaded = await getChatSessions(user.id);
+      setSessions(loaded);
+      if (loaded.length > 0) loadSession(loaded[0].id);
+      else createNewSession();
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {

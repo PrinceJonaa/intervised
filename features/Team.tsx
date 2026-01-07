@@ -3,10 +3,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, useMotionValue, useSpring, AnimatePresence } from 'framer-motion';
 import { Instagram, Mail, Music, ChevronDown, ChevronUp, Activity } from 'lucide-react';
-import { TEAM_DATA } from '../constants';
 import { TeamSkeleton } from '../components/Loading';
 import { useToast } from '../components/ToastSystem';
 import { TeamMember } from '../types';
+import { getTeamMembers, type TeamMember as SupabaseTeamMember } from '../lib/supabase/referenceService';
 
 const TeamCard = ({ member, index }: { member: TeamMember; index: number }) => {
   const { addToast } = useToast();
@@ -155,10 +155,20 @@ const TeamCard = ({ member, index }: { member: TeamMember; index: number }) => {
 
 export const TeamSection = () => {
   const [isLoading, setIsLoading] = useState(true);
+  const [teamMembers, setTeamMembers] = useState<SupabaseTeamMember[]>([]);
 
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 800);
-    return () => clearTimeout(timer);
+    const loadData = async () => {
+      try {
+        const data = await getTeamMembers();
+        setTeamMembers(data);
+      } catch (error) {
+        console.error('Failed to load team data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadData();
   }, []);
 
   return (
@@ -175,8 +185,19 @@ export const TeamSection = () => {
         {isLoading ? (
            [1, 2].map(i => <TeamSkeleton key={i} />)
         ) : (
-           TEAM_DATA.map((member, idx) => (
-             <TeamCard key={member.name} member={member} index={idx} />
+           teamMembers.map((member, idx) => (
+             <TeamCard key={member.id} member={{
+               name: member.name,
+               role: member.role,
+               bio: member.bio || '',
+               image: member.image || '',
+               status: member.status || 'Online',
+               links: {
+                 instagram: member.twitter || undefined,
+                 email: member.email || undefined,
+                 spotify: member.spotify || undefined
+               }
+             }} index={idx} />
            ))
         )}
       </div>

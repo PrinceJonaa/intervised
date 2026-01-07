@@ -1,11 +1,30 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight, ArrowDown, Quote, Star } from 'lucide-react';
 import { Page } from '../types';
-import { CLIENT_TESTIMONIALS, PAST_PROJECTS } from '../constants';
+import { getTestimonials, getProjects, type Testimonial, type Project } from '../lib/supabase/referenceService';
 
 export const HomeView = ({ setPage }: { setPage: (p: Page) => void }) => {
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [projectsData, testimonialsData] = await Promise.all([
+          getProjects(true), // Get featured projects
+          getTestimonials()
+        ]);
+        setProjects(projectsData);
+        setTestimonials(testimonialsData);
+      } catch (error) {
+        console.error('Failed to load home data:', error);
+      }
+    };
+    loadData();
+  }, []);
+
   return (
     <div className="flex flex-col pb-32">
       {/* Hero Section */}
@@ -102,7 +121,7 @@ export const HomeView = ({ setPage }: { setPage: (p: Page) => void }) => {
               <span className="text-xs font-mono text-gray-500 hidden sm:inline">SELECTED CASE STUDIES</span>
            </div>
            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 px-0 sm:px-4">
-              {PAST_PROJECTS.map((project, idx) => (
+              {projects.map((project, idx) => (
                  <div key={project.id} className="group relative bg-white/5 border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-colors overflow-hidden">
                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                        <ArrowRight size={48} className="text-accent" />
@@ -112,7 +131,7 @@ export const HomeView = ({ setPage }: { setPage: (p: Page) => void }) => {
                        <h4 className="text-xl font-bold mb-2 group-hover:text-white transition-colors">{project.title}</h4>
                        <p className="text-sm text-gray-400 mb-4">{project.description}</p>
                        <div className="text-xs text-gray-500 border-t border-white/5 pt-4">
-                          <span className="font-bold text-gray-400">Outcome:</span> {project.outcome}
+                          <span className="font-bold text-gray-400">Outcome:</span> {project.results}
                        </div>
                     </div>
                  </div>
@@ -124,15 +143,15 @@ export const HomeView = ({ setPage }: { setPage: (p: Page) => void }) => {
         <div className="max-w-4xl mx-auto px-0 sm:px-4">
            <h3 className="text-xl sm:text-2xl font-display font-bold mb-8 sm:mb-12 text-center">WHAT CLIENTS SAY</h3>
            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {CLIENT_TESTIMONIALS.map((t) => (
+              {testimonials.map((t) => (
                  <div key={t.id} className="bg-gradient-to-br from-white/5 to-transparent p-6 rounded-2xl border border-white/5">
                     <div className="mb-4 text-accent opacity-50"><Quote size={24} /></div>
                     <p className="text-sm leading-relaxed text-gray-300 mb-6 italic">"{t.quote}"</p>
                     <div className="flex items-center gap-3">
-                       <div className="w-8 h-8 rounded-full bg-surface flex items-center justify-center text-xs font-bold text-accent border border-accent/20">{t.clientName[0]}</div>
+                       <div className="w-8 h-8 rounded-full bg-surface flex items-center justify-center text-xs font-bold text-accent border border-accent/20">{t.client_name[0]}</div>
                        <div>
-                          <div className="text-xs font-bold text-white">{t.clientName}</div>
-                          <div className="text-[10px] text-gray-500 uppercase tracking-wide">{t.role}</div>
+                          <div className="text-xs font-bold text-white">{t.client_name}</div>
+                          <div className="text-[10px] text-gray-500 uppercase tracking-wide">{t.client_role}</div>
                        </div>
                     </div>
                  </div>
