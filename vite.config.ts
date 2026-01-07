@@ -32,6 +32,7 @@ export default defineConfig(({ mode }) => {
               'supabase-vendor': ['@supabase/supabase-js'],
               'ui-vendor': ['lucide-react'],
               'analytics-vendor': ['@vercel/analytics', '@vercel/speed-insights'],
+              'ai-vendor': ['@google/genai'],
             },
           },
         },
