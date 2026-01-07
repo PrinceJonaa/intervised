@@ -2,6 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence, } from 'framer-motion';
 import { BrowserRouter, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
+import { Analytics } from '@vercel/analytics/next';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 
 import { Page } from './types';
 
@@ -209,6 +211,8 @@ export default function App() {
           <AppContent />
         </ToastProvider>
       </AuthProvider>
+      <Analytics />
+      <SpeedInsights />
     </BrowserRouter>
   );
 }
