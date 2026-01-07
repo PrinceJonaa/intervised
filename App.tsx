@@ -202,20 +202,21 @@ function AppContent() {
 }
 
 export default function App() {
-  // Dynamically import Vercel telemetry packages on the client only.
-  // Static imports of the Next.js entrypoints cause build-time errors in non-Next apps.
+  // Initialize Vercel Analytics and Speed Insights for Vite (client-side only)
   useEffect(() => {
     if (typeof window === 'undefined') return;
     (async () => {
       try {
-        await import('@vercel/analytics');
+        const { inject } = await import('@vercel/analytics');
+        inject();
       } catch (err) {
-        // ignore if not available or incompatible
+        console.warn('Vercel Analytics failed to load:', err);
       }
       try {
-        await import('@vercel/speed-insights');
+        const { inject: injectSpeed } = await import('@vercel/speed-insights');
+        injectSpeed();
       } catch (err) {
-        // ignore if not available or incompatible
+        console.warn('Vercel Speed Insights failed to load:', err);
       }
     })();
   }, []);
