@@ -6,6 +6,7 @@ import { db } from '../../../lib/mockDb';
 import { useAuthContext } from '../../../components/AuthProvider';
 import { getChatSessions, deleteChatSession, deleteChatMessages } from '../../../lib/supabase/chatService';
 import { ToolEditor } from './ToolEditor';
+import { type SpendingInfo } from '../../../lib/supabase/aiService';
 
 // Modular Components
 import { GeneralTab } from './settings/GeneralTab';
@@ -26,11 +27,12 @@ interface SettingsModalProps {
   sessions: ChatSession[];
   refreshSessions: () => void;
   generateRaw: (prompt: string) => Promise<string | null>;
+  spending?: SpendingInfo | null;
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
   isOpen, onClose, settings, setSettings, tools, setTools, 
-  systemInstruction, setSystemInstruction, sessions, refreshSessions, generateRaw
+  systemInstruction, setSystemInstruction, sessions, refreshSessions, generateRaw, spending
 }) => {
    const { user } = useAuthContext();
   const [tab, setTab] = useState<'general' | 'persona' | 'tools' | 'memory' | 'voice'>('general');
@@ -190,7 +192,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                    <GeneralTab 
                       settings={settings} 
                       setSettings={setSettings} 
-                      onFactoryReset={handleFactoryReset} 
+                      onFactoryReset={handleFactoryReset}
+                      spending={spending}
                    />
                 )}
 

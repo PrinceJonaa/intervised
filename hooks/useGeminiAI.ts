@@ -6,6 +6,7 @@ import { SERVICES_DATA, TEAM_DATA, PAST_PROJECTS, CLIENT_TESTIMONIALS, FAQ_DATA 
 import { getInitialTools } from '../lib/aiTools';
 import { executeTool } from '../lib/toolExecutor';
 import { universalChat } from '../lib/universalAI';
+import { azureChat, toAzureMessages, AISpendingLimitError, AIAuthError, getSpendingInfo, type SpendingInfo } from '../lib/supabase/aiService';
 
 // --- Configuration ---
 const MAX_HISTORY_LENGTH = 20; 
@@ -78,11 +79,14 @@ export const useGeminiAI = (setPage?: (page: Page) => void) => {
       temperature: 0.7,
       systemTone: 'creative',
       enableHistory: true,
-      provider: 'google',
+      provider: 'intervised', // Default to Intervised Azure AI (free for users)
       customApiKey: '',
-      modelOverride: 'gemini-3-flash-preview'
+      modelOverride: 'deepseek-v3.2' // Default to most cost-efficient model
     };
   });
+
+  // Track spending for Intervised AI
+  const [spending, setSpending] = useState<SpendingInfo | null>(null);
 
   useEffect(() => {
     localStorage.setItem('iv_ai_settings', JSON.stringify(settings));
@@ -223,8 +227,38 @@ export const useGeminiAI = (setPage?: (page: Page) => void) => {
           }
         }
         if (success) addMessage('model', finalResponseText, toolCallsRecord.length > 0 ? toolCallsRecord : undefined, toolResultsRecord.length > 0 ? toolResultsRecord : undefined);
+      } else if (settings.provider === 'intervised') {
+        // --- INTERVISED AZURE AI (FREE FOR USERS) ---
+        const historyForAzure = historySlice.filter(m => m.role !== 'system').map(m => ({
+          role: m.role,
+          text: m.text
+        }));
+        
+        // Add the new user input
+        historyForAzure.push({ role: 'user', text: input });
+        
+        const azureMessages = toAzureMessages(systemInstruction, historyForAzure);
+        
+        const response = await azureChat({
+          messages: azureMessages,
+          model: settings.modelOverride as any || 'deepseek-v3.2',
+          temperature: settings.temperature,
+          maxTokens: 2048
+        });
+        
+        // Update spending info
+        if (response.spending) {
+          setSpending({
+            current: response.spending.current,
+            limit: response.spending.limit,
+            remaining: response.spending.remaining,
+            isUnderLimit: response.spending.remaining > 0
+          });
+        }
+        
+        addMessage('model', response.content);
       } else {
-        // --- MULTI-PROVIDER CHAT ---
+        // --- MULTI-PROVIDER CHAT (requires user API key) ---
         if (!settings.customApiKey) throw new Error(`API Key required for ${settings.provider}`);
         
         const universalMessages = [
@@ -251,15 +285,32 @@ export const useGeminiAI = (setPage?: (page: Page) => void) => {
         addMessage('model', result);
       }
     } catch (error: any) {
-      addMessage('system', `Transmission Interrupted: ${error.message || "Unknown cognitive error."}`);
+      // Handle specific Intervised AI errors
+      if (error instanceof AISpendingLimitError) {
+        addMessage('system', `💰 Usage Limit Reached: You've used your $5 AI credit. Current spending: $${error.spending.current.toFixed(4)}. Please try again later or contact support.`);
+        setSpending(error.spending);
+      } else if (error instanceof AIAuthError) {
+        addMessage('system', `🔐 Authentication Required: Please sign in to use the AI assistant.`);
+      } else {
+        addMessage('system', `Transmission Interrupted: ${error.message || "Unknown cognitive error."}`);
+      }
     } finally {
       setIsProcessing(false);
     }
   };
 
+  // Fetch initial spending info for Intervised provider
+  useEffect(() => {
+    if (settings.provider === 'intervised') {
+      getSpendingInfo().then(setSpending).catch(() => {
+        // User not authenticated or error - will be caught on first message
+      });
+    }
+  }, [settings.provider]);
+
   return {
     messages, isProcessing, isListening, modules, setModules, sendMessage, setMessages,
     startListening, systemInstruction, setSystemInstruction, tools, setTools,
-    settings, setSettings
+    settings, setSettings, spending
   };
 };

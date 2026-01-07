@@ -136,7 +136,7 @@ export interface ChatSession {
   analysis?: SessionAnalysis; // The "Memory" aspect of a session
 }
 
-export type AIProvider = 'google' | 'openai' | 'claude' | 'grok' | 'azure';
+export type AIProvider = 'google' | 'openai' | 'claude' | 'grok' | 'azure' | 'intervised';
 
 export interface ChatSettings {
   temperature: number;

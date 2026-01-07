@@ -191,7 +191,7 @@ export const ChatPage = ({ setPage }: { setPage: (p: Page) => void }) => {
   const { user } = useAuthContext();
   const {
     messages, isProcessing, isListening, sendMessage, startListening, setMessages,
-    systemInstruction, setSystemInstruction, tools, setTools, settings, setSettings
+    systemInstruction, setSystemInstruction, tools, setTools, settings, setSettings, spending
   } = useGeminiAI(setPage);
 
   const [input, setInput] = useState('');
@@ -513,6 +513,7 @@ export const ChatPage = ({ setPage }: { setPage: (p: Page) => void }) => {
         sessions={sessions}
         refreshSessions={refreshSessions}
         generateRaw={async () => null}
+        spending={spending}
       />
     </section>
   );

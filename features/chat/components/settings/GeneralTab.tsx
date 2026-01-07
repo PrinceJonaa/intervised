@@ -1,25 +1,35 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trash2, Key, Cpu, Eye, EyeOff, ExternalLink, Globe, Server, Info, ShieldCheck } from 'lucide-react';
+import { Trash2, Key, Cpu, Eye, EyeOff, ExternalLink, Globe, Server, Info, ShieldCheck, Sparkles, DollarSign } from 'lucide-react';
 import { ChatSettings, AIProvider } from '../../../../types';
 import { SectionHeader } from './Shared';
+import { type SpendingInfo } from '../../../../lib/supabase/aiService';
 
 interface GeneralTabProps {
   settings: ChatSettings;
   setSettings: React.Dispatch<React.SetStateAction<ChatSettings>>;
   onFactoryReset: () => void;
+  spending?: SpendingInfo | null;
 }
 
-const PROVIDERS: { id: AIProvider; label: string; icon: string; defaultModel: string }[] = [
-  { id: 'google', label: 'Google Gemini', icon: '✨', defaultModel: 'gemini-3-flash-preview' },
-  { id: 'openai', label: 'OpenAI GPT', icon: '🤖', defaultModel: 'gpt-4o' },
-  { id: 'claude', label: 'Anthropic Claude', icon: '🎭', defaultModel: 'claude-3-5-sonnet-latest' },
-  { id: 'grok', label: 'xAI Grok', icon: '✖️', defaultModel: 'grok-beta' },
-  { id: 'azure', label: 'Azure OpenAI', icon: '☁️', defaultModel: 'gpt-4' }
+const PROVIDERS: { id: AIProvider; label: string; icon: string; defaultModel: string; description?: string }[] = [
+  { id: 'intervised', label: 'Intervised AI', icon: '⚡', defaultModel: 'deepseek-v3.2', description: 'Free! $5 credit per user' },
+  { id: 'google', label: 'Google Gemini', icon: '✨', defaultModel: 'gemini-3-flash-preview', description: 'Requires API key' },
+  { id: 'openai', label: 'OpenAI GPT', icon: '🤖', defaultModel: 'gpt-4o', description: 'Requires API key' },
+  { id: 'claude', label: 'Anthropic Claude', icon: '🎭', defaultModel: 'claude-3-5-sonnet-latest', description: 'Requires API key' },
+  { id: 'grok', label: 'xAI Grok', icon: '✖️', defaultModel: 'grok-beta', description: 'Requires API key' },
+  { id: 'azure', label: 'Azure OpenAI', icon: '☁️', defaultModel: 'gpt-4', description: 'Requires API key' }
 ];
 
-export const GeneralTab: React.FC<GeneralTabProps> = ({ settings, setSettings, onFactoryReset }) => {
+const INTERVISED_MODELS = [
+  { id: 'deepseek-v3.2', label: 'DeepSeek V3.2', description: 'Budget • Fast responses', tier: 'budget' },
+  { id: 'kimi-k2-thinking', label: 'Kimi K2 Thinking', description: 'Standard • Long context (256K)', tier: 'standard' },
+  { id: 'gpt-4.1', label: 'GPT-4.1', description: 'Standard • Vision support', tier: 'standard' },
+  { id: 'grok-4-fast-reasoning', label: 'Grok 4 Fast', description: 'Premium • Best reasoning', tier: 'premium' },
+];
+
+export const GeneralTab: React.FC<GeneralTabProps> = ({ settings, setSettings, onFactoryReset, spending }) => {
   const [showKey, setShowKey] = useState(false);
 
   const handleProviderChange = (providerId: AIProvider) => {
@@ -34,35 +44,120 @@ export const GeneralTab: React.FC<GeneralTabProps> = ({ settings, setSettings, o
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-10">
       
+      {/* Intervised AI Usage Banner */}
+      {settings.provider === 'intervised' && spending && (
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="bg-gradient-to-r from-accent/20 via-accent/10 to-transparent border border-accent/30 p-6 rounded-2xl"
+        >
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-accent/20 flex items-center justify-center">
+                <DollarSign size={20} className="text-accent" />
+              </div>
+              <div>
+                <div className="text-sm font-bold text-white">AI Usage Credit</div>
+                <div className="text-xs text-gray-400">Free credit per user • Resets monthly</div>
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="text-2xl font-bold text-accent">${spending.remaining.toFixed(2)}</div>
+              <div className="text-xs text-gray-500">of $5.00 remaining</div>
+            </div>
+          </div>
+          <div className="mt-4">
+            <div className="h-2 bg-black/40 rounded-full overflow-hidden">
+              <motion.div 
+                initial={{ width: 0 }}
+                animate={{ width: `${(spending.remaining / spending.limit) * 100}%` }}
+                className="h-full bg-gradient-to-r from-accent to-green-400 rounded-full"
+              />
+            </div>
+            <div className="flex justify-between mt-2 text-[10px] text-gray-500 font-mono">
+              <span>Spent: ${spending.current.toFixed(4)}</span>
+              <span>Limit: ${spending.limit.toFixed(2)}</span>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
       {/* Provider Selector */}
       <div className="space-y-6">
         <SectionHeader title="Intelligence Core" subtitle="Select the neural engine powering this interface." />
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {PROVIDERS.map((p) => (
             <button
               key={p.id}
               onClick={() => handleProviderChange(p.id)}
-              className={`flex flex-col items-center gap-3 p-4 rounded-2xl border transition-all relative overflow-hidden group ${
+              className={`flex flex-col items-center gap-2 p-4 rounded-2xl border transition-all relative overflow-hidden group ${
                 settings.provider === p.id 
                   ? 'bg-accent/10 border-accent shadow-[0_0_20px_rgba(244,201,93,0.15)]' 
                   : 'bg-white/5 border-white/10 hover:border-white/20 hover:bg-white/10'
-              }`}
+              } ${p.id === 'intervised' ? 'col-span-2 sm:col-span-1 ring-2 ring-accent/30' : ''}`}
             >
+              {p.id === 'intervised' && (
+                <div className="absolute top-1 right-1 bg-accent text-black text-[8px] font-bold px-2 py-0.5 rounded-full">
+                  FREE
+                </div>
+              )}
               <span className="text-2xl group-hover:scale-110 transition-transform">{p.icon}</span>
               <span className={`text-[10px] font-bold uppercase tracking-widest text-center ${settings.provider === p.id ? 'text-accent' : 'text-gray-400'}`}>
                 {p.label}
               </span>
+              {p.description && (
+                <span className="text-[9px] text-gray-500 text-center">{p.description}</span>
+              )}
               {settings.provider === p.id && (
-                <motion.div layoutId="provider-check" className="absolute top-2 right-2"><ShieldCheck size={12} className="text-accent" /></motion.div>
+                <motion.div layoutId="provider-check" className="absolute top-2 left-2"><ShieldCheck size={12} className="text-accent" /></motion.div>
               )}
             </button>
           ))}
         </div>
       </div>
 
-      {/* API Configuration */}
-      <div className="space-y-6">
-        <SectionHeader title="Connection Parameters" subtitle="Secure authentication and model addressing." />
+      {/* Intervised Model Selection */}
+      {settings.provider === 'intervised' && (
+        <div className="space-y-6">
+          <SectionHeader title="Model Selection" subtitle="Choose your AI model. Budget models cost less of your credit." />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {INTERVISED_MODELS.map((model) => (
+              <button
+                key={model.id}
+                onClick={() => setSettings(p => ({...p, modelOverride: model.id}))}
+                className={`flex items-center gap-4 p-4 rounded-xl border transition-all ${
+                  settings.modelOverride === model.id 
+                    ? 'bg-accent/10 border-accent' 
+                    : 'bg-white/5 border-white/10 hover:border-white/20'
+                }`}
+              >
+                <div className={`w-3 h-3 rounded-full ${
+                  model.tier === 'budget' ? 'bg-green-400' : 
+                  model.tier === 'standard' ? 'bg-blue-400' : 'bg-purple-400'
+                }`} />
+                <div className="text-left flex-1">
+                  <div className={`text-sm font-medium ${settings.modelOverride === model.id ? 'text-accent' : 'text-white'}`}>
+                    {model.label}
+                  </div>
+                  <div className="text-[10px] text-gray-500">{model.description}</div>
+                </div>
+                {settings.modelOverride === model.id && (
+                  <ShieldCheck size={16} className="text-accent" />
+                )}
+              </button>
+            ))}
+          </div>
+          <div className="flex items-center gap-2 text-[10px] text-gray-500">
+            <Info size={12} />
+            <span>🟢 Budget = Cheapest • 🔵 Standard = Balanced • 🟣 Premium = Best quality</span>
+          </div>
+        </div>
+      )}
+
+      {/* API Configuration - Only show for non-Intervised providers */}
+      {settings.provider !== 'intervised' && (
+        <div className="space-y-6">
+          <SectionHeader title="Connection Parameters" subtitle="Secure authentication and model addressing." />
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* API Key */}
@@ -150,7 +245,8 @@ export const GeneralTab: React.FC<GeneralTabProps> = ({ settings, setSettings, o
             </motion.div>
           )}
         </AnimatePresence>
-      </div>
+        </div>
+      )}
 
       {/* Advanced Parameters */}
       <div className="space-y-6">
