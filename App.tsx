@@ -2,9 +2,9 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence, } from 'framer-motion';
 import { BrowserRouter, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 
 import { Page } from './types';
-import { initializeSpeedInsights } from './lib/speedInsights';
 
 // Feature Modules
 import { HomeView } from './features/Home';
@@ -203,7 +203,7 @@ function AppContent() {
 }
 
 export default function App() {
-  // Initialize Vercel Analytics and Speed Insights on app mount
+  // Initialize Vercel Analytics on app mount
   useEffect(() => {
     if (typeof window === 'undefined') return;
     
@@ -220,15 +220,6 @@ export default function App() {
           console.warn('⚠ Vercel Analytics failed to load:', err);
         }
       }
-
-      // Initialize Vercel Speed Insights
-      try {
-        await initializeSpeedInsights();
-      } catch (err) {
-        if (process.env.NODE_ENV === 'development') {
-          console.warn('⚠ Vercel Speed Insights failed to load:', err);
-        }
-      }
     })();
   }, []);
 
@@ -237,6 +228,8 @@ export default function App() {
       <AuthProvider>
         <ToastProvider>
           <AppContent />
+          {/* Vercel Speed Insights for web performance monitoring */}
+          <SpeedInsights />
         </ToastProvider>
       </AuthProvider>
     </BrowserRouter>
