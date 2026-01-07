@@ -31,8 +31,8 @@ export const HomeView = ({ setPage }: { setPage: (p: Page) => void }) => {
       <section className="min-h-[100dvh] flex flex-col justify-center items-center relative px-4 sm:px-6 py-12 sm:py-20">
         <div className="max-w-5xl w-full z-10 text-center mt-auto mb-auto">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
             transition={{ duration: 0.8 }}
           >
             <h2 className="text-accent font-mono text-[10px] sm:text-xs md:text-sm tracking-[0.3em] mb-4 sm:mb-6 uppercase">
@@ -55,8 +55,8 @@ export const HomeView = ({ setPage }: { setPage: (p: Page) => void }) => {
           </motion.p>
 
           <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
             transition={{ delay: 0.6 }}
             className="flex flex-col sm:flex-row justify-center gap-4 px-8 sm:px-0"
           >

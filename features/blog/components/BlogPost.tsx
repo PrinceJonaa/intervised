@@ -102,13 +102,13 @@ export const BlogPostView: React.FC<BlogPostViewProps> = ({
       <motion.div layoutId={`post-${post.id}`} className="relative mb-12">
          {/* Header Image */}
          <motion.div layoutId={`img-${post.id}`} className="w-full aspect-[16/10] sm:aspect-[16/9] md:aspect-[21/9] rounded-2xl sm:rounded-3xl overflow-hidden mb-6 sm:mb-10 border border-white/10 shadow-2xl relative">
-           <img src={post.imageUrl} alt={post.title} className="w-full h-full object-cover" />
+           <img src={post.imageUrl} alt={post.title} width={1200} height={600} className="w-full h-full object-cover" />
            <div className="absolute inset-0 bg-gradient-to-t from-void via-void/40 to-transparent" />
            <div className="absolute bottom-0 left-0 p-6 md:p-12 w-full max-w-5xl">
               <div className="flex gap-2 mb-2 sm:mb-4"><span className="bg-accent text-void px-2 py-1 sm:px-3 sm:py-1 rounded-md text-[10px] sm:text-xs font-bold uppercase tracking-widest">{post.category}</span></div>
               <h1 className="text-2xl sm:text-3xl md:text-6xl font-display font-bold leading-tight mb-4 sm:mb-6 text-white drop-shadow-lg">{post.title}</h1>
               <div className="flex flex-wrap items-center gap-4 sm:gap-6 text-[10px] sm:text-xs font-mono text-gray-300 uppercase tracking-widest">
-                 <div className="flex items-center gap-2"><div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-gray-700 overflow-hidden border border-white/20"><img src={`https://ui-avatars.com/api/?name=${post.author}&background=random`} alt={post.author} /></div><span className="font-bold text-white">{post.author}</span></div>
+                 <div className="flex items-center gap-2"><div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-gray-700 overflow-hidden border border-white/20"><img src={`https://ui-avatars.com/api/?name=${post.author}&background=random`} alt={post.author} width={32} height={32} /></div><span className="font-bold text-white">{post.author}</span></div>
                  <span className="opacity-60 hidden sm:inline">|</span><span className="flex items-center gap-2 opacity-80"><Calendar size={14} /> {post.date}</span><span className="flex items-center gap-2 opacity-80"><Clock size={14} /> {post.readTime} MIN READ</span>
               </div>
            </div>
@@ -171,7 +171,7 @@ export const BlogPostView: React.FC<BlogPostViewProps> = ({
                               className="min-w-[260px] w-[260px] sm:min-w-[280px] sm:w-[280px] bg-white/5 border border-white/10 rounded-2xl overflow-hidden cursor-pointer hover:border-accent/50 transition-all flex-shrink-0 snap-center group"
                            >
                               <div className="aspect-video relative overflow-hidden">
-                                 <img src={rp.imageUrl} alt={rp.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                                 <img src={rp.imageUrl} alt={rp.title} width={280} height={158} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
                                  <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-sm px-2 py-1 rounded text-[10px] font-bold text-white uppercase border border-white/10">{rp.category}</div>
                               </div>
                               <div className="p-4">
@@ -208,7 +208,7 @@ export const BlogPostView: React.FC<BlogPostViewProps> = ({
                          <div className="space-y-6">
                             {relatedPosts.map(rp => (
                                <div key={rp.id} onClick={() => onNavigate(rp)} className="group cursor-pointer">
-                                  <div className="aspect-video rounded-xl overflow-hidden mb-3 relative border border-white/10"><img src={rp.imageUrl} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt={rp.title} /></div>
+                                  <div className="aspect-video rounded-xl overflow-hidden mb-3 relative border border-white/10"><img src={rp.imageUrl} width={320} height={180} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt={rp.title} /></div>
                                   <h5 className="font-bold text-white text-base leading-tight group-hover:text-accent transition-colors mb-1">{rp.title}</h5>
                                   <span className="text-[10px] text-gray-500 uppercase tracking-widest">{rp.category}</span>
                                </div>

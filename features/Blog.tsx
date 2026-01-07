@@ -129,7 +129,7 @@ export const BlogSection = () => {
             <button onClick={handleLogin} className="flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 hover:bg-white/5 transition-colors text-xs font-mono uppercase tracking-widest text-gray-400"><User size={14} /> Contributor Login</button>
           ) : (
             <div className="flex items-center gap-3 bg-white/5 p-1.5 rounded-full border border-white/10">
-              <img src={user.avatar} className="w-8 h-8 rounded-full border border-accent" alt="avatar" />
+              <img src={user.avatar} width={32} height={32} className="w-8 h-8 rounded-full border border-accent" alt="avatar" />
               <button onClick={() => navigateToEdit()} className="p-2 bg-accent rounded-full hover:bg-white transition-colors text-void" title="New Post"><Plus size={16} /></button>
               <button onClick={handleLogin} className="p-2 hover:bg-white/10 rounded-full text-gray-400 hover:text-white transition-colors"><X size={16} /></button>
             </div>

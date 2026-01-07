@@ -1,27 +1,44 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { motion, AnimatePresence, } from 'framer-motion';
 import { BrowserRouter, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 
 import { Page } from './types';
 
-// Feature Modules
-import { HomeView } from './features/Home';
-import { ServicesSection } from './features/Services';
-import { TeamSection } from './features/Team';
-import { BlogSection } from './features/Blog';
-import { ContactSection } from './features/Contact';
-import { ChatPage } from './features/Chat';
-import { LoginPage } from './features/Login';
-import { AdminPage } from './features/Admin';
+// Lazy load feature modules for better initial bundle size
+const HomeView = lazy(() => import('./features/Home').then(m => ({ default: m.HomeView })));
+const ServicesSection = lazy(() => import('./features/Services').then(m => ({ default: m.ServicesSection })));
+const TeamSection = lazy(() => import('./features/Team').then(m => ({ default: m.TeamSection })));
+const BlogSection = lazy(() => import('./features/Blog').then(m => ({ default: m.BlogSection })));
+const ContactSection = lazy(() => import('./features/Contact').then(m => ({ default: m.ContactSection })));
+const ChatPage = lazy(() => import('./features/Chat').then(m => ({ default: m.ChatPage })));
+const LoginPage = lazy(() => import('./features/Login').then(m => ({ default: m.LoginPage })));
+const AdminPage = lazy(() => import('./features/Admin').then(m => ({ default: m.AdminPage })));
 
-// Components
-import { BackgroundScene } from './components/Background3D';
+// Lazy load heavy 3D background (1MB+ Three.js bundle)
+const BackgroundScene = lazy(() => import('./components/Background3D').then(m => ({ default: m.BackgroundScene })));
+
+// Components (keep Navigation eager for critical UI)
 import { NavDock, Header } from './components/Navigation';
 import { ToastProvider } from './components/ToastSystem';
 import { ScrollToTop } from './components/ScrollToTop';
 import { AuthProvider } from './components/AuthProvider';
+
+// Loading skeleton for lazy components
+const PageSkeleton = () => (
+  <div className="min-h-screen flex items-center justify-center">
+    <div className="animate-pulse flex flex-col items-center gap-4">
+      <div className="w-16 h-16 rounded-full bg-white/10"></div>
+      <div className="h-4 w-32 bg-white/10 rounded"></div>
+    </div>
+  </div>
+);
+
+// Background loading placeholder (invisible, just reserves space)
+const BackgroundPlaceholder = () => (
+  <div className="fixed inset-0 bg-void -z-10" />
+);
 
 // SEO Hook
 import { useSEO, SEO_CONFIG } from './hooks/useSEO';
@@ -172,27 +189,31 @@ function AppContent() {
 
   return (
     <div className="relative min-h-screen text-white font-sans selection:bg-accent/30 selection:text-accent">
-      <BackgroundScene activeCategory={activeCategory} />
+      <Suspense fallback={<BackgroundPlaceholder />}>
+        <BackgroundScene activeCategory={activeCategory} />
+      </Suspense>
       <Header />
       
       <main className="relative">
         <AnimatePresence mode="wait">
-          <Routes location={location} key={location.pathname}>
-            <Route path="/" element={<HomePage setPage={setPage} />} />
-            <Route 
-              path="/services" 
-              element={<ServicesPage setPage={setPage} onCategoryChange={setActiveCategory} />} 
-            />
-            <Route path="/team" element={<TeamPage />} />
-            <Route path="/blog" element={<BlogPage />} />
-            <Route path="/blog/:slug" element={<BlogPage />} />
-            <Route path="/contact" element={<ContactPage />} />
-            <Route path="/chat" element={<ChatPageWrapper setPage={setPage} />} />
-            <Route path="/login" element={<LoginPageWrapper />} />
-            <Route path="/admin" element={<AdminPageWrapper />} />
-            {/* Fallback route */}
-            <Route path="*" element={<HomePage setPage={setPage} />} />
-          </Routes>
+          <Suspense fallback={<PageSkeleton />}>
+            <Routes location={location} key={location.pathname}>
+              <Route path="/" element={<HomePage setPage={setPage} />} />
+              <Route 
+                path="/services" 
+                element={<ServicesPage setPage={setPage} onCategoryChange={setActiveCategory} />} 
+              />
+              <Route path="/team" element={<TeamPage />} />
+              <Route path="/blog" element={<BlogPage />} />
+              <Route path="/blog/:slug" element={<BlogPage />} />
+              <Route path="/contact" element={<ContactPage />} />
+              <Route path="/chat" element={<ChatPageWrapper setPage={setPage} />} />
+              <Route path="/login" element={<LoginPageWrapper />} />
+              <Route path="/admin" element={<AdminPageWrapper />} />
+              {/* Fallback route */}
+              <Route path="*" element={<HomePage setPage={setPage} />} />
+            </Routes>
+          </Suspense>
         </AnimatePresence>
       </main>
 

@@ -77,6 +77,8 @@ const TeamCard = ({ member, index }: { member: TeamMember; index: number }) => {
         <motion.img
           src={member.image}
           alt={member.name}
+          width={400}
+          height={500}
           style={{ x: mouseX, y: mouseY, scale: 1.15 }}
           className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700 will-change-transform"
         />

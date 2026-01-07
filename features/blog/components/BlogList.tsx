@@ -122,7 +122,7 @@ export const BlogList: React.FC<BlogListProps> = ({
                      <h2 className="text-2xl sm:text-3xl md:text-5xl font-display font-bold text-white mb-4 leading-tight group-hover:text-accent transition-colors">{featuredPost.title}</h2>
                      <p className="text-gray-300 text-sm sm:text-lg md:text-xl line-clamp-2 max-w-2xl mb-6 hidden sm:block">{featuredPost.excerpt}</p>
                      <div className="flex items-center gap-6 text-xs font-mono text-gray-400 uppercase tracking-widest">
-                        <span className="flex items-center gap-2"><img src={`https://ui-avatars.com/api/?name=${featuredPost.author}&background=random`} className="w-6 h-6 rounded-full" alt="author"/> {featuredPost.author}</span>
+                        <span className="flex items-center gap-2"><img src={`https://ui-avatars.com/api/?name=${featuredPost.author}&background=random`} width={24} height={24} className="w-6 h-6 rounded-full" alt="author"/> {featuredPost.author}</span>
                         <span className="flex items-center gap-2"><Clock size={14}/> {featuredPost.readTime} MIN READ</span>
                      </div>
                   </div>
