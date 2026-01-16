@@ -224,7 +224,7 @@ function AppContent() {
 }
 
 export default function App() {
-  // Initialize Vercel Analytics and Speed Insights on app mount
+  // Initialize Vercel Analytics on app mount
   useEffect(() => {
     if (typeof window === 'undefined') return;
     
@@ -249,6 +249,8 @@ export default function App() {
       <AuthProvider>
         <ToastProvider>
           <AppContent />
+          {/* Vercel Speed Insights for web performance monitoring */}
+          <SpeedInsights />
         </ToastProvider>
       </AuthProvider>
       <SpeedInsights debug={import.meta.env.DEV} />
