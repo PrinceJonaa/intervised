@@ -15,6 +15,8 @@ const ContactSection = lazy(() => import('./features/Contact').then(m => ({ defa
 const ChatPage = lazy(() => import('./features/Chat').then(m => ({ default: m.ChatPage })));
 const LoginPage = lazy(() => import('./features/Login').then(m => ({ default: m.LoginPage })));
 const AdminPage = lazy(() => import('./features/Admin').then(m => ({ default: m.AdminPage })));
+const PrivacyPage = lazy(() => import('./features/Privacy').then(m => ({ default: m.PrivacyPage })));
+const TermsPage = lazy(() => import('./features/Terms').then(m => ({ default: m.TermsPage })));
 
 // Lazy load heavy 3D background (1MB+ Three.js bundle)
 const BackgroundScene = lazy(() => import('./components/Background3D').then(m => ({ default: m.BackgroundScene })));
@@ -152,18 +154,23 @@ function LoginPageWrapper() {
   );
 }
 
-function AdminPageWrapper() {
-  useSEO({
-    title: 'Admin Dashboard | Intervised',
-    description: 'Manage contacts, bookings, and content from the admin dashboard.',
-    path: '/admin'
-  });
-  return (
-    <PageWrapper>
-      <AdminPage />
-    </PageWrapper>
-  );
-}
+const AdminPageWrapper = () => (
+  <PageWrapper>
+    <AdminPage />
+  </PageWrapper>
+);
+
+const PrivacyPageWrapper = () => (
+  <PageWrapper>
+    <PrivacyPage />
+  </PageWrapper>
+);
+
+const TermsPageWrapper = () => (
+  <PageWrapper>
+    <TermsPage />
+  </PageWrapper>
+);
 
 // Main app content with routing
 function AppContent() {
@@ -214,6 +221,8 @@ function AppContent() {
                   <AdminPageWrapper />
                 </ProtectedRoute>
               } />
+              <Route path="/privacy" element={<PrivacyPageWrapper />} />
+              <Route path="/terms" element={<TermsPageWrapper />} />
               {/* Fallback route */}
               <Route path="*" element={<HomePage setPage={setPage} />} />
             </Routes>
