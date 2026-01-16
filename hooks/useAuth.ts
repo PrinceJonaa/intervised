@@ -48,26 +48,38 @@ export function useAuth(): UseAuthReturn {
 
     const initAuth = async () => {
       try {
+        // Check for auth code in URL (OAuth callback)
+        const isAuthCallback = window.location.search.includes('code=');
+
         const currentSession = await authService.getSession();
-        
+
         if (!mounted) return;
-        
+
         if (currentSession?.user) {
           setSession(currentSession);
           setUser(currentSession.user);
-          
+
           // Load user profile
           const userProfile = await authService.ensureUserProfile(currentSession.user);
           if (mounted) {
             setProfile(userProfile);
           }
         }
+
+        // If we found a session OR if this isn't an auth callback, we can stop loading.
+        // If it IS an auth callback but no session yet, we wait for onAuthStateChange
+        // to fire (it handles the code exchange).
+        if (currentSession || !isAuthCallback) {
+          setIsLoading(false);
+        } else {
+          // Safety timeout: if auth callback hangs (e.g. invalid code), stop loading eventually
+          setTimeout(() => {
+            if (mounted) setIsLoading(false);
+          }, 5000);
+        }
       } catch (error) {
         console.error('Auth init error:', error);
-      } finally {
-        if (mounted) {
-          setIsLoading(false);
-        }
+        if (mounted) setIsLoading(false);
       }
     };
 
@@ -78,10 +90,10 @@ export function useAuth(): UseAuthReturn {
       if (!mounted) return;
 
       console.log('Auth state change:', event);
-      
+
       setSession(newSession);
       setUser(newSession?.user || null);
-      
+
       if (newSession?.user) {
         // Load/ensure profile on sign in
         const userProfile = await authService.ensureUserProfile(newSession.user);
@@ -91,7 +103,7 @@ export function useAuth(): UseAuthReturn {
       } else {
         setProfile(null);
       }
-      
+
       setIsLoading(false);
     });
 
@@ -169,13 +181,13 @@ export function useRequireAuth(requiredRole?: UserRole): UseAuthReturn {
       // Could redirect to login page
       console.warn('Authentication required');
     }
-    
+
     if (!auth.isLoading && requiredRole && auth.profile) {
-      const hasRole = 
+      const hasRole =
         requiredRole === 'member' ||
         (requiredRole === 'contributor' && auth.isContributor) ||
         (requiredRole === 'admin' && auth.isAdmin);
-      
+
       if (!hasRole) {
         console.warn('Insufficient permissions');
       }

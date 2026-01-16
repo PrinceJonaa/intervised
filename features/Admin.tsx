@@ -3,10 +3,11 @@
  */
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Mail, Calendar, MessageSquare, Users, FileText, Settings, 
-  LogOut, ChevronRight, Clock, CheckCircle2, Archive, 
-  Eye, Trash2, RefreshCw, X, User, Building2
+import {
+  Mail, Calendar, MessageSquare, Users, FileText, Settings,
+  LogOut, ChevronRight, Clock, CheckCircle2, Archive,
+  Eye, Trash2, RefreshCw, X, User, Building2,
+  Activity, Database, ShieldCheck, Lock as LockIcon, Loader2, AlertCircle
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthContext, ProtectedRoute } from '../components/AuthProvider';
@@ -15,7 +16,7 @@ import { getContactMessages, updateMessageStatus, type ContactMessage, type Cont
 import { getBookings, updateBookingStatus, type Booking, type BookingStatus } from '../lib/supabase/bookingService';
 
 // Tab types
-type AdminTab = 'contacts' | 'bookings' | 'comments' | 'settings';
+type AdminTab = 'contacts' | 'bookings' | 'comments' | 'settings' | 'system';
 
 // Status badge component
 function StatusBadge({ status, type }: { status: string; type: 'contact' | 'booking' }) {
@@ -41,17 +42,17 @@ function StatusBadge({ status, type }: { status: string; type: 'contact' | 'book
 }
 
 // Contact card component
-function ContactCard({ 
-  contact, 
+function ContactCard({
+  contact,
   onStatusChange,
-  onView 
-}: { 
+  onView
+}: {
   contact: ContactMessage;
   onStatusChange: (status: ContactStatus) => void;
   onView: () => void;
 }) {
   const date = new Date(contact.created_at || '').toLocaleDateString();
-  
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -70,16 +71,16 @@ function ContactCard({
         </div>
         <StatusBadge status={contact.status || 'new'} type="contact" />
       </div>
-      
+
       {contact.company && (
         <div className="flex items-center gap-2 text-xs text-gray-500 mb-2">
           <Building2 size={12} />
           {contact.company}
         </div>
       )}
-      
+
       <p className="text-gray-300 text-sm line-clamp-2 mb-3">{contact.message}</p>
-      
+
       <div className="flex items-center justify-between">
         <span className="text-[10px] font-mono text-gray-500">{date}</span>
         <div className="flex items-center gap-2">
@@ -110,17 +111,17 @@ function ContactCard({
 }
 
 // Booking card component
-function BookingCard({ 
-  booking, 
-  onStatusChange 
-}: { 
+function BookingCard({
+  booking,
+  onStatusChange
+}: {
   booking: Booking;
   onStatusChange: (status: BookingStatus) => void;
 }) {
-  const date = booking.scheduled_date 
-    ? new Date(booking.scheduled_date).toLocaleDateString() 
+  const date = booking.scheduled_date
+    ? new Date(booking.scheduled_date).toLocaleDateString()
     : 'TBD';
-  
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -134,7 +135,7 @@ function BookingCard({
         </div>
         <StatusBadge status={booking.status || 'pending'} type="booking" />
       </div>
-      
+
       <div className="grid grid-cols-2 gap-2 text-xs mb-3">
         <div className="flex items-center gap-2 text-gray-400">
           <Calendar size={12} />
@@ -145,7 +146,7 @@ function BookingCard({
           {booking.provider || 'Any'}
         </div>
       </div>
-      
+
       <div className="flex items-center justify-between pt-3 border-t border-white/5">
         <span className="text-accent font-mono font-bold">${booking.total_price}</span>
         <div className="flex items-center gap-1">
@@ -187,12 +188,129 @@ function BookingCard({
   );
 }
 
+// System Health Component
+function SystemHealth() {
+  const { user, profile } = useAuthContext();
+  const [dbStatus, setDbStatus] = useState<'checking' | 'connected' | 'error'>('checking');
+  const [dbLatency, setDbLatency] = useState<number | null>(null);
+
+  useEffect(() => {
+    checkConnection();
+  }, []);
+
+  const checkConnection = async () => {
+    setDbStatus('checking');
+    const start = performance.now();
+    try {
+      // Simple query to check connection
+      await getContactMessages({ limit: 1 });
+      const end = performance.now();
+      setDbLatency(Math.round(end - start));
+      setDbStatus('connected');
+    } catch (error) {
+      setDbStatus('error');
+    }
+  };
+
+  const provider = user?.app_metadata?.provider || 'email';
+  const lastSignIn = new Date(user?.last_sign_in_at || '').toLocaleString();
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* Connectivity Status */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="glass-panel p-6 rounded-2xl border border-white/10"
+      >
+        <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+          <Activity size={20} className="text-accent" />
+          System Status
+        </h3>
+
+        <div className="space-y-4">
+          <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl">
+            <div className="flex items-center gap-3">
+              <Database size={18} className="text-gray-400" />
+              <span className="text-sm text-gray-300">Database Connection</span>
+            </div>
+            <div className="flex items-center gap-2">
+              {dbStatus === 'checking' && <Loader2 size={16} className="animate-spin text-yellow-400" />}
+              {dbStatus === 'connected' && (
+                <>
+                  <span className="text-xs font-mono text-gray-500">{dbLatency}ms</span>
+                  <CheckCircle2 size={16} className="text-green-400" />
+                </>
+              )}
+              {dbStatus === 'error' && <AlertCircle size={16} className="text-red-400" />}
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl">
+            <div className="flex items-center gap-3">
+              <ShieldCheck size={18} className="text-gray-400" />
+              <span className="text-sm text-gray-300">Auth Service</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-mono text-green-400">ONLINE</span>
+              <CheckCircle2 size={16} className="text-green-400" />
+            </div>
+          </div>
+        </div>
+
+        <button
+          onClick={checkConnection}
+          className="mt-4 text-xs text-center w-full py-2 hover:bg-white/5 rounded-lg transition-colors text-gray-500"
+        >
+          Re-run Checks
+        </button>
+      </motion.div>
+
+      {/* Auth Configuration */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="glass-panel p-6 rounded-2xl border border-white/10"
+      >
+        <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+          <LockIcon size={20} className="text-accent" />
+          Auth Configuration
+        </h3>
+
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="p-3 bg-white/5 rounded-xl">
+              <p className="text-xs text-gray-500 uppercase mb-1">Current Role</p>
+              <p className="font-mono text-accent">{profile?.role || 'Guest'}</p>
+            </div>
+            <div className="p-3 bg-white/5 rounded-xl">
+              <p className="text-xs text-gray-500 uppercase mb-1">Provider</p>
+              <p className="font-mono text-white capitalize">{provider}</p>
+            </div>
+          </div>
+
+          <div className="p-3 bg-white/5 rounded-xl">
+            <p className="text-xs text-gray-500 uppercase mb-1">User ID</p>
+            <p className="font-mono text-xs text-gray-400 break-all">{user?.id}</p>
+          </div>
+
+          <div className="p-3 bg-white/5 rounded-xl">
+            <p className="text-xs text-gray-500 uppercase mb-1">Last Sign In</p>
+            <p className="font-mono text-xs text-gray-400">{lastSignIn}</p>
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
 // Main Admin Dashboard
 function AdminDashboardContent() {
   const navigate = useNavigate();
   const { addToast } = useToast();
   const { user, profile, signOut, isAdmin } = useAuthContext();
-  
+
   const [activeTab, setActiveTab] = useState<AdminTab>('contacts');
   const [contacts, setContacts] = useState<ContactMessage[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -254,6 +372,7 @@ function AdminDashboardContent() {
     { id: 'contacts' as AdminTab, label: 'Messages', icon: Mail, count: newContactsCount },
     { id: 'bookings' as AdminTab, label: 'Bookings', icon: Calendar, count: pendingBookingsCount },
     { id: 'comments' as AdminTab, label: 'Comments', icon: MessageSquare, count: 0 },
+    { id: 'system' as AdminTab, label: 'System Health', icon: Activity },
     { id: 'settings' as AdminTab, label: 'Settings', icon: Settings },
   ];
 
@@ -270,7 +389,7 @@ function AdminDashboardContent() {
               Welcome back, {profile?.full_name || user?.email}
             </p>
           </div>
-          
+
           <div className="flex items-center gap-4">
             <button
               onClick={loadData}
@@ -296,18 +415,16 @@ function AdminDashboardContent() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-3 rounded-xl transition-all whitespace-nowrap ${
-                activeTab === tab.id 
-                  ? 'bg-accent text-black font-bold' 
-                  : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
-              }`}
+              className={`flex items-center gap-2 px-4 py-3 rounded-xl transition-all whitespace-nowrap ${activeTab === tab.id
+                ? 'bg-accent text-black font-bold'
+                : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
+                }`}
             >
               <tab.icon size={16} />
               {tab.label}
               {tab.count !== undefined && tab.count > 0 && (
-                <span className={`px-2 py-0.5 text-xs rounded-full ${
-                  activeTab === tab.id ? 'bg-black/20' : 'bg-accent/20 text-accent'
-                }`}>
+                <span className={`px-2 py-0.5 text-xs rounded-full ${activeTab === tab.id ? 'bg-black/20' : 'bg-accent/20 text-accent'
+                  }`}>
                   {tab.count}
                 </span>
               )}
@@ -397,6 +514,18 @@ function AdminDashboardContent() {
                 >
                   <MessageSquare size={48} className="mx-auto mb-4 opacity-50" />
                   <p>Comment moderation coming soon</p>
+                </motion.div>
+              )}
+
+              {/* System Health Tab */}
+              {activeTab === 'system' && (
+                <motion.div
+                  key="system"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                >
+                  <SystemHealth />
                 </motion.div>
               )}
 
@@ -515,7 +644,7 @@ export function AdminPage() {
   // Show login page if not authenticated
   if (!isLoading && !isAuthenticated) {
     return (
-      <ProtectedRoute 
+      <ProtectedRoute
         fallback={
           <div className="min-h-screen flex items-center justify-center">
             <div className="text-center">
@@ -537,7 +666,7 @@ export function AdminPage() {
   }
 
   return (
-    <ProtectedRoute 
+    <ProtectedRoute
       fallback={
         <div className="min-h-screen flex items-center justify-center">
           <div className="text-center">
