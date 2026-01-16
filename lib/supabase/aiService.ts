@@ -180,10 +180,21 @@ async function fetchWithRetry(
  * Send a chat message through the secure Azure AI Edge Function
  */
 export async function azureChat(request: AzureChatRequest): Promise<AzureChatResponse> {
-  // Get current session
-  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+  // Get current session with robust fallback
+  let { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+  // If session is missing or errored, try to refresh it explicitly
+  // This handles cases where local storage might be out of sync or the token is stale
+  if (sessionError || !session) {
+    const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+    if (!refreshError && refreshData.session) {
+      session = refreshData.session;
+      sessionError = null;
+    }
+  }
 
   if (sessionError || !session) {
+    // Final check - if we still don't have a session, we can't proceed
     throw new AIAuthError('You must be signed in to use the AI assistant.');
   }
 
@@ -313,6 +324,50 @@ export async function getUsageHistory(limit = 50): Promise<Array<{
     costUsd: Number(row.cost_usd),
     createdAt: row.created_at,
   }));
+}
+
+export type UserAISettings = {
+  id?: string;
+  provider: 'openai' | 'azure' | 'anthropic' | 'google' | 'cohere' | 'grok' | 'custom' | null;
+  custom_model: string | null;
+  custom_api_key: string | null;
+  system_prompt: string | null;
+  temperature: number | null;
+  save_history: boolean | null;
+};
+
+export async function getUserAISettings(): Promise<UserAISettings | null> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const { data, error } = await supabase
+    .from('user_ai_settings')
+    .select('*')
+    .eq('user_id', user.id)
+    .single();
+
+  if (error && error.code !== 'PGRST116') { // PGRST116 = JSON object not found (no row)
+    console.error('Failed to load AI settings:', error);
+    return null;
+  }
+
+  return data as unknown as UserAISettings;
+}
+
+export async function updateUserAISettings(settings: Partial<UserAISettings>) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new AIAuthError('Not authenticated');
+
+  const { error } = await supabase
+    .from('user_ai_settings')
+    .upsert({
+      user_id: user.id,
+      ...settings,
+      updated_at: new Date().toISOString()
+    } as any)
+    .select();
+
+  if (error) throw error;
 }
 
 /**

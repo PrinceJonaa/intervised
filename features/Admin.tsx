@@ -20,10 +20,17 @@ import { getBookings, updateBookingStatus, type Booking, type BookingStatus } fr
 import { ServiceManager } from './admin/ServiceManager';
 import { ProjectManager } from './admin/ProjectManager';
 import { BlogManager } from './admin/BlogManager';
+import { UserManager } from './admin/UserManager';
+import { CommentsManager } from './admin/CommentsManager';
+import { MessageManager } from './admin/MessageManager';
+import { TransparencyManager } from './admin/TransparencyManager';
+import { AuditLogViewer } from './admin/AuditLogViewer';
+import { SettingsManager } from './admin/SettingsManager';
+import { AdminOverview } from './admin/Overview';
 
 // Tab types
 
-type AdminTab = 'contacts' | 'bookings' | 'services' | 'content' | 'blog' | 'comments' | 'settings' | 'system';
+type AdminTab = 'overview' | 'contacts' | 'bookings' | 'services' | 'content' | 'blog' | 'users' | 'comments' | 'messages' | 'transparency' | 'logs' | 'settings' | 'system';
 
 // Status badge component
 function StatusBadge({ status, type }: { status: string; type: 'contact' | 'booking' }) {
@@ -318,7 +325,7 @@ function AdminDashboardContent() {
   const { addToast } = useToast();
   const { user, profile, signOut, isAdmin } = useAuthContext();
 
-  const [activeTab, setActiveTab] = useState<AdminTab>('contacts');
+  const [activeTab, setActiveTab] = useState<AdminTab>('overview');
   const [contacts, setContacts] = useState<ContactMessage[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -376,13 +383,17 @@ function AdminDashboardContent() {
   const pendingBookingsCount = bookings.filter(b => b.status === 'pending').length;
 
   const tabs = [
+    { id: 'overview' as AdminTab, label: 'Overview', icon: Activity },
     { id: 'contacts' as AdminTab, label: 'Messages', icon: Mail, count: newContactsCount },
     { id: 'bookings' as AdminTab, label: 'Bookings', icon: Calendar, count: pendingBookingsCount },
     { id: 'services' as AdminTab, label: 'Services', icon: Database },
     { id: 'content' as AdminTab, label: 'Portfolio', icon: FileText },
     { id: 'blog' as AdminTab, label: 'Blog', icon: PenTool },
+    { id: 'users' as AdminTab, label: 'Users', icon: Users },
     { id: 'comments' as AdminTab, label: 'Comments', icon: MessageSquare, count: 0 },
-    { id: 'system' as AdminTab, label: 'System Health', icon: Activity },
+    { id: 'transparency' as AdminTab, label: 'Transparency', icon: Building2 },
+    { id: 'logs' as AdminTab, label: 'Logs', icon: FileText },
+    { id: 'system' as AdminTab, label: 'System Health', icon: ShieldCheck },
     { id: 'settings' as AdminTab, label: 'Settings', icon: Settings },
   ];
 
@@ -458,6 +469,18 @@ function AdminDashboardContent() {
             </motion.div>
           ) : (
             <>
+              {/* Overview Tab */}
+              {activeTab === 'overview' && (
+                <motion.div
+                  key="overview"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                >
+                  <AdminOverview />
+                </motion.div>
+              )}
+
               {/* Contacts Tab */}
               {activeTab === 'contacts' && (
                 <motion.div
@@ -549,17 +572,64 @@ function AdminDashboardContent() {
                 </motion.div>
               )}
 
-              {/* Comments Tab (Placeholder) */}
+              {/* Users Tab */}
+              {activeTab === 'users' && (
+                <motion.div
+                  key="users"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                >
+                  <UserManager />
+                </motion.div>
+              )}
+
+              {/* Comments Tab */}
               {activeTab === 'comments' && (
                 <motion.div
                   key="comments"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
-                  className="text-center py-20 text-gray-500"
                 >
-                  <MessageSquare size={48} className="mx-auto mb-4 opacity-50" />
-                  <p>Comment moderation coming soon</p>
+                  <CommentsManager />
+                </motion.div>
+              )}
+
+              {/* Messages Tab */}
+              {activeTab === 'messages' && (
+                <motion.div
+                  key="messages"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  className="h-full"
+                >
+                  <MessageManager />
+                </motion.div>
+              )}
+
+              {/* Transparency Tab */}
+              {activeTab === 'transparency' && (
+                <motion.div
+                  key="transparency"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                >
+                  <TransparencyManager />
+                </motion.div>
+              )}
+
+              {/* Logs Tab */}
+              {activeTab === 'logs' && (
+                <motion.div
+                  key="logs"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                >
+                  <AuditLogViewer />
                 </motion.div>
               )}
 
@@ -582,25 +652,9 @@ function AdminDashboardContent() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
-                  className="max-w-2xl"
+                  className="h-full"
                 >
-                  <div className="glass-panel p-6 rounded-2xl border border-white/10">
-                    <h3 className="font-bold text-lg mb-4">Account Settings</h3>
-                    <div className="space-y-4">
-                      <div>
-                        <label className="text-xs text-gray-500 uppercase tracking-wider">Email</label>
-                        <p className="text-white">{user?.email}</p>
-                      </div>
-                      <div>
-                        <label className="text-xs text-gray-500 uppercase tracking-wider">Role</label>
-                        <p className="text-white capitalize">{profile?.role || 'Member'}</p>
-                      </div>
-                      <div>
-                        <label className="text-xs text-gray-500 uppercase tracking-wider">User ID</label>
-                        <p className="text-gray-400 font-mono text-sm">{user?.id}</p>
-                      </div>
-                    </div>
-                  </div>
+                  <SettingsManager />
                 </motion.div>
               )}
             </>

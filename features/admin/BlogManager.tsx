@@ -7,10 +7,13 @@ import {
     createPost,
     updatePost,
     deletePost,
+    uploadBlogImage,
     type BlogPost,
     type BlogPostInsert
 } from '../../lib/supabase/blogService';
+import { logAdminAction } from '../../lib/supabase/adminService';
 import { useToast } from '../../components/ToastSystem';
+import { Upload } from 'lucide-react';
 
 export const BlogManager = () => {
     const { addToast } = useToast();
@@ -21,6 +24,7 @@ export const BlogManager = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [editForm, setEditForm] = useState<Partial<BlogPostInsert>>({});
     const [tagsInput, setTagsInput] = useState('');
+    const [isUploading, setIsUploading] = useState(false);
 
     useEffect(() => {
         loadData();
@@ -62,6 +66,7 @@ export const BlogManager = () => {
         if (!window.confirm('Are you sure you want to delete this post?')) return;
         try {
             await deletePost(id);
+            await logAdminAction('delete_post', 'blog_posts', id);
             setPosts(prev => prev.filter(p => p.id !== id));
             addToast('Post deleted', 'success');
         } catch (error) {
@@ -77,6 +82,7 @@ export const BlogManager = () => {
             if ((editForm as any).id) {
                 // Update
                 const updated = await updatePost((editForm as any).id, dataToSave);
+                await logAdminAction('update_post', 'blog_posts', updated.id, { title: updated.title, status: updated.status });
                 setPosts(prev => prev.map(p => p.id === updated.id ? updated : p));
                 addToast('Post updated', 'success');
             } else {
@@ -87,6 +93,7 @@ export const BlogManager = () => {
                     return;
                 }
                 const created = await createPost(dataToSave as BlogPostInsert);
+                await logAdminAction('create_post', 'blog_posts', created.id, { title: created.title });
                 setPosts(prev => [created, ...prev]);
                 addToast('Post created', 'success');
             }
@@ -181,14 +188,45 @@ export const BlogManager = () => {
                         </div>
 
                         <div>
-                            <label className="text-xs uppercase text-gray-500 font-bold block mb-1">Featured Image URL</label>
-                            <input
-                                type="text"
-                                value={editForm.featured_image || ''}
-                                onChange={e => setEditForm({ ...editForm, featured_image: e.target.value })}
-                                className="w-full bg-black/50 border border-white/10 rounded p-2 text-white focus:border-accent outline-none"
-                                placeholder="https://..."
-                            />
+                            <label className="text-xs uppercase text-gray-500 font-bold block mb-1">Featured Image</label>
+                            <div className="flex gap-2">
+                                <input
+                                    type="text"
+                                    value={editForm.featured_image || ''}
+                                    onChange={e => setEditForm({ ...editForm, featured_image: e.target.value })}
+                                    className="flex-1 bg-black/50 border border-white/10 rounded p-2 text-white focus:border-accent outline-none"
+                                    placeholder="https://..."
+                                />
+                                <div className="relative">
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        disabled={isUploading}
+                                        onChange={async (e) => {
+                                            if (!e.target.files || e.target.files.length === 0) return;
+                                            setIsUploading(true);
+                                            try {
+                                                const file = e.target.files[0];
+                                                // Use a temporary slug if creating new
+                                                const slug = editForm.slug || editForm.title?.toLowerCase().replace(/\s+/g, '-') || 'temp';
+                                                const url = await uploadBlogImage(file, slug);
+                                                setEditForm(prev => ({ ...prev, featured_image: url }));
+                                                addToast('Image uploaded successfully', 'success');
+                                            } catch (err) {
+                                                console.error(err);
+                                                addToast('Failed to upload image', 'error');
+                                            } finally {
+                                                setIsUploading(false);
+                                            }
+                                        }}
+                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
+                                    />
+                                    <button className={`px-3 py-2 bg-white/10 hover:bg-white/20 rounded border border-white/10 transition-colors flex items-center gap-2 ${isUploading ? 'opacity-50' : ''}`}>
+                                        <Upload size={16} />
+                                        {isUploading ? '...' : 'Upload'}
+                                    </button>
+                                </div>
+                            </div>
                         </div>
 
                         <div>
@@ -199,6 +237,50 @@ export const BlogManager = () => {
                                 className="w-full bg-black/50 border border-white/10 rounded p-2 text-white focus:border-accent outline-none h-96 font-mono text-sm"
                                 placeholder="# Heading&#10;&#10;Write your post content here..."
                             />
+                        </div>
+
+                        {/* SEO Settings */}
+                        <div className="border border-white/5 rounded-xl p-4 bg-black/20 space-y-4">
+                            <h4 className="font-bold text-gray-300 flex items-center gap-2">
+                                <Globe size={16} className="text-accent" />
+                                SEO Settings
+                            </h4>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="text-xs uppercase text-gray-500 font-bold block mb-1">URL Slug</label>
+                                    <input
+                                        type="text"
+                                        value={editForm.slug || ''}
+                                        onChange={e => setEditForm({ ...editForm, slug: e.target.value })}
+                                        className="w-full bg-black/50 border border-white/10 rounded p-2 text-white focus:border-accent outline-none font-mono text-xs"
+                                        placeholder="custom-url-slug"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-xs uppercase text-gray-500 font-bold block mb-1">Meta Keywords</label>
+                                    <input
+                                        type="text"
+                                        value={editForm.meta_keywords?.join(', ') || ''}
+                                        onChange={e => setEditForm({
+                                            ...editForm,
+                                            meta_keywords: e.target.value.split(',').map(s => s.trim()).filter(Boolean)
+                                        })}
+                                        className="w-full bg-black/50 border border-white/10 rounded p-2 text-white focus:border-accent outline-none font-mono text-xs"
+                                        placeholder="keyword1, keyword2..."
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="text-xs uppercase text-gray-500 font-bold block mb-1">Meta Description</label>
+                                <textarea
+                                    value={editForm.meta_description || ''}
+                                    onChange={e => setEditForm({ ...editForm, meta_description: e.target.value })}
+                                    className="w-full bg-black/50 border border-white/10 rounded p-2 text-white focus:border-accent outline-none h-20 resize-none text-sm"
+                                    placeholder="SEO description for search engines..."
+                                />
+                            </div>
                         </div>
 
                         <div>

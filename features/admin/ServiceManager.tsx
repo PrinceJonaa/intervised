@@ -3,6 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Settings, Eye, EyeOff, Save, Plus, Trash2, X, Check, AlertCircle, Edit2 } from 'lucide-react';
 import { getServices, updateService, type Service } from '../../lib/supabase/referenceService';
+import { supabase } from '../../lib/supabase/client';
+import { logAdminAction } from '../../lib/supabase/adminService';
 import { useToast } from '../../components/ToastSystem';
 
 interface ServiceOption {
@@ -36,11 +38,11 @@ export const ServiceManager = () => {
             // Let's rely on getServices() returning what it returns, but ideally we'd fetch all.
             // Actually, checking referenceService.ts, getServices has .eq('is_active', true).
             // We will fix this by creating a separate fetch in this component for Admin purposes.
-            const { data, error } = await import('../../lib/supabase/client').then(m => m.supabase
+            // Fetch ALL services directly using the client
+            const { data, error } = await supabase
                 .from('services')
                 .select('*')
-                .order('sort_order', { ascending: true })
-            );
+                .order('sort_order', { ascending: true });
 
             if (error) throw error;
             setServices(data || []);
@@ -56,6 +58,7 @@ export const ServiceManager = () => {
         try {
             const newStatus = !service.is_active;
             await updateService(service.id, { is_active: newStatus });
+            await logAdminAction('update_service_status', 'services', service.id, { is_active: newStatus });
             setServices(prev => prev.map(s => s.id === service.id ? { ...s, is_active: newStatus } : s));
             addToast(`Service ${newStatus ? 'enabled' : 'disabled'}`, 'success');
         } catch (error) {
@@ -87,6 +90,7 @@ export const ServiceManager = () => {
                 options: editOptions
             });
 
+            await logAdminAction('update_service', 'services', editingId, editForm);
             setServices(prev => prev.map(s => s.id === editingId ? { ...s, ...editForm, options: editOptions } : s));
             addToast('Service updated successfully', 'success');
             cancelEdit();
