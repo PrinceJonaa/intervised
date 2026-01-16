@@ -2,10 +2,10 @@
 
 [![Website](https://img.shields.io/website?url=https%3A%2F%2Fintervised.com&label=intervised.com)](https://intervised.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![GitHub issues](https://img.shields.io/github/issues/PrinceJonaa/intervised-website)](https://github.com/PrinceJonaa/intervised-website/issues)
-[![GitHub stars](https://img.shields.io/github/stars/PrinceJonaa/intervised-website?style=social)](https://github.com/PrinceJonaa/intervised-website/stargazers)
+[![GitHub issues](https://img.shields.io/github/issues/PrinceJonaa/intervised)](https://github.com/PrinceJonaa/intervised/issues)
+[![GitHub stars](https://img.shields.io/github/stars/PrinceJonaa/intervised?style=social)](https://github.com/PrinceJonaa/intervised/stargazers)
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/import/project?template=https://github.com/PrinceJonaa/intervised-website)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/import/project?template=https://github.com/PrinceJonaa/intervised)
 
 **Live:** [intervised.com](https://intervised.com)
 
@@ -29,9 +29,9 @@ We're a creative and tech studio in NYC. This repo is the full source code for o
 
 ## Project Stats
 
-![GitHub code size](https://img.shields.io/github/languages/code-size/PrinceJonaa/intervised-website)
-![GitHub repo size](https://img.shields.io/github/repo-size/PrinceJonaa/intervised-website)
-![GitHub last commit](https://img.shields.io/github/last-commit/PrinceJonaa/intervised-website)
+![GitHub code size](https://img.shields.io/github/languages/code-size/PrinceJonaa/intervised)
+![GitHub repo size](https://img.shields.io/github/repo-size/PrinceJonaa/intervised)
+![GitHub last commit](https://img.shields.io/github/last-commit/PrinceJonaa/intervised)
 
 ---
 
@@ -113,15 +113,15 @@ Found a security issue? Email security@intervised.com or open a private advisory
 
 [![Security Rating](https://img.shields.io/badge/security-A+-brightgreen)]()
 [![Code Quality](https://img.shields.io/badge/code%20quality-A-brightgreen)]()
-[![Maintained](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/PrinceJonaa/intervised-website/graphs/commit-activity)
+[![Maintained](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/PrinceJonaa/intervised/graphs/commit-activity)
 
 ---
 
 ## Local Setup (If You're Curious)
 
 ```bash
-git clone https://github.com/PrinceJonaa/intervised-website.git
-cd intervised-website
+git clone https://github.com/PrinceJonaa/intervised.git
+cd intervised
 npm install
 cp .env.example .env
 # Add your Supabase URL + keys
