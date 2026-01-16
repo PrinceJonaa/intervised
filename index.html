@@ -53,25 +53,144 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Intervised" />
 
-  <!-- Structured Data - Organization -->
+  <!-- Structured Data - Organization (Enhanced for Local SEO) -->
   <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "Organization",
-      "name": "Intervised",
+      "name": "Intervised LLC",
       "alternateName": "Mutually Envisioned",
       "url": "https://intervised.com",
-      "logo": "https://intervised.com/logo.png",
-      "description": "Premium creative and technology studio offering web development, brand design, AI integration, and digital strategy services.",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://intervised.com/logo.png",
+        "width": 512,
+        "height": 512
+      },
+      "image": "https://intervised.com/og-image.png",
+      "description": "Premium creative and technology studio offering web development, brand design, AI integration, and digital strategy services in Brooklyn, NYC.",
+      "foundingDate": "2024",
+      "founder": {
+        "@type": "Person",
+        "name": "Prince Jones"
+      },
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Brooklyn",
+        "addressRegion": "NY",
+        "postalCode": "11201",
+        "addressCountry": "US"
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": 40.6782,
+        "longitude": -73.9442
+      },
+      "areaServed": [
+        {
+          "@type": "City",
+          "name": "Brooklyn"
+        },
+        {
+          "@type": "City",
+          "name": "Manhattan"
+        },
+        {
+          "@type": "City",
+          "name": "Queens"
+        },
+        {
+          "@type": "State",
+          "name": "New York"
+        }
+      ],
       "sameAs": [
-        "https://twitter.com/intervised",
+        "https://instagram.com/intervised.llc",
         "https://linkedin.com/company/intervised",
+        "https://twitter.com/intervised",
         "https://github.com/intervised"
       ],
-      "contactPoint": {
-        "@type": "ContactPoint",
-        "contactType": "customer service",
-        "availableLanguage": ["English"]
+      "contactPoint": [
+        {
+          "@type": "ContactPoint",
+          "contactType": "customer service",
+          "availableLanguage": ["English"],
+          "areaServed": "US"
+        },
+        {
+          "@type": "ContactPoint",
+          "contactType": "sales",
+          "availableLanguage": ["English"],
+          "areaServed": "US"
+        }
+      ],
+      "knowsAbout": [
+        "Web Development",
+        "AI Integration",
+        "Brand Design",
+        "Digital Strategy",
+        "Content Creation",
+        "React Development",
+        "3D Web Experiences"
+      ]
+    }
+    </script>
+
+  <!-- Structured Data - BreadcrumbList (Internal Linking Structure) -->
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://intervised.com"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Services",
+          "item": "https://intervised.com/services"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "Team",
+          "item": "https://intervised.com/team"
+        },
+        {
+          "@type": "ListItem",
+          "position": 4,
+          "name": "Blog",
+          "item": "https://intervised.com/blog"
+        },
+        {
+          "@type": "ListItem",
+          "position": 5,
+          "name": "Contact",
+          "item": "https://intervised.com/contact"
+        }
+      ]
+    }
+    </script>
+
+  <!-- Structured Data - WebPage with Speakable (AI/Voice Search Optimization) -->
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "Intervised - Creative & Technology Studio",
+      "description": "Premium creative and technology studio offering web development, brand design, AI integration, and digital strategy services.",
+      "url": "https://intervised.com",
+      "speakable": {
+        "@type": "SpeakableSpecification",
+        "cssSelector": ["h1", "h2", ".service-description", ".hero-text"]
+      },
+      "mainEntity": {
+        "@type": "Organization",
+        "name": "Intervised LLC"
       }
     }
     </script>
@@ -129,8 +248,12 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 
 
+  <!-- Preload critical fonts for Core Web Vitals -->
+  <link rel="preload" href="https://fonts.gstatic.com/s/spacegrotesk/v16/V8mQoQDjQSkFtoMM3T6r8E7mPb54C_k3HqUtEw.woff2"
+    as="font" type="font/woff2" crossorigin>
+
   <link
-    href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=optional"
+    href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap"
     rel="stylesheet">
 </head>
 

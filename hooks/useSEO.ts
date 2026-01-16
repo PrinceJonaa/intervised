@@ -13,6 +13,15 @@ interface SEOProps {
     tags?: string[];
   };
   noIndex?: boolean;
+  // New schema support
+  breadcrumbs?: readonly { readonly name: string; readonly url: string }[];
+  service?: {
+    name: string;
+    description: string;
+    provider?: string;
+    areaServed?: string[];
+    offers?: Array<{ name: string; price?: number }>;
+  };
 }
 
 const BASE_URL = 'https://intervised.com';
@@ -23,6 +32,7 @@ const DEFAULT_OG_IMAGE = `${BASE_URL}/og-image.png`;
 /**
  * Custom hook for managing dynamic SEO meta tags
  * Updates document head without external dependencies (React 19 compatible)
+ * Supports Organization, Service, Breadcrumb, and Article schemas
  */
 // Enhanced SEO hook with full Open Graph Protocol support
 export function useSEO({
@@ -36,6 +46,8 @@ export function useSEO({
   ogLocale = 'en_US',
   article,
   noIndex = false,
+  breadcrumbs,
+  service,
 }: SEOProps & {
   ogImageAlt?: string;
   ogSiteName?: string;
@@ -72,6 +84,18 @@ export function useSEO({
       element.setAttribute('href', href);
     };
 
+    // Helper to inject JSON-LD script with ID
+    const injectJsonLd = (id: string, data: object) => {
+      let ldScript = document.querySelector(`script[data-seo-id="${id}"]`) as HTMLScriptElement;
+      if (!ldScript) {
+        ldScript = document.createElement('script');
+        ldScript.setAttribute('type', 'application/ld+json');
+        ldScript.setAttribute('data-seo-id', id);
+        document.head.appendChild(ldScript);
+      }
+      ldScript.textContent = JSON.stringify(data);
+    };
+
     // Primary meta tags
     setMetaTag('title', title);
     setMetaTag('description', description);
@@ -102,6 +126,52 @@ export function useSEO({
     setMetaTag('twitter:title', title, false);
     setMetaTag('twitter:description', description, false);
     setMetaTag('twitter:image', ogImage, false);
+
+    // Breadcrumb Schema (Internal Linking Structure)
+    if (breadcrumbs && breadcrumbs.length > 0) {
+      const breadcrumbSchema = {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": breadcrumbs.map((crumb, index) => ({
+          "@type": "ListItem",
+          "position": index + 1,
+          "name": crumb.name,
+          "item": crumb.url
+        }))
+      };
+      injectJsonLd('breadcrumb-schema', breadcrumbSchema);
+    }
+
+    // Service Schema
+    if (service) {
+      const serviceSchema = {
+        "@context": "https://schema.org",
+        "@type": "Service",
+        "name": service.name,
+        "description": service.description,
+        "provider": {
+          "@type": "Organization",
+          "name": service.provider || "Intervised LLC",
+          "url": BASE_URL
+        },
+        "areaServed": service.areaServed || ["Brooklyn", "Manhattan", "New York", "NY"],
+        ...(service.offers && {
+          "hasOfferCatalog": {
+            "@type": "OfferCatalog",
+            "name": `${service.name} Options`,
+            "itemListElement": service.offers.map(offer => ({
+              "@type": "Offer",
+              "itemOffered": {
+                "@type": "Service",
+                "name": offer.name
+              },
+              ...(offer.price && { "price": offer.price, "priceCurrency": "USD" })
+            }))
+          }
+        })
+      };
+      injectJsonLd('service-schema', serviceSchema);
+    }
 
     // Article-specific meta
     if (ogType === 'article' && article) {
@@ -147,24 +217,16 @@ export function useSEO({
         }
       };
 
-      // Inject or update JSON-LD script
-      let ldScript = document.querySelector('script[type="application/ld+json"]') as HTMLScriptElement;
-      if (!ldScript) {
-        ldScript = document.createElement('script');
-        ldScript.setAttribute('type', 'application/ld+json');
-        document.head.appendChild(ldScript);
-      }
-      ldScript.textContent = JSON.stringify(structuredData);
+      injectJsonLd('article-schema', structuredData);
     }
 
     // Cleanup
     return () => {
       document.title = DEFAULT_TITLE;
-      // Remove JSON-LD on cleanup
-      const ldScript = document.querySelector('script[type="application/ld+json"]');
-      if (ldScript) ldScript.remove();
+      // Remove dynamic JSON-LD on cleanup
+      document.querySelectorAll('script[data-seo-id]').forEach(el => el.remove());
     };
-  }, [title, description, canonical, ogImage, ogType, ogSiteName, ogLocale, article, noIndex]);
+  }, [title, description, canonical, ogImage, ogType, ogSiteName, ogLocale, article, noIndex, breadcrumbs, service]);
 }
 
 // Pre-defined SEO configs for each page
@@ -173,26 +235,45 @@ export const SEO_CONFIG = {
     title: 'Intervised | Mutually Envisioned - Creative & Technology Studio',
     description: 'Premium creative and technology studio offering web development, brand design, AI integration, and digital strategy services. Transform your vision into reality.',
     canonical: BASE_URL,
+    breadcrumbs: [
+      { name: 'Home', url: BASE_URL }
+    ],
   },
   services: {
     title: 'Services | Intervised - Web Development, Brand Design & AI Integration',
     description: 'Explore our comprehensive digital services including custom web development, brand design, AI chatbot integration, content creation, and growth strategy.',
     canonical: `${BASE_URL}/services`,
+    breadcrumbs: [
+      { name: 'Home', url: BASE_URL },
+      { name: 'Services', url: `${BASE_URL}/services` }
+    ],
   },
   team: {
     title: 'Our Team | Intervised - Meet the Creators Behind Your Vision',
     description: 'Meet the talented team at Intervised. Creative directors, developers, and strategists dedicated to transforming your digital presence.',
     canonical: `${BASE_URL}/team`,
+    breadcrumbs: [
+      { name: 'Home', url: BASE_URL },
+      { name: 'Team', url: `${BASE_URL}/team` }
+    ],
   },
   blog: {
     title: 'Blog | Intervised - Insights on Design, Technology & Strategy',
     description: 'Read our latest insights on web development, brand design, AI integration, and digital strategy. Expert articles from the Intervised team.',
     canonical: `${BASE_URL}/blog`,
+    breadcrumbs: [
+      { name: 'Home', url: BASE_URL },
+      { name: 'Blog', url: `${BASE_URL}/blog` }
+    ],
   },
   contact: {
     title: 'Contact Us | Intervised - Start Your Project Today',
     description: 'Get in touch with Intervised to discuss your project. We\'re here to help transform your vision into a stunning digital reality.',
     canonical: `${BASE_URL}/contact`,
+    breadcrumbs: [
+      { name: 'Home', url: BASE_URL },
+      { name: 'Contact', url: `${BASE_URL}/contact` }
+    ],
   },
   chat: {
     title: 'AI Chat | Intervised - Ask Our AI Assistant',
@@ -223,7 +304,13 @@ export function getBlogPostSEO(post: {
       author: post.author,
       tags: post.tags,
     },
+    breadcrumbs: [
+      { name: 'Home', url: BASE_URL },
+      { name: 'Blog', url: `${BASE_URL}/blog` },
+      { name: post.title, url: `${BASE_URL}/blog/${post.slug}` }
+    ],
   };
 }
 
 export default useSEO;
+
