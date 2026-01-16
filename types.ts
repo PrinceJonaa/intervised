@@ -117,8 +117,19 @@ export interface ChatMessage {
   role: 'user' | 'model' | 'system';
   text: string;
   timestamp: number;
+  attachments?: ChatAttachment[];
   toolCalls?: { name: string; args: any }[];
   toolResults?: { name: string; result: any }[];
+}
+
+export interface ChatAttachment {
+  id: string;
+  name: string;
+  mimeType: string;
+  size: number;
+  kind: 'image' | 'file';
+  dataUrl?: string;
+  textContent?: string;
 }
 
 export interface SessionAnalysis {
@@ -136,7 +147,35 @@ export interface ChatSession {
   analysis?: SessionAnalysis; // The "Memory" aspect of a session
 }
 
-export type AIProvider = 'google' | 'openai' | 'claude' | 'grok' | 'azure' | 'intervised';
+export type AIProvider = 'google' | 'openai' | 'claude' | 'grok' | 'azure' | 'intervised' | 'g4f';
+
+// G4F Sub-providers available through g4f.dev
+export type G4FSubProvider =
+  | 'g4f-main'
+  | 'pollinations'
+  | 'api.airforce'
+  | 'groq'
+  | 'huggingface'
+  | 'nvidia'
+  | 'ollama'
+  | 'openrouter'
+  | 'deepinfra'
+  | 'gemini'
+  | 'puter'
+  | 'nectar'
+  | 'azure'
+  | 'custom'
+  | 'auto';
+
+// G4F-specific settings
+export interface G4FSettings {
+  subProvider: G4FSubProvider;
+  model: string;
+  apiKey?: string;           // Only needed for g4f-main
+  customBaseUrl?: string;    // For custom/ollama providers
+  webSearch?: boolean;       // Enable web search
+  streaming?: boolean;       // Enable streaming responses
+}
 
 export interface ChatSettings {
   temperature: number;
@@ -148,6 +187,8 @@ export interface ChatSettings {
   modelOverride?: string;
   azureEndpoint?: string;
   azureDeployment?: string;
+  // G4F settings
+  g4f?: G4FSettings;
 }
 
 // --- Advanced AI / Framework Types ---

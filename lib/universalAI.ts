@@ -9,6 +9,7 @@ interface UniversalChatRequest {
   temperature?: number;
   azureEndpoint?: string;
   azureDeployment?: string;
+  signal?: AbortSignal;
 }
 
 export async function universalChat(request: UniversalChatRequest): Promise<string> {
@@ -22,6 +23,7 @@ export async function universalChat(request: UniversalChatRequest): Promise<stri
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${apiKey}`
       },
+      signal: request.signal,
       body: JSON.stringify({
         model,
         messages: messages.map(m => ({ role: m.role, content: m.content })),
@@ -42,6 +44,7 @@ export async function universalChat(request: UniversalChatRequest): Promise<stri
         'anthropic-version': '2023-06-01',
         'dangerously-allow-browser': 'true' // In a production environment this should be handled via a proxy
       },
+      signal: request.signal,
       body: JSON.stringify({
         model,
         max_tokens: 1024,
@@ -65,6 +68,7 @@ export async function universalChat(request: UniversalChatRequest): Promise<stri
         'Content-Type': 'application/json',
         'api-key': apiKey
       },
+      signal: request.signal,
       body: JSON.stringify({
         messages: messages.map(m => ({ role: m.role, content: m.content })),
         temperature

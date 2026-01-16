@@ -19,7 +19,7 @@ import { supabase } from './client';
 // TYPES
 // ============================================================
 
-export type AzureModel = 
+export type AzureModel =
   | 'deepseek-v3.2'     // Primary - most cost efficient
   | 'kimi-k2-thinking'  // Good for long contexts
   | 'gpt-4.1'           // Vision capable
@@ -38,6 +38,7 @@ export interface AzureChatRequest {
   tools?: AzureToolDefinition[];
   sessionId?: string;
   requiresVision?: boolean;
+  signal?: AbortSignal;
 }
 
 export interface AzureToolDefinition {
@@ -82,7 +83,7 @@ export interface SpendingInfo {
 
 export class AISpendingLimitError extends Error {
   spending: SpendingInfo;
-  
+
   constructor(message: string, spending: SpendingInfo) {
     super(message);
     this.name = 'AISpendingLimitError';
@@ -147,13 +148,41 @@ export const MODEL_INFO: Record<AzureModel, {
 // MAIN SERVICE
 // ============================================================
 
+// Helper for retrying fetches
+async function fetchWithRetry(
+  url: string,
+  options: RequestInit,
+  retries = 3,
+  backoff = 1000
+): Promise<Response> {
+  let lastError: any;
+  for (let attempt = 0; attempt < retries; attempt++) {
+    try {
+      const response = await fetch(url, options);
+      // 5xx errors should be retried
+      if (response.status >= 500 && response.status < 600) {
+        throw new Error(`Server error: ${response.status}`);
+      }
+      return response;
+    } catch (error: any) {
+      if (error?.name === 'AbortError') throw error; // Don't retry aborts
+      lastError = error;
+      if (attempt < retries - 1) {
+        // Exponential backoff
+        await new Promise(resolve => setTimeout(resolve, backoff * Math.pow(2, attempt)));
+      }
+    }
+  }
+  throw lastError;
+}
+
 /**
  * Send a chat message through the secure Azure AI Edge Function
  */
 export async function azureChat(request: AzureChatRequest): Promise<AzureChatResponse> {
   // Get current session
   const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-  
+
   if (sessionError || !session) {
     throw new AIAuthError('You must be signed in to use the AI assistant.');
   }
@@ -163,12 +192,13 @@ export async function azureChat(request: AzureChatRequest): Promise<AzureChatRes
   const supabaseUrl = (import.meta as any).env?.VITE_PUBLIC_SUPABASE_URL || 'https://jnfnqtohljybohlcslnm.supabase.co';
   const functionUrl = `${supabaseUrl}/functions/v1/azure-ai-chat`;
 
-  const response = await fetch(functionUrl, {
+  const response = await fetchWithRetry(functionUrl, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${session.access_token}`,
     },
+    signal: request.signal,
     body: JSON.stringify({
       messages: request.messages,
       model: request.model,
@@ -180,7 +210,14 @@ export async function azureChat(request: AzureChatRequest): Promise<AzureChatRes
     }),
   });
 
-  const data = await response.json();
+  let data;
+  try {
+    data = await response.json();
+  } catch (e) {
+    // If not JSON, it might be a raw text error (e.g. 502 Bad Gateway from a proxy)
+    const text = await response.text().catch(() => '');
+    throw new Error(`Request failed (${response.status}): ${text.slice(0, 100)}`);
+  }
 
   if (response.status === 401) {
     throw new AIAuthError(data.message || 'Authentication required');
@@ -207,15 +244,15 @@ export async function azureChat(request: AzureChatRequest): Promise<AzureChatRes
  */
 export async function getSpendingInfo(): Promise<SpendingInfo> {
   const { data: { user }, error: userError } = await supabase.auth.getUser();
-  
+
   if (userError || !user) {
     throw new AIAuthError('You must be signed in to check spending.');
   }
 
   const { data, error } = await supabase
-    .rpc('check_ai_spending_limit', { 
-      p_user_id: user.id, 
-      p_limit_usd: 5.0 
+    .rpc('check_ai_spending_limit', {
+      p_user_id: user.id,
+      p_limit_usd: 5.0
     });
 
   if (error) {
@@ -230,7 +267,7 @@ export async function getSpendingInfo(): Promise<SpendingInfo> {
   }
 
   const result = data?.[0] || { is_under_limit: true, current_spending: 0, remaining_budget: 5 };
-  
+
   return {
     current: Number(result.current_spending) || 0,
     limit: 5,
@@ -251,7 +288,7 @@ export async function getUsageHistory(limit = 50): Promise<Array<{
   createdAt: string;
 }>> {
   const { data: { user }, error: userError } = await supabase.auth.getUser();
-  
+
   if (userError || !user) {
     throw new AIAuthError('You must be signed in to view usage history.');
   }

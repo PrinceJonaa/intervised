@@ -1,12 +1,13 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { GoogleGenAI, Type, FunctionDeclaration } from "@google/genai";
-import { Page, ChatMessage, ToolDefinition, ChatSettings } from '../types';
+import { Page, ChatAttachment, ChatMessage, ToolDefinition, ChatSettings } from '../types';
 import { SERVICES_DATA, TEAM_DATA, PAST_PROJECTS, CLIENT_TESTIMONIALS, FAQ_DATA } from '../constants';
 import { getInitialTools } from '../lib/aiTools';
 import { executeTool } from '../lib/toolExecutor';
 import { universalChat } from '../lib/universalAI';
 import { azureChat, toAzureMessages, AISpendingLimitError, AIAuthError, getSpendingInfo, type SpendingInfo } from '../lib/supabase/aiService';
+import { g4fChat, g4fChatStream, getG4FProvider, DEFAULT_G4F_API_KEY, type G4FChatRequest, type G4FContentPart, type G4FMessage } from '../lib/g4fService';
 
 // --- Configuration ---
 const MAX_HISTORY_LENGTH = 20; 
@@ -68,6 +69,102 @@ const NAV_TOOL_DEF: ToolDefinition = {
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
+const MAX_ATTACHMENT_TEXT_CHARS = 8000;
+
+const truncateText = (value: string, maxLength: number) => {
+  if (value.length <= maxLength) return value;
+  return `${value.slice(0, maxLength)}\n...[truncated]`;
+};
+
+const buildAttachmentSummary = (
+  attachments: ChatAttachment[] | undefined,
+  options?: { includeImages?: boolean }
+) => {
+  if (!attachments || attachments.length === 0) return '';
+  const includeImages = options?.includeImages ?? true;
+  const parts: string[] = [];
+
+  for (const attachment of attachments) {
+    const mimeType = attachment.mimeType || 'unknown';
+
+    if (attachment.kind === 'image') {
+      if (!includeImages) continue;
+      parts.push(`Image: ${attachment.name} (${mimeType}, ${attachment.size} bytes).`);
+      continue;
+    }
+
+    if (attachment.textContent) {
+      const snippet = truncateText(attachment.textContent, MAX_ATTACHMENT_TEXT_CHARS);
+      parts.push(`File: ${attachment.name}\n\`\`\`\n${snippet}\n\`\`\``);
+    } else {
+      parts.push(`File: ${attachment.name} (${mimeType}, ${attachment.size} bytes).`);
+    }
+  }
+
+  return parts.join('\n\n');
+};
+
+const mergeTextWithAttachments = (
+  text: string,
+  attachments: ChatAttachment[] | undefined,
+  options?: { includeImages?: boolean }
+) => {
+  const attachmentText = buildAttachmentSummary(attachments, options);
+  if (!attachmentText) return text;
+  if (!text.trim()) return attachmentText;
+  return `${text}\n\n${attachmentText}`;
+};
+
+const buildG4FMessageContent = (
+  message: ChatMessage,
+  supportsVision: boolean
+): string | G4FContentPart[] => {
+  const textWithAttachments = mergeTextWithAttachments(
+    message.text,
+    message.attachments,
+    { includeImages: !supportsVision }
+  );
+  const imageAttachments = supportsVision
+    ? (message.attachments || []).filter(a => a.kind === 'image' && a.dataUrl)
+    : [];
+
+  if (supportsVision && imageAttachments.length > 0) {
+    const textPart: G4FContentPart = {
+      type: 'text',
+      text: textWithAttachments.trim() ? textWithAttachments : 'Image attached.'
+    };
+    const imageParts: G4FContentPart[] = imageAttachments.map(attachment => ({
+      type: 'image_url',
+      image_url: { url: attachment.dataUrl as string }
+    }));
+    return [textPart, ...imageParts];
+  }
+
+  return textWithAttachments;
+};
+
+const buildG4FMessages = (
+  history: ChatMessage[],
+  systemInstruction: string,
+  supportsVision: boolean
+): G4FMessage[] => {
+  const g4fMessages: G4FMessage[] = [];
+
+  if (systemInstruction) {
+    g4fMessages.push({ role: 'system', content: systemInstruction });
+  }
+
+  for (const msg of history) {
+    if (msg.role === 'system') continue;
+    g4fMessages.push({
+      role: msg.role === 'model' ? 'assistant' : 'user',
+      content: buildG4FMessageContent(msg, supportsVision)
+    });
+  }
+
+  return g4fMessages;
+};
+
 export const useGeminiAI = (setPage?: (page: Page) => void) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -79,9 +176,17 @@ export const useGeminiAI = (setPage?: (page: Page) => void) => {
       temperature: 0.7,
       systemTone: 'creative',
       enableHistory: true,
-      provider: 'intervised', // Default to Intervised Azure AI (free for users)
+      provider: 'g4f', // Default to G4F (free multi-provider)
       customApiKey: '',
-      modelOverride: 'deepseek-v3.2' // Default to most cost-efficient model
+      modelOverride: '',
+      // Default G4F settings
+      g4f: {
+        subProvider: 'pollinations',
+        model: 'openai',
+        apiKey: DEFAULT_G4F_API_KEY,
+        streaming: true,
+        webSearch: false
+      }
     };
   });
 
@@ -98,6 +203,7 @@ export const useGeminiAI = (setPage?: (page: Page) => void) => {
   
   const aiClientRef = useRef<GoogleGenAI | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const cancelledRef = useRef(false);
 
   // Initialize Google AI Client if needed
   useEffect(() => {
@@ -109,12 +215,19 @@ export const useGeminiAI = (setPage?: (page: Page) => void) => {
     }
   }, [settings.provider, settings.customApiKey]);
 
-  const addMessage = useCallback((role: 'user' | 'model' | 'system', text: string, toolCalls?: any[], toolResults?: any[]) => {
+  const addMessage = useCallback((
+    role: 'user' | 'model' | 'system',
+    text: string,
+    toolCalls?: any[],
+    toolResults?: any[],
+    attachments?: ChatAttachment[]
+  ) => {
     setMessages(prev => [...prev, {
       id: Date.now().toString() + Math.random().toString(),
       role,
       text,
       timestamp: Date.now(),
+      attachments,
       toolCalls,
       toolResults
     }]);
@@ -137,22 +250,38 @@ export const useGeminiAI = (setPage?: (page: Page) => void) => {
     recognition.start();
   }, [addMessage]);
 
-  const sendMessage = async (input: string, customHistory?: ChatMessage[]) => {
-    if (!input.trim()) return;
+  const stopGenerating = useCallback(() => {
+    cancelledRef.current = true;
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    setIsProcessing(false);
+  }, []);
+
+  const sendMessage = async (
+    input: string,
+    customHistory?: ChatMessage[],
+    attachments?: ChatAttachment[]
+  ) => {
+    const hasContent = input.trim() || (attachments && attachments.length > 0);
+    if (!hasContent) return;
     if (isProcessing) return;
 
     if (customHistory) {
-      setMessages([...customHistory, { id: Date.now().toString(), role: 'user', text: input, timestamp: Date.now() }]);
+      setMessages([...customHistory, { id: Date.now().toString(), role: 'user', text: input, timestamp: Date.now(), attachments }]);
     } else {
-      addMessage('user', input);
+      addMessage('user', input, undefined, undefined, attachments);
     }
     
     setIsProcessing(true);
     abortControllerRef.current = new AbortController();
+    cancelledRef.current = false;
 
     try {
       const sourceHistory = customHistory || messages;
       const historySlice = sourceHistory.slice(-MAX_HISTORY_LENGTH);
+      const inputWithAttachments = mergeTextWithAttachments(input, attachments, { includeImages: true });
 
       // --- BRANCH BY PROVIDER ---
       if (settings.provider === 'google') {
@@ -169,8 +298,8 @@ export const useGeminiAI = (setPage?: (page: Page) => void) => {
         const history = historySlice.filter(m => m.role !== 'system').map(m => ({
              role: m.role,
              parts: m.toolCalls 
-              ? [{ text: m.text }, ...m.toolCalls.map(tc => ({ functionCall: { name: tc.name, args: tc.args } }))] 
-              : [{ text: m.text }]
+              ? [{ text: mergeTextWithAttachments(m.text, m.attachments, { includeImages: true }) }, ...m.toolCalls.map(tc => ({ functionCall: { name: tc.name, args: tc.args } }))] 
+              : [{ text: mergeTextWithAttachments(m.text, m.attachments, { includeImages: true }) }]
         }));
 
         let attempts = 0;
@@ -191,7 +320,7 @@ export const useGeminiAI = (setPage?: (page: Page) => void) => {
               history: history
             });
 
-            let currentResponse = await chatSession.sendMessage({ message: input });
+            let currentResponse = await chatSession.sendMessage({ message: inputWithAttachments });
             finalResponseText = currentResponse.text || "";
 
             for (let turn = 0; turn < 5; turn++) {
@@ -226,16 +355,18 @@ export const useGeminiAI = (setPage?: (page: Page) => void) => {
             } else throw error;
           }
         }
-        if (success) addMessage('model', finalResponseText, toolCallsRecord.length > 0 ? toolCallsRecord : undefined, toolResultsRecord.length > 0 ? toolResultsRecord : undefined);
+        if (success && !cancelledRef.current) {
+          addMessage('model', finalResponseText, toolCallsRecord.length > 0 ? toolCallsRecord : undefined, toolResultsRecord.length > 0 ? toolResultsRecord : undefined);
+        }
       } else if (settings.provider === 'intervised') {
         // --- INTERVISED AZURE AI (FREE FOR USERS) ---
         const historyForAzure = historySlice.filter(m => m.role !== 'system').map(m => ({
           role: m.role,
-          text: m.text
+          text: mergeTextWithAttachments(m.text, m.attachments, { includeImages: true })
         }));
         
         // Add the new user input
-        historyForAzure.push({ role: 'user', text: input });
+        historyForAzure.push({ role: 'user', text: inputWithAttachments });
         
         const azureMessages = toAzureMessages(systemInstruction, historyForAzure);
         
@@ -243,7 +374,8 @@ export const useGeminiAI = (setPage?: (page: Page) => void) => {
           messages: azureMessages,
           model: settings.modelOverride as any || 'deepseek-v3.2',
           temperature: settings.temperature,
-          maxTokens: 2048
+          maxTokens: 2048,
+          signal: abortControllerRef.current?.signal
         });
         
         // Update spending info
@@ -256,7 +388,90 @@ export const useGeminiAI = (setPage?: (page: Page) => void) => {
           });
         }
         
-        addMessage('model', response.content);
+        if (!cancelledRef.current) {
+          addMessage('model', response.content);
+        }
+      } else if (settings.provider === 'g4f') {
+        // --- G4F MULTI-PROVIDER CHAT (FREE) ---
+        const g4fSettings = settings.g4f || {
+          subProvider: 'pollinations',
+          model: 'openai',
+          streaming: true
+        };
+        
+        const providerConfig = getG4FProvider(g4fSettings.subProvider);
+        const supportsVision = providerConfig?.supportsVision ?? false;
+        
+        // Build messages for G4F
+        const g4fMessages = buildG4FMessages(historySlice, systemInstruction, supportsVision);
+        
+        // Add the new user input
+        g4fMessages.push({ role: 'user', content: buildG4FMessageContent({
+          id: Date.now().toString(),
+          role: 'user',
+          text: input,
+          timestamp: Date.now(),
+          attachments
+        }, supportsVision) });
+        
+        const g4fRequest: G4FChatRequest = {
+          provider: g4fSettings.subProvider,
+          model: g4fSettings.model || (providerConfig?.popularModels[0] || 'openai'),
+          messages: g4fMessages,
+          temperature: settings.temperature,
+          maxTokens: 4096,
+          apiKey: g4fSettings.apiKey || (g4fSettings.subProvider === 'g4f-main' ? DEFAULT_G4F_API_KEY : undefined),
+          customBaseUrl: g4fSettings.customBaseUrl,
+          signal: abortControllerRef.current?.signal,
+          providerOptions: {
+            webSearch: g4fSettings.webSearch
+          }
+        };
+        
+        // Use streaming if enabled and supported
+        if (g4fSettings.streaming && providerConfig?.supportsStreaming) {
+          // Create a placeholder message that we'll update
+          const messageId = Date.now().toString() + Math.random().toString();
+          setMessages(prev => [...prev, {
+            id: messageId,
+            role: 'model',
+            text: '',
+            timestamp: Date.now()
+          }]);
+          
+          let fullContent = '';
+          
+          try {
+            for await (const chunk of g4fChatStream(g4fRequest)) {
+              if (cancelledRef.current) break;
+              fullContent += chunk;
+              // Update the message in place
+              setMessages(prev => prev.map(msg => 
+                msg.id === messageId 
+                  ? { ...msg, text: fullContent }
+                  : msg
+              ));
+            }
+          } catch (streamError) {
+            // If streaming fails, try non-streaming fallback
+            if (fullContent.length === 0) {
+              const response = await g4fChat(g4fRequest);
+              if (!cancelledRef.current) {
+                setMessages(prev => prev.map(msg => 
+                  msg.id === messageId 
+                    ? { ...msg, text: response.content }
+                    : msg
+                ));
+              }
+            }
+          }
+        } else {
+          // Non-streaming request
+          const response = await g4fChat(g4fRequest);
+          if (!cancelledRef.current) {
+            addMessage('model', response.content);
+          }
+        }
       } else {
         // --- MULTI-PROVIDER CHAT (requires user API key) ---
         if (!settings.customApiKey) throw new Error(`API Key required for ${settings.provider}`);
@@ -265,12 +480,12 @@ export const useGeminiAI = (setPage?: (page: Page) => void) => {
           { role: 'system' as const, content: systemInstruction },
           ...historySlice.map(m => ({ 
             role: m.role === 'model' ? 'assistant' as const : 'user' as const, 
-            content: m.text 
+            content: mergeTextWithAttachments(m.text, m.attachments, { includeImages: true })
           }))
         ];
 
         // Add latest message if not in history slice
-        universalMessages.push({ role: 'user', content: input });
+        universalMessages.push({ role: 'user', content: inputWithAttachments });
 
         const result = await universalChat({
           provider: settings.provider,
@@ -279,12 +494,18 @@ export const useGeminiAI = (setPage?: (page: Page) => void) => {
           messages: universalMessages,
           temperature: settings.temperature,
           azureEndpoint: settings.azureEndpoint,
-          azureDeployment: settings.azureDeployment
+          azureDeployment: settings.azureDeployment,
+          signal: abortControllerRef.current?.signal
         });
 
-        addMessage('model', result);
+        if (!cancelledRef.current) {
+          addMessage('model', result);
+        }
       }
     } catch (error: any) {
+      if (error?.name === 'AbortError') {
+        return;
+      }
       // Handle specific Intervised AI errors
       if (error instanceof AISpendingLimitError) {
         addMessage('system', `💰 Usage Limit Reached: You've used your $5 AI credit. Current spending: $${error.spending.current.toFixed(4)}. Please try again later or contact support.`);
@@ -295,6 +516,7 @@ export const useGeminiAI = (setPage?: (page: Page) => void) => {
         addMessage('system', `Transmission Interrupted: ${error.message || "Unknown cognitive error."}`);
       }
     } finally {
+      abortControllerRef.current = null;
       setIsProcessing(false);
     }
   };
@@ -311,6 +533,6 @@ export const useGeminiAI = (setPage?: (page: Page) => void) => {
   return {
     messages, isProcessing, isListening, modules, setModules, sendMessage, setMessages,
     startListening, systemInstruction, setSystemInstruction, tools, setTools,
-    settings, setSettings, spending
+    settings, setSettings, spending, stopGenerating
   };
 };
