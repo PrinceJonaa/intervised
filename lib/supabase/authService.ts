@@ -31,7 +31,7 @@ export async function signInWithGoogle(): Promise<void> {
   const { error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: `${window.location.origin}/admin`,
+      redirectTo: `https://intervised.com/admin`,
       queryParams: {
         access_type: 'offline',
         prompt: 'consent',
@@ -52,7 +52,7 @@ export async function signInWithEmail(email: string): Promise<void> {
   const { error } = await supabase.auth.signInWithOtp({
     email,
     options: {
-      emailRedirectTo: `${window.location.origin}/admin`,
+      emailRedirectTo: `https://intervised.com/admin`,
     },
   });
 
@@ -170,7 +170,7 @@ export async function createUserProfile(
  */
 export async function ensureUserProfile(user: User): Promise<Profile> {
   let profile = await getUserProfile(user.id);
-  
+
   if (!profile) {
     profile = await createUserProfile(
       user.id,
@@ -178,7 +178,7 @@ export async function ensureUserProfile(user: User): Promise<Profile> {
       user.user_metadata as { full_name?: string; avatar_url?: string }
     );
   }
-  
+
   return profile;
 }
 

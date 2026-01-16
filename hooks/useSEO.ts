@@ -24,15 +24,23 @@ const DEFAULT_OG_IMAGE = `${BASE_URL}/og-image.png`;
  * Custom hook for managing dynamic SEO meta tags
  * Updates document head without external dependencies (React 19 compatible)
  */
+// Enhanced SEO hook with full Open Graph Protocol support
 export function useSEO({
   title = DEFAULT_TITLE,
   description = DEFAULT_DESCRIPTION,
   canonical,
   ogImage = DEFAULT_OG_IMAGE,
+  ogImageAlt = 'Intervised - Mutually Envisioned',
   ogType = 'website',
+  ogSiteName = 'Intervised',
+  ogLocale = 'en_US',
   article,
   noIndex = false,
-}: SEOProps = {}) {
+}: SEOProps & {
+  ogImageAlt?: string;
+  ogSiteName?: string;
+  ogLocale?: string;
+} = {}) {
   useEffect(() => {
     // Update title
     document.title = title;
@@ -41,26 +49,26 @@ export function useSEO({
     const setMetaTag = (property: string, content: string, isProperty = false) => {
       const attr = isProperty ? 'property' : 'name';
       let element = document.querySelector(`meta[${attr}="${property}"]`);
-      
+
       if (!element) {
         element = document.createElement('meta');
         element.setAttribute(attr, property);
         document.head.appendChild(element);
       }
-      
+
       element.setAttribute('content', content);
     };
 
     // Helper to update or create link tag
     const setLinkTag = (rel: string, href: string) => {
       let element = document.querySelector(`link[rel="${rel}"]`);
-      
+
       if (!element) {
         element = document.createElement('link');
         element.setAttribute('rel', rel);
         document.head.appendChild(element);
       }
-      
+
       element.setAttribute('href', href);
     };
 
@@ -72,20 +80,30 @@ export function useSEO({
     // Open Graph
     setMetaTag('og:title', title, true);
     setMetaTag('og:description', description, true);
-    setMetaTag('og:image', ogImage, true);
+    setMetaTag('og:url', canonical || window.location.href, true);
+    setMetaTag('og:site_name', ogSiteName, true);
+    setMetaTag('og:locale', ogLocale, true);
     setMetaTag('og:type', ogType, true);
-    
+
+    // OG Image Structured Properties
+    setMetaTag('og:image', ogImage, true);
+    setMetaTag('og:image:alt', ogImageAlt, true);
+    // Standard social card size
+    setMetaTag('og:image:width', '1200', true);
+    setMetaTag('og:image:height', '630', true);
+    setMetaTag('og:image:type', 'image/png', true);
+
     if (canonical) {
-      setMetaTag('og:url', canonical, true);
       setLinkTag('canonical', canonical);
     }
 
-    // Twitter
-    setMetaTag('twitter:title', title, true);
-    setMetaTag('twitter:description', description, true);
-    setMetaTag('twitter:image', ogImage, true);
+    // Twitter Card
+    setMetaTag('twitter:card', 'summary_large_image', false); // Use standard name for twitter:card
+    setMetaTag('twitter:title', title, false);
+    setMetaTag('twitter:description', description, false);
+    setMetaTag('twitter:image', ogImage, false);
 
-    // Article-specific meta (for blog posts)
+    // Article-specific meta
     if (ogType === 'article' && article) {
       if (article.publishedTime) {
         setMetaTag('article:published_time', article.publishedTime, true);
@@ -98,23 +116,16 @@ export function useSEO({
       }
       if (article.tags) {
         article.tags.forEach((tag, index) => {
-          setMetaTag(`article:tag:${index}`, tag, true);
+          setMetaTag(`article:tag`, tag, true); // Multiple tags support
         });
       }
     }
 
-    // Cleanup function to reset to defaults when component unmounts
+    // Cleanup
     return () => {
       document.title = DEFAULT_TITLE;
-      setMetaTag('description', DEFAULT_DESCRIPTION);
-      setMetaTag('og:title', DEFAULT_TITLE, true);
-      setMetaTag('og:description', DEFAULT_DESCRIPTION, true);
-      setMetaTag('og:image', DEFAULT_OG_IMAGE, true);
-      setMetaTag('og:type', 'website', true);
-      setMetaTag('twitter:title', DEFAULT_TITLE, true);
-      setMetaTag('twitter:description', DEFAULT_DESCRIPTION, true);
     };
-  }, [title, description, canonical, ogImage, ogType, article, noIndex]);
+  }, [title, description, canonical, ogImage, ogType, ogSiteName, ogLocale, article, noIndex]);
 }
 
 // Pre-defined SEO configs for each page

@@ -154,23 +154,45 @@ function LoginPageWrapper() {
   );
 }
 
-const AdminPageWrapper = () => (
-  <PageWrapper>
-    <AdminPage />
-  </PageWrapper>
-);
+function AdminPageWrapper() {
+  useSEO({
+    title: 'Admin Dashboard | Intervised',
+    description: 'Command Center for Intervised administrators.',
+    noIndex: true, // Admin page shouldn't be indexed
+    canonical: 'https://intervised.com/admin'
+  });
+  return (
+    <PageWrapper>
+      <AdminPage />
+    </PageWrapper>
+  );
+}
 
-const PrivacyPageWrapper = () => (
-  <PageWrapper>
-    <PrivacyPage />
-  </PageWrapper>
-);
+function PrivacyPageWrapper() {
+  useSEO({
+    title: 'Privacy Policy | Intervised',
+    description: 'Read our Privacy Policy to understand how we collect, use, and protect your data.',
+    canonical: 'https://intervised.com/privacy'
+  });
+  return (
+    <PageWrapper>
+      <PrivacyPage />
+    </PageWrapper>
+  );
+}
 
-const TermsPageWrapper = () => (
-  <PageWrapper>
-    <TermsPage />
-  </PageWrapper>
-);
+function TermsPageWrapper() {
+  useSEO({
+    title: 'Terms of Service | Intervised',
+    description: 'Read our Terms of Service regarding your use of the Intervised website and services.',
+    canonical: 'https://intervised.com/terms'
+  });
+  return (
+    <PageWrapper>
+      <TermsPage />
+    </PageWrapper>
+  );
+}
 
 // Main app content with routing
 function AppContent() {
