@@ -80,6 +80,8 @@ export interface TeamMember {
     instagram?: string;
     email?: string;
     spotify?: string;
+    website?: string;
+    soundcloud?: string;
   };
 }
 
@@ -120,6 +122,9 @@ export interface ChatMessage {
   attachments?: ChatAttachment[];
   toolCalls?: { name: string; args: any }[];
   toolResults?: { name: string; result: any }[];
+  // DB compatibility fields
+  content?: string;
+  created_at?: string;
 }
 
 export interface ChatAttachment {
@@ -145,6 +150,10 @@ export interface ChatSession {
   lastModified: number;
   messages: ChatMessage[];
   analysis?: SessionAnalysis; // The "Memory" aspect of a session
+  // DB compatibility fields
+  user_id?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export type AIProvider = 'google' | 'openai' | 'claude' | 'grok' | 'azure' | 'intervised' | 'g4f';

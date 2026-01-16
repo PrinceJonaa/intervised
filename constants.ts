@@ -3,12 +3,12 @@ import { ServiceItem, TeamMember, BlogPost, Project, Testimonial, FAQItem } from
 
 export const SERVICES_DATA: ServiceItem[] = [
   // Creative
-  { 
-    id: 'vid', 
-    category: 'Creative', 
-    title: 'Videography', 
-    description: 'Event or promotional video capture and editing.', 
-    price: 300, 
+  {
+    id: 'vid',
+    category: 'Creative',
+    title: 'Videography',
+    description: 'Event or promotional video capture and editing.',
+    price: 300,
     durationMinutes: 120,
     hourly: true,
     providers: ['Prince Jona'],
@@ -17,12 +17,12 @@ export const SERVICES_DATA: ServiceItem[] = [
       { id: 'rush', label: '48hr Turnaround', price: 100 }
     ]
   },
-  { 
-    id: 'photo', 
-    category: 'Creative', 
-    title: 'Photography', 
-    description: 'Portraits, product, or brand photography sessions.', 
-    price: 200, 
+  {
+    id: 'photo',
+    category: 'Creative',
+    title: 'Photography',
+    description: 'Portraits, product, or brand photography sessions.',
+    price: 200,
     durationMinutes: 60,
     hourly: true,
     providers: ['Reina Hondo'],
@@ -31,12 +31,12 @@ export const SERVICES_DATA: ServiceItem[] = [
       { id: 'looks', label: 'Extra Looks (Outfit)', price: 50 }
     ]
   },
-  { 
-    id: 'music', 
-    category: 'Creative', 
-    title: 'Music Production', 
-    description: 'Original scoring, mixing, and recording.', 
-    price: 400, 
+  {
+    id: 'music',
+    category: 'Creative',
+    title: 'Music Production',
+    description: 'Original scoring, mixing, and recording.',
+    price: 400,
     durationMinutes: 120,
     hourly: false,
     providers: ['Prince Jona', 'Reina Hondo'],
@@ -46,14 +46,14 @@ export const SERVICES_DATA: ServiceItem[] = [
       { id: 'score', label: 'Cinematic Scoring', price: 200 }
     ]
   },
-  
+
   // Tech
-  { 
-    id: 'ai', 
-    category: 'Tech', 
-    title: 'AI Bot Design', 
-    description: 'Custom chatbot or automation bot setup.', 
-    price: 10000, 
+  {
+    id: 'ai',
+    category: 'Tech',
+    title: 'AI Bot Design',
+    description: 'Custom chatbot or automation bot setup.',
+    price: 10000,
     durationMinutes: 60,
     hourly: false,
     providers: ['Prince Jona'],
@@ -62,12 +62,12 @@ export const SERVICES_DATA: ServiceItem[] = [
       { id: 'fine-tune', label: 'Custom LLM Fine-tuning', price: 2500 }
     ]
   },
-  { 
-    id: 'obs', 
-    category: 'Tech', 
-    title: 'OBS Setup', 
-    description: 'Livestream configuration with custom scenes.', 
-    price: 250, 
+  {
+    id: 'obs',
+    category: 'Tech',
+    title: 'OBS Setup',
+    description: 'Livestream configuration with custom scenes.',
+    price: 250,
     durationMinutes: 60,
     hourly: false,
     providers: ['Prince Jona'],
@@ -76,74 +76,74 @@ export const SERVICES_DATA: ServiceItem[] = [
       { id: 'remote', label: 'Remote Config', price: 0 }
     ]
   },
-  { 
-    id: 'auto', 
-    category: 'Tech', 
-    title: 'Automation Consulting', 
-    description: 'Consultation for workflow automation.', 
-    price: 150, 
+  {
+    id: 'auto',
+    category: 'Tech',
+    title: 'Automation Consulting',
+    description: 'Consultation for workflow automation.',
+    price: 150,
     durationMinutes: 60,
     hourly: true,
     providers: ['Prince Jona']
   },
 
   // Content
-  { 
-    id: 'cap', 
-    category: 'Content', 
-    title: 'Caption Writing', 
-    description: 'Captions for social video content.', 
-    price: 75, 
+  {
+    id: 'cap',
+    category: 'Content',
+    title: 'Caption Writing',
+    description: 'Captions for social video content.',
+    price: 75,
     durationMinutes: 30,
     providers: ['Reina Hondo']
   },
-  { 
-    id: 'vcdf', 
-    category: 'Content', 
-    title: 'VCDF Packs', 
-    description: 'Viral content distillation frameworks.', 
-    price: 200, 
+  {
+    id: 'vcdf',
+    category: 'Content',
+    title: 'VCDF Packs',
+    description: 'Viral content distillation frameworks.',
+    price: 200,
     durationMinutes: 60,
     providers: ['Prince Jona', 'Reina Hondo']
   },
-  { 
-    id: 'hash', 
-    category: 'Content', 
-    title: 'Hashtag Optimization', 
-    description: 'Research and align optimal hashtags.', 
-    price: 50, 
+  {
+    id: 'hash',
+    category: 'Content',
+    title: 'Hashtag Optimization',
+    description: 'Research and align optimal hashtags.',
+    price: 50,
     durationMinutes: 30,
     providers: ['Reina Hondo']
   },
 
   // Growth
-  { 
-    id: 'ig', 
-    category: 'Growth', 
-    title: 'IG Growth Strategy', 
-    description: 'Tactical growth map and engagement plan.', 
-    price: 175, 
+  {
+    id: 'ig',
+    category: 'Growth',
+    title: 'IG Growth Strategy',
+    description: 'Tactical growth map and engagement plan.',
+    price: 175,
     durationMinutes: 60,
     providers: ['Prince Jona', 'Reina Hondo']
   },
-  { 
-    id: 'sched', 
-    category: 'Growth', 
-    title: 'Content Scheduling', 
-    description: 'System setup for posting automation.', 
-    price: 500, 
+  {
+    id: 'sched',
+    category: 'Growth',
+    title: 'Content Scheduling',
+    description: 'System setup for posting automation.',
+    price: 500,
     durationMinutes: 60,
     hourly: false,
     providers: ['Prince Jona']
   },
 
   // Ministry
-  { 
-    id: 'live', 
-    category: 'Ministry', 
-    title: 'Church Livestream', 
-    description: 'Full livestream solution for churches.', 
-    price: 1000, 
+  {
+    id: 'live',
+    category: 'Ministry',
+    title: 'Church Livestream',
+    description: 'Full livestream solution for churches.',
+    price: 1000,
     durationMinutes: 120,
     hourly: true,
     providers: ['Prince Jona'],
@@ -152,21 +152,21 @@ export const SERVICES_DATA: ServiceItem[] = [
       { id: 'train', label: 'Volunteer Training', price: 200 }
     ]
   },
-  { 
-    id: 'worship', 
-    category: 'Ministry', 
-    title: 'Worship Media', 
-    description: 'Slides, lower thirds, visuals for services.', 
-    price: 150, 
+  {
+    id: 'worship',
+    category: 'Ministry',
+    title: 'Worship Media',
+    description: 'Slides, lower thirds, visuals for services.',
+    price: 150,
     durationMinutes: 60,
     providers: ['Reina Hondo']
   },
-  { 
-    id: 'kid', 
-    category: 'Ministry', 
-    title: 'Kids Ministry Kits', 
-    description: 'Visual kits and tools for children\'s ministry.', 
-    price: 100, 
+  {
+    id: 'kid',
+    category: 'Ministry',
+    title: 'Kids Ministry Kits',
+    description: 'Visual kits and tools for children\'s ministry.',
+    price: 100,
     durationMinutes: 30,
     providers: ['Reina Hondo']
   },
@@ -250,7 +250,13 @@ export const TEAM_DATA: TeamMember[] = [
     bio: "Artist, technologist, and seeker of truth. Jona exists at the threshold between aesthetics and systems — fluent in both AI frameworks and sonic storytelling. From music production to automation architecture, he builds bridges that make technology feel human and sacred.",
     image: "https://picsum.photos/400/500?grayscale&random=1",
     status: 'In Deep Work',
-    links: { instagram: "https://instagram.com/princejona", email: "jona@intervised.com" }
+    links: {
+      instagram: "https://instagram.com/princejonaa",
+      email: "intervised.llc@gmail.com",
+      website: "https://princejona.com",
+      spotify: "https://open.spotify.com/artist/4oLxy1WTGaWi2D5bCwRkzP",
+      soundcloud: "https://soundcloud.com/princejona"
+    }
   },
   {
     name: "Reina Hondo",
@@ -258,7 +264,11 @@ export const TEAM_DATA: TeamMember[] = [
     bio: "Multi-instrumentalist, storyteller, and spiritual curator from Queens. Classically trained, Reina bridges elevated artistry with street-level authenticity. She weaves worship, narrative, and sonic identity into cohesive brand experiences.",
     image: "https://picsum.photos/400/500?grayscale&random=2",
     status: 'On Set',
-    links: { instagram: "https://instagram.com/reinahondo", spotify: "https://open.spotify.com/artist/reina", email: "reina@intervised.com" }
+    links: {
+      instagram: "https://instagram.com/challenges_inlife",
+      spotify: "https://open.spotify.com/artist/2p9CF5W95kYJx6qLNGH4lV",
+      email: "reina@intervised.com"
+    }
   }
 ];
 
@@ -285,11 +295,11 @@ export const INITIAL_BLOGS: BlogPost[] = [
     likes: 45,
     comments: [
       {
-         id: 'c1',
-         author: 'Sarah Miller',
-         content: 'This perspective on stewardship completely changed how I view our church database. Thank you.',
-         date: 1761350400000,
-         avatar: 'https://ui-avatars.com/api/?name=Sarah+Miller&background=random'
+        id: 'c1',
+        author: 'Sarah Miller',
+        content: 'This perspective on stewardship completely changed how I view our church database. Thank you.',
+        date: 1761350400000,
+        avatar: 'https://ui-avatars.com/api/?name=Sarah+Miller&background=random'
       }
     ]
   },

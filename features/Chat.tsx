@@ -152,7 +152,7 @@ export const ChatPage = ({ setPage }: { setPage: (p: Page) => void }) => {
   const createNewSession = async () => {
     if (!user?.id) return;
     const newId = crypto.randomUUID();
-    const newSession: Partial<ChatSession> = {
+    const newSession = {
       id: newId,
       user_id: user.id,
       title: 'New Transmission',

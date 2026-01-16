@@ -11,6 +11,7 @@ export interface Service {
   duration?: number;
   is_scalable?: boolean;
   providers?: string[];
+  options?: any[]; // JSONB column for add-ons
   is_active?: boolean;
   sort_order?: number;
   created_at?: string;
@@ -55,10 +56,40 @@ export interface Project {
   image?: string;
   url?: string;
   is_featured?: boolean;
+  service_ids?: string[]; // Cross-reference to Services
   sort_order?: number;
   completed_at?: string;
   created_at?: string;
   updated_at?: string;
+}
+
+export async function createProject(project: Partial<Project>): Promise<Project> {
+  const { data, error } = await supabase
+    .from('projects')
+    .insert([project as any])
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function updateProject(id: string, updates: Partial<Project>): Promise<Project> {
+  const { data, error } = await supabase
+    .from('projects')
+    .update(updates)
+    .eq('id', id)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteProject(id: string): Promise<void> {
+  const { error } = await supabase
+    .from('projects')
+    .delete()
+    .eq('id', id);
+  if (error) throw error;
 }
 
 export async function getProjects(featured?: boolean): Promise<Project[]> {
@@ -166,6 +197,22 @@ export async function getFAQItemById(id: string): Promise<FAQItem | null> {
   return data || null;
 }
 
+// --- Services Service ---
+
+// ... (existing code)
+
+export async function updateService(id: string, updates: Partial<Service>): Promise<Service> {
+  const { data, error } = await supabase
+    .from('services')
+    .update(updates)
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
 // --- Team Service ---
 
 export interface TeamMember {
@@ -174,12 +221,15 @@ export interface TeamMember {
   role: string;
   bio?: string;
   image?: string;
-  status?: string;
-  twitter?: string;
+  status?: 'Online' | 'In Deep Work' | 'Offline' | 'On Set' | string;
+  instagram?: string;
   email?: string;
   spotify?: string;
   linkedin?: string;
   github?: string;
+  website?: string;
+  soundcloud?: string;
+  twitter?: string; // Legacy
   sort_order?: number;
   is_active?: boolean;
   created_at?: string;
@@ -204,4 +254,33 @@ export async function getTeamMemberById(id: string): Promise<TeamMember | null> 
     .single();
   if (error) throw error;
   return data || null;
+}
+
+export async function createTeamMember(member: Partial<TeamMember>): Promise<TeamMember> {
+  const { data, error } = await supabase
+    .from('team_members')
+    .insert([member as any])
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function updateTeamMember(id: string, updates: Partial<TeamMember>): Promise<TeamMember> {
+  const { data, error } = await supabase
+    .from('team_members')
+    .update(updates as any)
+    .eq('id', id)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteTeamMember(id: string): Promise<void> {
+  const { error } = await supabase
+    .from('team_members')
+    .delete()
+    .eq('id', id);
+  if (error) throw error;
 }

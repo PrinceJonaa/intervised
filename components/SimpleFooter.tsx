@@ -1,8 +1,12 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 export const SimpleFooter = () => {
     const currentYear = new Date().getFullYear();
+    const location = useLocation();
+
+    // Hide footer on Chat and Admin pages (app-like views)
+    if (['/chat', '/admin', '/login'].includes(location.pathname)) return null;
 
     return (
         <footer className="w-full py-8 mt-auto px-4 z-40 relative">

@@ -17,8 +17,8 @@ interface BookingConsoleProps {
   setPage?: (p: Page) => void;
 }
 
-export const BookingConsole: React.FC<BookingConsoleProps> = ({ 
-  selectedService, selectedDate, setSelectedDate, isBooked, setIsBooked, days, setPage 
+export const BookingConsole: React.FC<BookingConsoleProps> = ({
+  selectedService, selectedDate, setSelectedDate, isBooked, setIsBooked, days, setPage
 }) => {
   const { addToast } = useToast();
   const [holdProgress, setHoldProgress] = useState(0);
@@ -31,16 +31,16 @@ export const BookingConsole: React.FC<BookingConsoleProps> = ({
   const [durationMultiplier, setDurationMultiplier] = useState(1);
   const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
   const [projectContext, setProjectContext] = useState('');
-  
+
   // Computed States
   const [totalPrice, setTotalPrice] = useState(0);
 
   // Submit booking to Supabase
   const handleBookingSubmit = async () => {
     if (!selectedService || !selectedDate || isSubmitting) return;
-    
+
     setIsSubmitting(true);
-    
+
     try {
       const bookingData: BookingData = {
         serviceId: selectedService.id,
@@ -76,7 +76,7 @@ export const BookingConsole: React.FC<BookingConsoleProps> = ({
       setBookingReference(null);
       // Note: isBooked and selectedDate are managed by parent component (Services.tsx) and reset on click there.
     }
-  }, [selectedService ? selectedService.id : 'none']); 
+  }, [selectedService ? selectedService.id : 'none']);
 
   // Calculate Price
   useEffect(() => {
@@ -86,7 +86,7 @@ export const BookingConsole: React.FC<BookingConsoleProps> = ({
     }
 
     let base = selectedService.price;
-    
+
     // Apply Options
     const optionsTotal = selectedOptions.reduce((acc, optId) => {
       const opt = selectedService.options?.find(o => o.id === optId);
@@ -94,16 +94,16 @@ export const BookingConsole: React.FC<BookingConsoleProps> = ({
     }, 0);
 
     // Apply Duration Multiplier (Only if hourly, or assume options are flat fee)
-    let timeCalculatedPrice = selectedService.hourly 
-       ? (base * durationMultiplier) 
-       : base;
+    let timeCalculatedPrice = selectedService.hourly
+      ? (base * durationMultiplier)
+      : base;
 
     setTotalPrice(timeCalculatedPrice + optionsTotal);
 
   }, [selectedService, durationMultiplier, selectedOptions]);
 
   const toggleOption = (optId: string) => {
-    setSelectedOptions(prev => 
+    setSelectedOptions(prev =>
       prev.includes(optId) ? prev.filter(id => id !== optId) : [...prev, optId]
     );
   };
@@ -133,11 +133,11 @@ export const BookingConsole: React.FC<BookingConsoleProps> = ({
       setHoldProgress(0);
     }
   };
-  
+
   const generateQuoteString = () => {
-     if (!selectedService) return '';
-     const opts = selectedOptions.map(id => selectedService.options?.find(o => o.id === id)?.label).filter(Boolean).join(', ');
-     return `Service: ${selectedService.title}
+    if (!selectedService) return '';
+    const opts = selectedOptions.map(id => selectedService.options?.find(o => o.id === id)?.label).filter(Boolean).join(', ');
+    return `Service: ${selectedService.title}
 Provider: ${selectedProvider || 'Any'}
 Duration: ${selectedService.durationMinutes * durationMultiplier}m
 Options: ${opts || 'None'}
@@ -151,10 +151,28 @@ Mission: ${projectContext || 'N/A'}`;
     addToast('Quote copied to system clipboard.', 'success');
   };
 
-  const handleOpenMail = () => {
+  const [showEmailModal, setShowEmailModal] = useState(false);
+
+  const getEmailUrl = (provider: 'default' | 'gmail' | 'outlook' | 'yahoo') => {
     const subject = encodeURIComponent(`Booking Inquiry: ${selectedService?.title}`);
     const body = encodeURIComponent(`Hello Intervised Team,\n\nI'd like to proceed with the following configuration:\n\n${generateQuoteString()}\n\nAwaiting your transmission.\n`);
-    window.location.href = `mailto:jona@intervised.com?subject=${subject}&body=${body}`;
+    const email = 'jona@intervised.com';
+
+    switch (provider) {
+      case 'gmail':
+        return `https://mail.google.com/mail/?view=cm&fs=1&to=${email}&su=${subject}&body=${body}`;
+      case 'outlook':
+        return `https://outlook.office.com/mail/deeplink/compose?to=${email}&subject=${subject}&body=${body}`;
+      case 'yahoo':
+        return `https://compose.mail.yahoo.com/?to=${email}&subject=${subject}&body=${body}`;
+      default:
+        return `mailto:${email}?subject=${subject}&body=${body}`;
+    }
+  };
+
+  const handleOpenMail = (provider: 'default' | 'gmail' | 'outlook' | 'yahoo') => {
+    window.open(getEmailUrl(provider), '_blank');
+    setShowEmailModal(false);
   };
 
   const handleReset = () => {
@@ -167,9 +185,9 @@ Mission: ${projectContext || 'N/A'}`;
   return (
     <div className="w-full lg:w-[450px] xl:w-[500px] relative scroll-mt-24">
       <div className="lg:sticky lg:top-28">
-        <motion.div 
-          initial={{ opacity: 0, x: 20 }} 
-          animate={{ opacity: 1, x: 0 }} 
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
           className="glass-panel p-6 sm:p-8 rounded-3xl border border-white/10 shadow-2xl backdrop-blur-xl bg-surface/50 overflow-hidden relative min-h-[500px] flex flex-col"
         >
           <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 pointer-events-none"></div>
@@ -178,24 +196,24 @@ Mission: ${projectContext || 'N/A'}`;
             {/* Header */}
             <div className="flex items-center justify-between mb-6 pb-6 border-b border-white/10">
               <div className="flex items-center gap-2">
-                 <Settings2 className="text-accent" />
-                 <h3 className="font-display font-bold text-lg sm:text-xl">CONSOLE</h3>
+                <Settings2 className="text-accent" />
+                <h3 className="font-display font-bold text-lg sm:text-xl">CONSOLE</h3>
               </div>
               {setPage && (
-                 <button onClick={() => setPage(Page.CHAT)} className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-gray-500 hover:text-white transition-colors">
-                    <MessageSquare size={14} /> Ask Intelligence
-                 </button>
+                <button onClick={() => setPage(Page.CHAT)} className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-gray-500 hover:text-white transition-colors">
+                  <MessageSquare size={14} /> Ask Intelligence
+                </button>
               )}
             </div>
 
             <AnimatePresence mode="wait">
               {!selectedService ? (
-                <motion.div 
-                    key="empty"
-                    initial={{ opacity: 0 }} 
-                    animate={{ opacity: 1 }} 
-                    exit={{ opacity: 0 }} 
-                    className="text-center py-12 text-gray-500 flex-1 flex flex-col items-center justify-center"
+                <motion.div
+                  key="empty"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="text-center py-12 text-gray-500 flex-1 flex flex-col items-center justify-center"
                 >
                   <div className="w-16 h-16 rounded-full border border-dashed border-white/20 mx-auto flex items-center justify-center mb-4"><Cpu size={24} className="opacity-50" /></div>
                   <p>Select a service node from the catalog to configure parameters.</p>
@@ -203,70 +221,100 @@ Mission: ${projectContext || 'N/A'}`;
                 </motion.div>
               ) : isBooked ? (
                 // RECEIPT MODE
-                <motion.div 
-                    key="receipt" 
-                    initial={{ opacity: 0, scale: 0.95 }} 
-                    animate={{ opacity: 1, scale: 1 }} 
-                    exit={{ opacity: 0 }}
-                    className="flex-1 flex flex-col"
+                <motion.div
+                  key="receipt"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="flex-1 flex flex-col"
                 >
-                   <div className="text-center mb-6">
-                      <div className="w-16 h-16 rounded-full bg-green-500/20 text-green-400 mx-auto flex items-center justify-center mb-4 border border-green-500/50 shadow-[0_0_30px_rgba(74,222,128,0.2)]">
-                         <CheckCircle2 size={32} />
-                      </div>
-                      <h3 className="text-2xl font-display font-bold text-white mb-1">PROTOCOL INITIATED</h3>
-                      <p className="text-gray-400 text-sm">Your configuration has been logged.</p>
-                   </div>
-                   
-                   <div className="bg-black/40 border border-white/10 rounded-xl p-6 font-mono text-sm space-y-3 mb-6 relative overflow-hidden group">
-                      <div className="absolute top-0 right-0 p-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                         <button onClick={handleCopyQuote} className="p-2 bg-black/50 hover:bg-white/10 rounded text-gray-400 hover:text-white transition-colors" title="Copy Details"><Copy size={14}/></button>
-                      </div>
-                      <div className="flex justify-between border-b border-white/10 pb-2 mb-2">
-                         <span className="text-gray-500 uppercase tracking-widest text-[10px]">Reference</span>
-                         <span className="text-accent font-bold">{bookingReference || `#IV-${Date.now().toString().slice(-6)}`}</span>
-                      </div>
-                      <div className="flex justify-between">
-                         <span className="text-gray-400">Service</span>
-                         <span className="text-white text-right truncate ml-4">{selectedService.title}</span>
-                      </div>
-                      <div className="flex justify-between">
-                         <span className="text-gray-400">Creative</span>
-                         <span className="text-white text-right">{selectedProvider || 'Any'}</span>
-                      </div>
-                      <div className="flex justify-between">
-                         <span className="text-gray-400">Scope</span>
-                         <span className="text-white text-right">{selectedService.durationMinutes * durationMultiplier} min</span>
-                      </div>
-                       <div className="flex justify-between">
-                         <span className="text-gray-400">Date</span>
-                         <span className="text-white text-right text-accent">{selectedDate}th (Hold)</span>
-                      </div>
-                      <div className="pt-2 border-t border-white/10 flex justify-between text-lg font-bold">
-                         <span className="text-gray-300">Total Est.</span>
-                         <span className="text-accent">${totalPrice}</span>
-                      </div>
-                   </div>
+                  <div className="text-center mb-6">
+                    <div className="w-16 h-16 rounded-full bg-green-500/20 text-green-400 mx-auto flex items-center justify-center mb-4 border border-green-500/50 shadow-[0_0_30px_rgba(74,222,128,0.2)]">
+                      <CheckCircle2 size={32} />
+                    </div>
+                    <h3 className="text-2xl font-display font-bold text-white mb-1">PROTOCOL INITIATED</h3>
+                    <p className="text-gray-400 text-sm">Your configuration has been logged.</p>
+                  </div>
 
-                   <div className="space-y-3 mt-auto">
-                      <button onClick={handleOpenMail} className="w-full py-4 bg-white text-black font-bold rounded-xl hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2">
-                         <Mail size={18} /> CONFIRM VIA EMAIL
-                      </button>
-                      <button onClick={handleReset} className="w-full py-3 bg-white/5 text-gray-400 font-bold rounded-xl hover:bg-white/10 hover:text-white transition-all flex items-center justify-center gap-2 text-sm">
-                         <RefreshCw size={14} /> NEW CONFIGURATION
-                      </button>
-                   </div>
+                  <div className="bg-black/40 border border-white/10 rounded-xl p-6 font-mono text-sm space-y-3 mb-6 relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 p-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                      <button onClick={handleCopyQuote} className="p-2 bg-black/50 hover:bg-white/10 rounded text-gray-400 hover:text-white transition-colors" title="Copy Details"><Copy size={14} /></button>
+                    </div>
+                    <div className="flex justify-between border-b border-white/10 pb-2 mb-2">
+                      <span className="text-gray-500 uppercase tracking-widest text-[10px]">Reference</span>
+                      <span className="text-accent font-bold">{bookingReference || `#IV-${Date.now().toString().slice(-6)}`}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Service</span>
+                      <span className="text-white text-right truncate ml-4">{selectedService.title}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Creative</span>
+                      <span className="text-white text-right">{selectedProvider || 'Any'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Scope</span>
+                      <span className="text-white text-right">{selectedService.durationMinutes * durationMultiplier} min</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Date</span>
+                      <span className="text-white text-right text-accent">{selectedDate}th (Hold)</span>
+                    </div>
+                    <div className="pt-2 border-t border-white/10 flex justify-between text-lg font-bold">
+                      <span className="text-gray-300">Total Est.</span>
+                      <span className="text-accent">${totalPrice}</span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3 mt-auto relative z-20">
+                    <button onClick={() => setShowEmailModal(true)} className="w-full py-4 bg-white text-black font-bold rounded-xl hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2">
+                      <Mail size={18} /> CONFIRM VIA EMAIL
+                    </button>
+                    <button onClick={handleReset} className="w-full py-3 bg-white/5 text-gray-400 font-bold rounded-xl hover:bg-white/10 hover:text-white transition-all flex items-center justify-center gap-2 text-sm">
+                      <RefreshCw size={14} /> NEW CONFIGURATION
+                    </button>
+                  </div>
+
+                  {/* Email Provider Modal */}
+                  <AnimatePresence>
+                    {showEmailModal && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 10 }}
+                        className="absolute inset-0 bg-black/95 backdrop-blur-md rounded-3xl z-30 flex flex-col items-center justify-center p-6 text-center"
+                      >
+                        <h4 className="text-xl font-bold font-display mb-2 text-white">Select Channel</h4>
+                        <p className="text-gray-400 text-sm mb-6">Choose your preferred email client.</p>
+                        <div className="grid grid-cols-2 gap-3 w-full">
+                          <button onClick={() => handleOpenMail('gmail')} className="p-4 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all flex flex-col items-center gap-2">
+                            <span className="text-lg">📧</span>
+                            <span className="text-xs font-bold font-mono uppercase">Gmail</span>
+                          </button>
+                          <button onClick={() => handleOpenMail('outlook')} className="p-4 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all flex flex-col items-center gap-2">
+                            <span className="text-lg">📫</span>
+                            <span className="text-xs font-bold font-mono uppercase">Outlook</span>
+                          </button>
+                          <button onClick={() => handleOpenMail('default')} className="p-4 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all flex flex-col items-center gap-2 col-span-2">
+                            <Mail size={20} className="text-accent" />
+                            <span className="text-xs font-bold font-mono uppercase">System Default / iCloud</span>
+                          </button>
+                        </div>
+                        <button onClick={() => setShowEmailModal(false)} className="mt-6 text-gray-500 hover:text-white text-sm">Cancel</button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </motion.div>
               ) : (
                 // CONFIGURATION MODE
-                <motion.div 
-                    key={selectedService.id} 
-                    initial={{ opacity: 0, y: 10 }} 
-                    animate={{ opacity: 1, y: 0 }} 
-                    exit={{ opacity: 0, y: -10 }}
-                    className="flex-1 flex flex-col"
+                <motion.div
+                  key={selectedService.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="flex-1 flex flex-col"
                 >
-                  
+
                   {/* Service Info & Price */}
                   <div className="mb-6 border-b border-white/5 pb-4 shrink-0">
                     <div className="flex justify-between items-start">
@@ -279,7 +327,7 @@ Mission: ${projectContext || 'N/A'}`;
                           ${totalPrice}
                         </motion.div>
                         <button onClick={handleCopyQuote} className="text-[10px] font-mono text-gray-500 hover:text-white flex items-center gap-1 uppercase tracking-widest transition-colors">
-                           <Copy size={10} /> Copy Quote
+                          <Copy size={10} /> Copy Quote
                         </button>
                       </div>
                     </div>
@@ -287,20 +335,20 @@ Mission: ${projectContext || 'N/A'}`;
 
                   {/* CONFIGURATION SECTION */}
                   <div className="space-y-6 mb-6 overflow-y-auto custom-scrollbar pr-2 flex-1 min-h-0">
-                    
+
                     {/* Providers */}
                     {selectedService.providers && selectedService.providers.length > 1 && (
                       <div className="space-y-3">
-                        <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2"><User size={12}/> Lead Creative</label>
+                        <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2"><User size={12} /> Lead Creative</label>
                         <div className="flex gap-2 p-1 bg-black/40 rounded-xl border border-white/5">
                           {selectedService.providers.map(p => (
-                             <button 
-                                key={p}
-                                onClick={() => setSelectedProvider(p)}
-                                className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all ${selectedProvider === p ? 'bg-white/10 text-white shadow-sm border border-white/10' : 'text-gray-500 hover:text-white'}`}
-                             >
-                               {p}
-                             </button>
+                            <button
+                              key={p}
+                              onClick={() => setSelectedProvider(p)}
+                              className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all ${selectedProvider === p ? 'bg-white/10 text-white shadow-sm border border-white/10' : 'text-gray-500 hover:text-white'}`}
+                            >
+                              {p}
+                            </button>
                           ))}
                         </div>
                       </div>
@@ -308,62 +356,62 @@ Mission: ${projectContext || 'N/A'}`;
 
                     {/* Duration Slider (Only if hourly or long duration) */}
                     {(selectedService.hourly || selectedService.durationMinutes >= 60) && (
-                       <div className="space-y-4">
-                          <div className="flex justify-between items-center">
-                             <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2"><Clock size={12}/> Duration Scope</label>
-                             <span className="text-xs font-mono text-accent">{selectedService.durationMinutes * durationMultiplier} MIN</span>
-                          </div>
-                          <div className="relative h-6 flex items-center">
-                             <input 
-                                type="range" 
-                                min="1" 
-                                max="8" 
-                                step="0.5" 
-                                value={durationMultiplier} 
-                                onChange={(e) => setDurationMultiplier(parseFloat(e.target.value))}
-                                className="w-full accent-accent bg-white/10 h-1.5 rounded-lg appearance-none cursor-pointer"
-                             />
-                          </div>
-                          <div className="flex justify-between text-[10px] text-gray-600 font-mono">
-                             <span>Base ({selectedService.durationMinutes}m)</span>
-                             <span>Full Day</span>
-                          </div>
-                       </div>
+                      <div className="space-y-4">
+                        <div className="flex justify-between items-center">
+                          <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2"><Clock size={12} /> Duration Scope</label>
+                          <span className="text-xs font-mono text-accent">{selectedService.durationMinutes * durationMultiplier} MIN</span>
+                        </div>
+                        <div className="relative h-6 flex items-center">
+                          <input
+                            type="range"
+                            min="1"
+                            max="8"
+                            step="0.5"
+                            value={durationMultiplier}
+                            onChange={(e) => setDurationMultiplier(parseFloat(e.target.value))}
+                            className="w-full accent-accent bg-white/10 h-1.5 rounded-lg appearance-none cursor-pointer"
+                          />
+                        </div>
+                        <div className="flex justify-between text-[10px] text-gray-600 font-mono">
+                          <span>Base ({selectedService.durationMinutes}m)</span>
+                          <span>Full Day</span>
+                        </div>
+                      </div>
                     )}
 
                     {/* Add-on Options */}
                     {selectedService.options && selectedService.options.length > 0 && (
-                       <div className="space-y-3">
-                          <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2"><Zap size={12}/> Enhanced Modules</label>
-                          <div className="grid grid-cols-1 gap-2">
-                             {selectedService.options.map(opt => (
-                                <button 
-                                   key={opt.id}
-                                   onClick={() => toggleOption(opt.id)}
-                                   className={`flex items-center justify-between p-3 rounded-xl border transition-all text-sm ${selectedOptions.includes(opt.id) ? 'bg-accent/10 border-accent/50 text-white' : 'bg-white/5 border-white/5 text-gray-400 hover:border-white/20'}`}
-                                >
-                                   <div className="flex items-center gap-2">
-                                      <div className={`w-4 h-4 rounded border flex items-center justify-center ${selectedOptions.includes(opt.id) ? 'bg-accent border-accent' : 'border-gray-500'}`}>
-                                         {selectedOptions.includes(opt.id) && <CheckCircle2 size={12} className="text-black" />}
-                                      </div>
-                                      <span className="font-bold">{opt.label}</span>
-                                   </div>
-                                   <span className="font-mono text-xs opacity-70">{opt.price > 0 ? `+$${opt.price}` : `-$${Math.abs(opt.price)}`}</span>
-                                </button>
-                             ))}
-                          </div>
-                       </div>
+                      <div className="space-y-3">
+                        <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2"><Zap size={12} /> Enhanced Modules</label>
+                        <div className="grid grid-cols-1 gap-2">
+                          {selectedService.options.map(opt => (
+                            <button
+                              key={opt.id}
+                              onClick={() => toggleOption(opt.id)}
+                              className={`flex items-center justify-between p-3 rounded-xl border transition-all text-sm ${selectedOptions.includes(opt.id) ? 'bg-accent/10 border-accent/50 text-white' : 'bg-white/5 border-white/5 text-gray-400 hover:border-white/20'}`}
+                            >
+                              <div className="flex items-center gap-2">
+                                <div className={`w-4 h-4 rounded border flex items-center justify-center ${selectedOptions.includes(opt.id) ? 'bg-accent border-accent' : 'border-gray-500'}`}>
+                                  {selectedOptions.includes(opt.id) && <CheckCircle2 size={12} className="text-black" />}
+                                </div>
+                                <span className="font-bold">{opt.label}</span>
+                              </div>
+                              <span className="font-mono text-xs opacity-70">{opt.price > 0 ? `+$${opt.price}` : `-$${Math.abs(opt.price)}`}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
                     )}
-                    
+
                     {/* Project Context Form */}
                     <div className="space-y-3">
-                       <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2"><FileText size={12}/> Mission Context</label>
-                       <textarea 
-                          value={projectContext}
-                          onChange={(e) => setProjectContext(e.target.value)}
-                          placeholder="Briefly describe your specific needs or vision..."
-                          className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-sm text-gray-300 placeholder:text-gray-700 focus:outline-none focus:border-accent/50 resize-none h-24"
-                       />
+                      <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2"><FileText size={12} /> Mission Context</label>
+                      <textarea
+                        value={projectContext}
+                        onChange={(e) => setProjectContext(e.target.value)}
+                        placeholder="Briefly describe your specific needs or vision..."
+                        className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-sm text-gray-300 placeholder:text-gray-700 focus:outline-none focus:border-accent/50 resize-none h-24"
+                      />
                     </div>
                   </div>
 

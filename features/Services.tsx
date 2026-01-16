@@ -53,7 +53,19 @@ export const ServicesSection = ({ onCategoryChange, setPage }: ServicesSectionPr
           getFAQItems(),
           getProjects()
         ]);
-        setServices(servicesData);
+
+        // Map DB Service to Frontend ServiceItem
+        const mappedServices = servicesData.map(s => ({
+          ...s,
+          price: s.base_price, // Map base_price to price
+          durationMinutes: s.duration || 60, // Ensure duration exists
+          title: s.name // Map name to title if needed, though interface has title? No, ServiceItem has title, Service has name.
+        }));
+        // Wait, ServiceItem also has 'options'. DB Service doesn't seem to have options in the interface. 
+        // We might need to fetch options separately or check if they are included.
+        // For now, let's just fix the price and name mapping.
+
+        setServices(mappedServices as any); // Temporary cast until we align types
         setFaqItems(faqData);
         setProjects(projectsData);
       } catch (error) {
@@ -68,17 +80,17 @@ export const ServicesSection = ({ onCategoryChange, setPage }: ServicesSectionPr
   const categories = Array.from(new Set(services.map(s => s.category)));
   const days = Array.from({ length: 31 }, (_, i) => i + 1);
   const displayedCategories = activeFilter === 'All' ? categories : [activeFilter];
-  
+
   // Find related project based on selected service's category
-  const relatedProject = selectedService 
-    ? projects.find(p => p.category.toLowerCase().includes(selectedService.category.toLowerCase()) || selectedService.category.toLowerCase().includes(p.category.toLowerCase())) 
+  const relatedProject = selectedService
+    ? projects.find(p => p.category.toLowerCase().includes(selectedService.category.toLowerCase()) || selectedService.category.toLowerCase().includes(p.category.toLowerCase()))
     : null;
 
   useEffect(() => { onCategoryChange(selectedService ? selectedService.category : null); }, [selectedService, onCategoryChange]);
   useEffect(() => { const timer = setTimeout(() => setIsLoading(false), 800); return () => clearTimeout(timer); }, []);
 
   const scrollToBooking = () => bookingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  const getIcon = (category: string) => { switch(category) { case 'Creative': return <Camera className="text-accent" />; case 'Tech': return <Cpu className="text-white" />; case 'Content': return <Video className="text-accent" />; case 'Growth': return <Hash className="text-white" />; case 'Ministry': return <Mic className="text-accent" />; default: return <Cpu />; } };
+  const getIcon = (category: string) => { switch (category) { case 'Creative': return <Camera className="text-accent" />; case 'Tech': return <Cpu className="text-white" />; case 'Content': return <Video className="text-accent" />; case 'Growth': return <Hash className="text-white" />; case 'Ministry': return <Mic className="text-accent" />; default: return <Cpu />; } };
 
   return (
     <section className="min-h-screen pt-20 sm:pt-24 pb-32 px-4 sm:px-6 max-w-[1400px] mx-auto flex flex-col gap-12 lg:gap-24 relative">
@@ -97,55 +109,55 @@ export const ServicesSection = ({ onCategoryChange, setPage }: ServicesSectionPr
           </motion.div>
           <div className="space-y-12">
             {isLoading ? (
-               <div className="space-y-12">{[1, 2, 3].map(i => (<div key={i}><div className="flex items-center gap-3 mb-6 border-b border-white/5 pb-2"><SkeletonPulse className="w-6 h-6 rounded-full" /><SkeletonPulse className="h-6 w-32" /></div><div className="grid grid-cols-1 md:grid-cols-2 gap-4">{[1, 2].map(j => <ServiceSkeleton key={j} />)}</div></div>))}</div>
+              <div className="space-y-12">{[1, 2, 3].map(i => (<div key={i}><div className="flex items-center gap-3 mb-6 border-b border-white/5 pb-2"><SkeletonPulse className="w-6 h-6 rounded-full" /><SkeletonPulse className="h-6 w-32" /></div><div className="grid grid-cols-1 md:grid-cols-2 gap-4">{[1, 2].map(j => <ServiceSkeleton key={j} />)}</div></div>))}</div>
             ) : (
-               displayedCategories.map((category, idx) => (
-                 <motion.div key={category} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.1 }}>
-                   <div className="flex items-center gap-3 mb-6 border-b border-white/10 pb-2 sticky top-16 bg-void/90 z-20 backdrop-blur-md lg:static lg:bg-transparent">{getIcon(category)}<h3 className="text-lg sm:text-xl font-bold font-display uppercase tracking-wider text-gray-200">{category}</h3></div>
-                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                     {services.filter(s => s.category === category).map(service => (
-                       <motion.div key={service.id} variants={cardVariants} initial="idle" whileHover="hover" animate={selectedService?.id === service.id ? "active" : "idle"} layoutId={`card-${service.id}`} onClick={() => { setSelectedService(service as ServiceItem); setIsBooked(false); setSelectedDate(null); }} className="relative p-5 sm:p-6 rounded-2xl cursor-pointer overflow-hidden border touch-manipulation">
-                         {selectedService?.id === service.id && <motion.div className="absolute inset-0 bg-gradient-to-b from-transparent via-accent/10 to-transparent pointer-events-none" initial={{ y: "-100%" }} animate={{ y: "100%" }} transition={{ repeat: Infinity, duration: 2, ease: "linear" }} />}
-                         <div className="relative z-10">
-                           <div className="flex justify-between items-start mb-2 gap-4"><h4 className={`font-bold text-base sm:text-lg leading-tight ${selectedService?.id === service.id ? 'text-white' : 'text-gray-200'}`}>{service.name}</h4><span className={`font-mono text-xs px-2 py-1 rounded-full whitespace-nowrap ${selectedService?.id === service.id ? 'bg-black/20 text-accent' : 'bg-white/10'}`}>${service.base_price}</span></div>
-                           <p className={`text-sm mb-4 line-clamp-2 ${selectedService?.id === service.id ? 'text-gray-300' : 'text-gray-400'}`}>{service.description}</p>
-                           <div className={`flex items-center gap-2 text-xs font-mono uppercase tracking-wider ${selectedService?.id === service.id ? 'text-accent' : 'text-gray-500'}`}><Clock size={12} />{service.duration || 60} MIN</div>
-                         </div>
-                         {selectedService?.id === service.id && <div className="absolute bottom-4 right-4 text-accent"><CheckCircle2 size={20} /></div>}
-                       </motion.div>
-                     ))}
-                   </div>
-                 </motion.div>
-               ))
+              displayedCategories.map((category, idx) => (
+                <motion.div key={category} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.1 }}>
+                  <div className="flex items-center gap-3 mb-6 border-b border-white/10 pb-2 sticky top-16 bg-void/90 z-20 backdrop-blur-md lg:static lg:bg-transparent">{getIcon(category)}<h3 className="text-lg sm:text-xl font-bold font-display uppercase tracking-wider text-gray-200">{category}</h3></div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {services.filter(s => s.category === category).map(service => (
+                      <motion.div key={service.id} variants={cardVariants} initial="idle" whileHover="hover" animate={selectedService?.id === service.id ? "active" : "idle"} layoutId={`card-${service.id}`} onClick={() => { setSelectedService(service as ServiceItem); setIsBooked(false); setSelectedDate(null); }} className="relative p-5 sm:p-6 rounded-2xl cursor-pointer overflow-hidden border touch-manipulation">
+                        {selectedService?.id === service.id && <motion.div className="absolute inset-0 bg-gradient-to-b from-transparent via-accent/10 to-transparent pointer-events-none" initial={{ y: "-100%" }} animate={{ y: "100%" }} transition={{ repeat: Infinity, duration: 2, ease: "linear" }} />}
+                        <div className="relative z-10">
+                          <div className="flex justify-between items-start mb-2 gap-4"><h4 className={`font-bold text-base sm:text-lg leading-tight ${selectedService?.id === service.id ? 'text-white' : 'text-gray-200'}`}>{service.name}</h4><span className={`font-mono text-xs px-2 py-1 rounded-full whitespace-nowrap ${selectedService?.id === service.id ? 'bg-black/20 text-accent' : 'bg-white/10'}`}>${service.base_price}</span></div>
+                          <p className={`text-sm mb-4 line-clamp-2 ${selectedService?.id === service.id ? 'text-gray-300' : 'text-gray-400'}`}>{service.description}</p>
+                          <div className={`flex items-center gap-2 text-xs font-mono uppercase tracking-wider ${selectedService?.id === service.id ? 'text-accent' : 'text-gray-500'}`}><Clock size={12} />{service.duration || 60} MIN</div>
+                        </div>
+                        {selectedService?.id === service.id && <div className="absolute bottom-4 right-4 text-accent"><CheckCircle2 size={20} /></div>}
+                      </motion.div>
+                    ))}
+                  </div>
+                </motion.div>
+              ))
             )}
           </div>
         </div>
 
         {/* Booking Console & Contextual Intelligence */}
         <div ref={bookingRef} className="w-full lg:w-auto flex flex-col gap-6">
-          <BookingConsole 
-             selectedService={selectedService} selectedDate={selectedDate} setSelectedDate={setSelectedDate} 
-             isBooked={isBooked} setIsBooked={setIsBooked} days={days} setPage={setPage}
+          <BookingConsole
+            selectedService={selectedService} selectedDate={selectedDate} setSelectedDate={setSelectedDate}
+            isBooked={isBooked} setIsBooked={setIsBooked} days={days} setPage={setPage}
           />
-          
+
           {/* Contextual Case Study - Only shows when a service is selected */}
           <AnimatePresence>
             {selectedService && relatedProject && (
-                <motion.div 
-                    initial={{ opacity: 0, y: 20 }} 
-                    animate={{ opacity: 1, y: 0 }} 
-                    exit={{ opacity: 0, y: 20 }}
-                    className="glass-panel p-6 rounded-3xl border border-white/10 relative overflow-hidden group hidden lg:block"
-                >
-                    <div className="absolute top-0 right-0 p-8 opacity-10"><Sparkles size={100} /></div>
-                    <span className="text-[10px] font-mono text-accent uppercase tracking-widest mb-2 block">Relevant Transmission</span>
-                    <h4 className="text-xl font-bold mb-2 group-hover:text-accent transition-colors">{relatedProject.title}</h4>
-                    <p className="text-sm text-gray-400 mb-4 line-clamp-2">{relatedProject.description}</p>
-                    <div className="text-xs text-gray-500 flex items-center gap-2 font-mono">
-                        <CheckCircle2 size={12} className="text-green-500" />
-                        Outcome: {relatedProject.outcome}
-                    </div>
-                </motion.div>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 20 }}
+                className="glass-panel p-6 rounded-3xl border border-white/10 relative overflow-hidden group hidden lg:block"
+              >
+                <div className="absolute top-0 right-0 p-8 opacity-10"><Sparkles size={100} /></div>
+                <span className="text-[10px] font-mono text-accent uppercase tracking-widest mb-2 block">Relevant Transmission</span>
+                <h4 className="text-xl font-bold mb-2 group-hover:text-accent transition-colors">{relatedProject.title}</h4>
+                <p className="text-sm text-gray-400 mb-4 line-clamp-2">{relatedProject.description}</p>
+                <div className="text-xs text-gray-500 flex items-center gap-2 font-mono">
+                  <CheckCircle2 size={12} className="text-green-500" />
+                  Outcome: {relatedProject.outcome}
+                </div>
+              </motion.div>
             )}
           </AnimatePresence>
         </div>
@@ -153,14 +165,14 @@ export const ServicesSection = ({ onCategoryChange, setPage }: ServicesSectionPr
 
       <AnimatePresence>
         {selectedService && !isBooked && (
-          <motion.button 
-             initial={{ y: 100 }} 
-             animate={{ y: 0 }} 
-             exit={{ y: 100 }} 
-             onClick={scrollToBooking} 
-             className="fixed bottom-28 right-4 z-40 bg-accent text-void font-bold p-4 rounded-full shadow-2xl lg:hidden flex items-center gap-2 border-2 border-white/20"
+          <motion.button
+            initial={{ y: 100 }}
+            animate={{ y: 0 }}
+            exit={{ y: 100 }}
+            onClick={scrollToBooking}
+            className="fixed bottom-28 right-4 z-40 bg-accent text-void font-bold p-4 rounded-full shadow-2xl lg:hidden flex items-center gap-2 border-2 border-white/20"
           >
-             <span className="text-xs font-bold uppercase">Configure</span><ArrowDownCircle size={20} />
+            <span className="text-xs font-bold uppercase">Configure</span><ArrowDownCircle size={20} />
           </motion.button>
         )}
       </AnimatePresence>

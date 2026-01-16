@@ -10,7 +10,7 @@ import { azureChat, toAzureMessages, AISpendingLimitError, AIAuthError, getSpend
 import { g4fChat, g4fChatStream, getG4FProvider, DEFAULT_G4F_API_KEY, type G4FChatRequest, type G4FContentPart, type G4FMessage } from '../lib/g4fService';
 
 // --- Configuration ---
-const MAX_HISTORY_LENGTH = 20; 
+const MAX_HISTORY_LENGTH = 20;
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000;
 
@@ -169,7 +169,7 @@ export const useGeminiAI = (setPage?: (page: Page) => void) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isListening, setIsListening] = useState(false);
-  
+
   const [settings, setSettings] = useState<ChatSettings>(() => {
     const saved = localStorage.getItem('iv_ai_settings');
     return saved ? JSON.parse(saved) : {
@@ -200,7 +200,7 @@ export const useGeminiAI = (setPage?: (page: Page) => void) => {
   const [systemInstruction, setSystemInstruction] = useState(DEFAULT_SYSTEM_INSTRUCTION);
   const [tools, setTools] = useState<ToolDefinition[]>([...getInitialTools()]);
   const [modules, setModules] = useState({ navigation: true, knowledge: true, actions: false });
-  
+
   const aiClientRef = useRef<GoogleGenAI | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const cancelledRef = useRef(false);
@@ -273,7 +273,7 @@ export const useGeminiAI = (setPage?: (page: Page) => void) => {
     } else {
       addMessage('user', input, undefined, undefined, attachments);
     }
-    
+
     setIsProcessing(true);
     abortControllerRef.current = new AbortController();
     cancelledRef.current = false;
@@ -288,7 +288,7 @@ export const useGeminiAI = (setPage?: (page: Page) => void) => {
         if (!aiClientRef.current) throw new Error("Google AI Client not initialized.");
         const activeTools = tools.filter(t => t.enabled);
         const allToolsForRequest = modules.navigation ? [NAV_TOOL_DEF, ...activeTools] : activeTools;
-        
+
         const functionDeclarations: FunctionDeclaration[] = allToolsForRequest.map(t => {
           try {
             return { name: t.name, description: t.description, parameters: JSON.parse(t.parameters) };
@@ -296,10 +296,10 @@ export const useGeminiAI = (setPage?: (page: Page) => void) => {
         }).filter(Boolean) as FunctionDeclaration[];
 
         const history = historySlice.filter(m => m.role !== 'system').map(m => ({
-             role: m.role,
-             parts: m.toolCalls 
-              ? [{ text: mergeTextWithAttachments(m.text, m.attachments, { includeImages: true }) }, ...m.toolCalls.map(tc => ({ functionCall: { name: tc.name, args: tc.args } }))] 
-              : [{ text: mergeTextWithAttachments(m.text, m.attachments, { includeImages: true }) }]
+          role: m.role,
+          parts: m.toolCalls
+            ? [{ text: mergeTextWithAttachments(m.text, m.attachments, { includeImages: true }) }, ...m.toolCalls.map(tc => ({ functionCall: { name: tc.name, args: tc.args } }))]
+            : [{ text: mergeTextWithAttachments(m.text, m.attachments, { includeImages: true }) }]
         }));
 
         let attempts = 0;
@@ -324,28 +324,28 @@ export const useGeminiAI = (setPage?: (page: Page) => void) => {
             finalResponseText = currentResponse.text || "";
 
             for (let turn = 0; turn < 5; turn++) {
-               const parts = currentResponse.candidates?.[0]?.content?.parts || [];
-               const functionCalls = parts.filter(p => p.functionCall).map(p => p.functionCall!);
+              const parts = currentResponse.candidates?.[0]?.content?.parts || [];
+              const functionCalls = parts.filter(p => p.functionCall).map(p => p.functionCall!);
 
-               if (functionCalls.length > 0) {
-                  const toolOutputs = [];
-                  for (const call of functionCalls) {
-                    toolCallsRecord.push({ name: call.name, args: call.args });
-                    let result: any = { error: "Execution failed" };
+              if (functionCalls.length > 0) {
+                const toolOutputs = [];
+                for (const call of functionCalls) {
+                  toolCallsRecord.push({ name: call.name, args: call.args });
+                  let result: any = { error: "Execution failed" };
 
-                    if (call.name === 'changePage') {
-                      const dest = (call.args as any).destination;
-                      if (setPage) { setPage(dest as Page); result = { success: true }; }
-                    } else {
-                      const toolDef = activeTools.find(t => t.name === call.name);
-                      if (toolDef) result = executeTool(toolDef.code, call.args);
-                    }
-                    toolResultsRecord.push({ name: call.name, result });
-                    toolOutputs.push({ functionResponse: { name: call.name, response: result } });
+                  if (call.name === 'changePage') {
+                    const dest = (call.args as any).destination;
+                    if (setPage) { setPage(dest as Page); result = { success: true }; }
+                  } else {
+                    const toolDef = activeTools.find(t => t.name === call.name);
+                    if (toolDef) result = executeTool(toolDef.code, call.args);
                   }
-                  currentResponse = await chatSession.sendMessage({ message: toolOutputs });
-                  if (currentResponse.text) finalResponseText = currentResponse.text;
-               } else break;
+                  toolResultsRecord.push({ name: call.name, result });
+                  toolOutputs.push({ functionResponse: { name: call.name, response: result } });
+                }
+                currentResponse = await chatSession.sendMessage({ message: toolOutputs });
+                if (currentResponse.text) finalResponseText = currentResponse.text;
+              } else break;
             }
             success = true;
           } catch (error: any) {
@@ -364,12 +364,12 @@ export const useGeminiAI = (setPage?: (page: Page) => void) => {
           role: m.role,
           text: mergeTextWithAttachments(m.text, m.attachments, { includeImages: true })
         }));
-        
+
         // Add the new user input
         historyForAzure.push({ role: 'user', text: inputWithAttachments });
-        
+
         const azureMessages = toAzureMessages(systemInstruction, historyForAzure);
-        
+
         const response = await azureChat({
           messages: azureMessages,
           model: settings.modelOverride as any || 'deepseek-v3.2',
@@ -377,7 +377,7 @@ export const useGeminiAI = (setPage?: (page: Page) => void) => {
           maxTokens: 2048,
           signal: abortControllerRef.current?.signal
         });
-        
+
         // Update spending info
         if (response.spending) {
           setSpending({
@@ -387,7 +387,7 @@ export const useGeminiAI = (setPage?: (page: Page) => void) => {
             isUnderLimit: response.spending.remaining > 0
           });
         }
-        
+
         if (!cancelledRef.current) {
           addMessage('model', response.content);
         }
@@ -398,22 +398,24 @@ export const useGeminiAI = (setPage?: (page: Page) => void) => {
           model: 'openai',
           streaming: true
         };
-        
+
         const providerConfig = getG4FProvider(g4fSettings.subProvider);
         const supportsVision = providerConfig?.supportsVision ?? false;
-        
+
         // Build messages for G4F
         const g4fMessages = buildG4FMessages(historySlice, systemInstruction, supportsVision);
-        
+
         // Add the new user input
-        g4fMessages.push({ role: 'user', content: buildG4FMessageContent({
-          id: Date.now().toString(),
-          role: 'user',
-          text: input,
-          timestamp: Date.now(),
-          attachments
-        }, supportsVision) });
-        
+        g4fMessages.push({
+          role: 'user', content: buildG4FMessageContent({
+            id: Date.now().toString(),
+            role: 'user',
+            text: input,
+            timestamp: Date.now(),
+            attachments
+          }, supportsVision)
+        });
+
         const g4fRequest: G4FChatRequest = {
           provider: g4fSettings.subProvider,
           model: g4fSettings.model || (providerConfig?.popularModels[0] || 'openai'),
@@ -427,7 +429,7 @@ export const useGeminiAI = (setPage?: (page: Page) => void) => {
             webSearch: g4fSettings.webSearch
           }
         };
-        
+
         // Use streaming if enabled and supported
         if (g4fSettings.streaming && providerConfig?.supportsStreaming) {
           // Create a placeholder message that we'll update
@@ -438,48 +440,67 @@ export const useGeminiAI = (setPage?: (page: Page) => void) => {
             text: '',
             timestamp: Date.now()
           }]);
-          
+
           let fullContent = '';
-          
+
           try {
             for await (const chunk of g4fChatStream(g4fRequest)) {
               if (cancelledRef.current) break;
               fullContent += chunk;
               // Update the message in place
-              setMessages(prev => prev.map(msg => 
-                msg.id === messageId 
+              setMessages(prev => prev.map(msg =>
+                msg.id === messageId
                   ? { ...msg, text: fullContent }
                   : msg
               ));
             }
           } catch (streamError) {
-            // If streaming fails, try non-streaming fallback
-            if (fullContent.length === 0) {
+            console.warn("G4F Stream failed, retrying with non-streaming:", streamError);
+          }
+
+          // If streaming failed or yielded no content, try fallback
+          if (fullContent.trim().length === 0 && !cancelledRef.current) {
+            try {
               const response = await g4fChat(g4fRequest);
-              if (!cancelledRef.current) {
-                setMessages(prev => prev.map(msg => 
-                  msg.id === messageId 
-                    ? { ...msg, text: response.content }
-                    : msg
+              if (response.content) {
+                setMessages(prev => prev.map(msg =>
+                  msg.id === messageId ? { ...msg, text: response.content } : msg
                 ));
+              } else {
+                throw new Error("Empty response from provider");
               }
+            } catch (fallbackError) {
+              // If fallback also fails, update message to show error
+              setMessages(prev => prev.map(msg =>
+                msg.id === messageId
+                  ? { ...msg, text: "⚠️ Connection to AI provider failed. Please try a different provider in settings or try again." }
+                  : msg
+              ));
             }
           }
         } else {
           // Non-streaming request
-          const response = await g4fChat(g4fRequest);
-          if (!cancelledRef.current) {
-            addMessage('model', response.content);
+          try {
+            const response = await g4fChat(g4fRequest);
+            if (!cancelledRef.current) {
+              if (response.content) {
+                addMessage('model', response.content);
+              } else {
+                throw new Error("Empty response");
+              }
+            }
+          } catch (error) {
+            addMessage('system', "⚠️ AI Provider Error: Failed to get a response. Please check your settings.");
           }
         }
       } else {
         // --- MULTI-PROVIDER CHAT (requires user API key) ---
         if (!settings.customApiKey) throw new Error(`API Key required for ${settings.provider}`);
-        
+
         const universalMessages = [
           { role: 'system' as const, content: systemInstruction },
-          ...historySlice.map(m => ({ 
-            role: m.role === 'model' ? 'assistant' as const : 'user' as const, 
+          ...historySlice.map(m => ({
+            role: m.role === 'model' ? 'assistant' as const : 'user' as const,
             content: mergeTextWithAttachments(m.text, m.attachments, { includeImages: true })
           }))
         ];

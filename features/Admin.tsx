@@ -7,16 +7,23 @@ import {
   Mail, Calendar, MessageSquare, Users, FileText, Settings,
   LogOut, ChevronRight, Clock, CheckCircle2, Archive,
   Eye, Trash2, RefreshCw, X, User, Building2,
-  Activity, Database, ShieldCheck, Lock as LockIcon, Loader2, AlertCircle
+  Activity, Database, ShieldCheck, Lock as LockIcon, Loader2, AlertCircle, PenTool
 } from 'lucide-react';
+
+// ... (existing code)
+
 import { useNavigate } from 'react-router-dom';
 import { useAuthContext, ProtectedRoute } from '../components/AuthProvider';
 import { useToast } from '../components/ToastSystem';
 import { getContactMessages, updateMessageStatus, type ContactMessage, type ContactStatus } from '../lib/supabase/contactService';
 import { getBookings, updateBookingStatus, type Booking, type BookingStatus } from '../lib/supabase/bookingService';
+import { ServiceManager } from './admin/ServiceManager';
+import { ProjectManager } from './admin/ProjectManager';
+import { BlogManager } from './admin/BlogManager';
 
 // Tab types
-type AdminTab = 'contacts' | 'bookings' | 'comments' | 'settings' | 'system';
+
+type AdminTab = 'contacts' | 'bookings' | 'services' | 'content' | 'blog' | 'comments' | 'settings' | 'system';
 
 // Status badge component
 function StatusBadge({ status, type }: { status: string; type: 'contact' | 'booking' }) {
@@ -371,6 +378,9 @@ function AdminDashboardContent() {
   const tabs = [
     { id: 'contacts' as AdminTab, label: 'Messages', icon: Mail, count: newContactsCount },
     { id: 'bookings' as AdminTab, label: 'Bookings', icon: Calendar, count: pendingBookingsCount },
+    { id: 'services' as AdminTab, label: 'Services', icon: Database },
+    { id: 'content' as AdminTab, label: 'Portfolio', icon: FileText },
+    { id: 'blog' as AdminTab, label: 'Blog', icon: PenTool },
     { id: 'comments' as AdminTab, label: 'Comments', icon: MessageSquare, count: 0 },
     { id: 'system' as AdminTab, label: 'System Health', icon: Activity },
     { id: 'settings' as AdminTab, label: 'Settings', icon: Settings },
@@ -500,6 +510,42 @@ function AdminDashboardContent() {
                       ))}
                     </div>
                   )}
+                </motion.div>
+              )}
+
+              {/* Services Tab */}
+              {activeTab === 'services' && (
+                <motion.div
+                  key="services"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                >
+                  <ServiceManager />
+                </motion.div>
+              )}
+
+              {/* Content / Portfolio Tab */}
+              {activeTab === 'content' && (
+                <motion.div
+                  key="content"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                >
+                  <ProjectManager />
+                </motion.div>
+              )}
+
+              {/* Blog Tab */}
+              {activeTab === 'blog' && (
+                <motion.div
+                  key="blog"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                >
+                  <BlogManager />
                 </motion.div>
               )}
 

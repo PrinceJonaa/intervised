@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, useMotionValue, useSpring, AnimatePresence } from 'framer-motion';
-import { Instagram, Mail, Music, ChevronDown, ChevronUp, Activity } from 'lucide-react';
+import { Instagram, Mail, Music, ChevronDown, ChevronUp, Activity, Globe } from 'lucide-react';
 import { TeamSkeleton } from '../components/Loading';
 import { useToast } from '../components/ToastSystem';
 import { TeamMember } from '../types';
@@ -25,11 +25,11 @@ const TeamCard = ({ member, index }: { member: TeamMember; index: number }) => {
     const rect = ref.current.getBoundingClientRect();
     const width = rect.width;
     const height = rect.height;
-    
+
     // Calculate mouse position relative to center of card
     const clickX = e.clientX - rect.left;
     const clickY = e.clientY - rect.top;
-    
+
     // Move up to 20px in opposition or direction
     const xPos = (clickX / width - 0.5) * 20;
     const yPos = (clickY / height - 0.5) * 20;
@@ -79,76 +79,88 @@ const TeamCard = ({ member, index }: { member: TeamMember; index: number }) => {
           alt={member.name}
           width={400}
           height={500}
+          loading={index < 2 ? "eager" : "lazy"}
+          decoding="async"
           style={{ x: mouseX, y: mouseY, scale: 1.15 }}
           className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700 will-change-transform"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-void via-void/20 to-transparent opacity-90" />
-        
+
         {/* Status Indicator */}
         {member.status && (
-           <div className="absolute top-4 right-4 flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/40 border border-white/10 backdrop-blur-md">
-              <div className={`w-2 h-2 rounded-full ${getStatusColor(member.status)} animate-pulse`}></div>
-              <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-white">{member.status}</span>
-           </div>
+          <div className="absolute top-4 right-4 flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/40 border border-white/10 backdrop-blur-md">
+            <div className={`w-2 h-2 rounded-full ${getStatusColor(member.status)} animate-pulse`}></div>
+            <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-white">{member.status}</span>
+          </div>
         )}
 
         <div className="absolute bottom-0 left-0 p-6 sm:p-8 w-full transform translate-y-0 transition-transform">
-           <motion.div layout="position">
-              <h3 className="text-2xl sm:text-3xl font-display font-bold leading-none text-white mb-2">{member.name}</h3>
-              <p className="text-accent font-mono text-sm tracking-wide">{member.role}</p>
-           </motion.div>
+          <motion.div layout="position">
+            <h3 className="text-2xl sm:text-3xl font-display font-bold leading-none text-white mb-2">{member.name}</h3>
+            <p className="text-accent font-mono text-sm tracking-wide">{member.role}</p>
+          </motion.div>
         </div>
       </div>
 
       <div className="p-6 sm:p-8 pt-4">
         <motion.div layout="position" className="relative">
-             <AnimatePresence mode="wait">
-                 {isExpanded ? (
-                     <motion.div 
-                        key="full" 
-                        initial={{ opacity: 0, height: 0 }} 
-                        animate={{ opacity: 1, height: 'auto' }} 
-                        exit={{ opacity: 0, height: 0 }}
-                        transition={{ duration: 0.3 }}
-                     >
-                        <p className="text-gray-200 leading-relaxed text-base font-serif mb-6">{member.bio}</p>
-                     </motion.div>
-                 ) : (
-                     <motion.div 
-                        key="collapsed"
-                        initial={{ opacity: 0 }} 
-                        animate={{ opacity: 1 }} 
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.3 }}
-                     >
-                        <p className="text-gray-400 leading-relaxed text-sm line-clamp-2 mb-2">{member.bio}</p>
-                     </motion.div>
-                 )}
-             </AnimatePresence>
+          <AnimatePresence mode="wait">
+            {isExpanded ? (
+              <motion.div
+                key="full"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <p className="text-gray-200 leading-relaxed text-base font-serif mb-6">{member.bio}</p>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="collapsed"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <p className="text-gray-400 leading-relaxed text-sm line-clamp-2 mb-2">{member.bio}</p>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
 
         <motion.div layout="position" className="flex items-center justify-between pt-4 border-t border-white/10 mt-2">
-            <div className="flex gap-3">
-              {member.links.instagram && (
-                <a href={member.links.instagram} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="p-2 bg-black/20 rounded-full hover:bg-white hover:text-black transition-colors border border-white/5" title="Instagram">
-                  <Instagram size={18} />
-                </a>
-              )}
-              {member.links.email && (
-                <button onClick={(e) => handleCopyEmail(e, member.links.email!)} className="p-2 bg-black/20 rounded-full hover:bg-accent hover:text-void transition-colors border border-white/5" title="Copy Email">
-                  <Mail size={18} />
-                </button>
-              )}
-              {member.links.spotify && (
-                <a href={member.links.spotify} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="p-2 bg-black/20 rounded-full hover:bg-[#1DB954] hover:text-white transition-colors border border-white/5" title="Spotify">
-                  <Music size={18} />
-                </a>
-              )}
-            </div>
-            <div className={`text-[10px] font-bold font-mono uppercase tracking-widest flex items-center gap-2 transition-colors ${isExpanded ? 'text-accent' : 'text-gray-500 group-hover:text-gray-300'}`}>
-               {isExpanded ? 'Collapse' : 'Read Bio'}
-               {isExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-            </div>
+          <div className="flex gap-3">
+            {member.links.instagram && (
+              <a href={member.links.instagram} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="p-2 bg-black/20 rounded-full hover:bg-white hover:text-black transition-colors border border-white/5" title="Instagram">
+                <Instagram size={18} />
+              </a>
+            )}
+            {member.links.email && (
+              <button onClick={(e) => handleCopyEmail(e, member.links.email!)} className="p-2 bg-black/20 rounded-full hover:bg-accent hover:text-void transition-colors border border-white/5" title="Copy Email">
+                <Mail size={18} />
+              </button>
+            )}
+            {member.links.spotify && (
+              <a href={member.links.spotify} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="p-2 bg-black/20 rounded-full hover:bg-[#1DB954] hover:text-white transition-colors border border-white/5" title="Spotify">
+                <Music size={18} />
+              </a>
+            )}
+            {member.links.soundcloud && (
+              <a href={member.links.soundcloud} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="p-2 bg-black/20 rounded-full hover:bg-[#ff5500] hover:text-white transition-colors border border-white/5" title="SoundCloud">
+                <Music size={18} />
+              </a>
+            )}
+            {member.links.website && (
+              <a href={member.links.website} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="p-2 bg-black/20 rounded-full hover:bg-accent hover:text-void transition-colors border border-white/5" title="Website">
+                <Globe size={18} />
+              </a>
+            )}
+          </div>
+          <div className={`text-[10px] font-bold font-mono uppercase tracking-widest flex items-center gap-2 transition-colors ${isExpanded ? 'text-accent' : 'text-gray-500 group-hover:text-gray-300'}`}>
+            {isExpanded ? 'Collapse' : 'Read Bio'}
+            {isExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+          </div>
         </motion.div>
       </div>
     </motion.div>
@@ -178,29 +190,31 @@ export const TeamSection = () => {
       <div className="mb-12 sm:mb-16 text-center max-w-3xl mx-auto">
         <h2 className="text-4xl md:text-6xl font-display font-bold mb-4 sm:mb-6">THE CREATORS</h2>
         <p className="text-gray-400 text-base sm:text-lg px-2">
-          We believe creativity and technology are not opposites — they are collaborators. 
+          We believe creativity and technology are not opposites — they are collaborators.
           Intervised exists to midwife coherence, bringing sacred and systemic projects into reality.
         </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 sm:gap-12">
         {isLoading ? (
-           [1, 2].map(i => <TeamSkeleton key={i} />)
+          [1, 2].map(i => <TeamSkeleton key={i} />)
         ) : (
-           teamMembers.map((member, idx) => (
-             <TeamCard key={member.id} member={{
-               name: member.name,
-               role: member.role,
-               bio: member.bio || '',
-               image: member.image || '',
-               status: member.status || 'Online',
-               links: {
-                 instagram: member.twitter || undefined,
-                 email: member.email || undefined,
-                 spotify: member.spotify || undefined
-               }
-             }} index={idx} />
-           ))
+          teamMembers.map((member, idx) => (
+            <TeamCard key={member.id} member={{
+              name: member.name,
+              role: member.role,
+              bio: member.bio || '',
+              image: member.image || '',
+              status: member.status as any || 'Online',
+              links: {
+                instagram: member.instagram || member.twitter || undefined,
+                email: member.email || undefined,
+                spotify: member.spotify || undefined,
+                website: member.website || undefined,
+                soundcloud: member.soundcloud || undefined
+              }
+            }} index={idx} />
+          ))
         )}
       </div>
     </section>

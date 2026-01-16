@@ -145,8 +145,7 @@ function ChatPageWrapper({ setPage }: { setPage: (p: Page) => void }) {
 function LoginPageWrapper() {
   useSEO({
     title: 'Sign In | Intervised',
-    description: 'Sign in to your Intervised account to access exclusive features and manage your content.',
-    path: '/login'
+    description: 'Sign in to your Intervised account to access exclusive features and manage your content.'
   });
   return (
     <PageWrapper>

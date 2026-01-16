@@ -8,11 +8,11 @@ import * as THREE from 'three';
 // Augmenting both global JSX and React.JSX namespaces for maximum compatibility with @react-three/fiber
 declare global {
   namespace JSX {
-    interface IntrinsicElements extends ThreeElements {}
+    interface IntrinsicElements extends ThreeElements { }
   }
   namespace React {
     namespace JSX {
-      interface IntrinsicElements extends ThreeElements {}
+      interface IntrinsicElements extends ThreeElements { }
     }
   }
 }
@@ -62,7 +62,7 @@ const AnimatedSphere = ({ activeCategory }: { activeCategory: string | null }) =
   );
 };
 
-export const BackgroundScene = ({ activeCategory }: { activeCategory: string | null }) => {
+export const BackgroundScene = React.memo(({ activeCategory }: { activeCategory: string | null }) => {
   const [dpr, setDpr] = useState(1);
   const [isTabActive, setIsTabActive] = useState(true);
 
@@ -83,9 +83,9 @@ export const BackgroundScene = ({ activeCategory }: { activeCategory: string | n
         dpr={dpr}
         gl={{ antialias: false, powerPreference: 'low-power' }}
       >
-        <PerformanceMonitor 
-          onDecline={() => setDpr(0.5)} 
-          onIncline={() => setDpr(window.devicePixelRatio)} 
+        <PerformanceMonitor
+          onDecline={() => setDpr(0.5)}
+          onIncline={() => setDpr(window.devicePixelRatio)}
         />
         {/* @ts-ignore - Fix for ambientLight JSX error */}
         <ambientLight intensity={0.6} />
@@ -96,4 +96,4 @@ export const BackgroundScene = ({ activeCategory }: { activeCategory: string | n
       </Canvas>
     </div>
   );
-};
+});
