@@ -55,6 +55,7 @@ export interface Project {
   results?: string;
   image?: string;
   url?: string;
+  outcome?: string; // Short result description
   is_featured?: boolean;
   service_ids?: string[]; // Cross-reference to Services
   sort_order?: number;

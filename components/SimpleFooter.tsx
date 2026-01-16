@@ -10,7 +10,7 @@ export const SimpleFooter = () => {
 
     return (
         <footer className="w-full py-8 mt-auto px-4 z-40 relative">
-            <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] sm:text-xs text-gray-500 font-mono tracking-wide uppercase">
+            <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] sm:text-xs text-gray-400 font-mono tracking-wide uppercase">
 
                 {/* Copyright */}
                 <div className="text-center md:text-left">

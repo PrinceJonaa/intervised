@@ -40,7 +40,7 @@ export const ServicesSection = ({ onCategoryChange, setPage }: ServicesSectionPr
   const bookingRef = useRef<HTMLDivElement>(null);
 
   // Data from Supabase
-  const [services, setServices] = useState<Service[]>([]);
+  const [services, setServices] = useState<ServiceItem[]>([]);
   const [faqItems, setFaqItems] = useState<FAQItem[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
 
@@ -55,17 +55,22 @@ export const ServicesSection = ({ onCategoryChange, setPage }: ServicesSectionPr
         ]);
 
         // Map DB Service to Frontend ServiceItem
-        const mappedServices = servicesData.map(s => ({
-          ...s,
-          price: s.base_price, // Map base_price to price
-          durationMinutes: s.duration || 60, // Ensure duration exists
-          title: s.name // Map name to title if needed, though interface has title? No, ServiceItem has title, Service has name.
+        const mappedServices: ServiceItem[] = servicesData.map(s => ({
+          id: s.id,
+          title: s.name,
+          description: s.description || '',
+          price: s.base_price,
+          durationMinutes: s.duration || 60,
+          category: s.category,
+          features: [], // Default empty features if not in DB
+          options: s.options?.map((opt: any) => ({
+            id: opt.id || opt.name, // Fallback if id missing
+            label: opt.name || opt.label,
+            price: opt.price
+          })) || []
         }));
-        // Wait, ServiceItem also has 'options'. DB Service doesn't seem to have options in the interface. 
-        // We might need to fetch options separately or check if they are included.
-        // For now, let's just fix the price and name mapping.
 
-        setServices(mappedServices as any); // Temporary cast until we align types
+        setServices(mappedServices);
         setFaqItems(faqData);
         setProjects(projectsData);
       } catch (error) {
@@ -101,9 +106,9 @@ export const ServicesSection = ({ onCategoryChange, setPage }: ServicesSectionPr
             <h2 className="text-4xl md:text-6xl font-display font-bold mb-4">SERVICES</h2>
             <p className="text-gray-400 max-w-xl text-base sm:text-lg mb-8">Select a service protocol to initialize booking sequence.</p>
             <div className="flex flex-wrap gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
-              <button onClick={() => setActiveFilter('All')} className={`flex-shrink-0 px-4 py-2 rounded-full text-xs sm:text-sm font-mono uppercase tracking-wider transition-all border flex items-center gap-2 ${activeFilter === 'All' ? 'bg-accent text-void border-accent font-bold' : 'bg-transparent text-gray-500 border-white/10 hover:border-white/30 hover:text-white'}`}><Filter size={14} /> All Protocols</button>
+              <button onClick={() => setActiveFilter('All')} className={`flex-shrink-0 px-4 py-2 rounded-full text-xs sm:text-sm font-mono uppercase tracking-wider transition-all border flex items-center gap-2 ${activeFilter === 'All' ? 'bg-accent text-void border-accent font-bold' : 'bg-transparent text-gray-400 border-white/10 hover:border-white/30 hover:text-white'}`}><Filter size={14} /> All Protocols</button>
               {categories.map(cat => (
-                <button key={cat} onClick={() => setActiveFilter(cat)} className={`flex-shrink-0 px-4 py-2 rounded-full text-xs sm:text-sm font-mono uppercase tracking-wider transition-all border ${activeFilter === cat ? 'bg-accent/20 text-accent border-accent' : 'bg-transparent text-gray-500 border-white/10 hover:border-white/30 hover:text-white'}`}>{cat}</button>
+                <button key={cat} onClick={() => setActiveFilter(cat)} className={`flex-shrink-0 px-4 py-2 rounded-full text-xs sm:text-sm font-mono uppercase tracking-wider transition-all border ${activeFilter === cat ? 'bg-accent/20 text-accent border-accent' : 'bg-transparent text-gray-400 border-white/10 hover:border-white/30 hover:text-white'}`}>{cat}</button>
               ))}
             </div>
           </motion.div>
@@ -115,13 +120,14 @@ export const ServicesSection = ({ onCategoryChange, setPage }: ServicesSectionPr
                 <motion.div key={category} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.1 }}>
                   <div className="flex items-center gap-3 mb-6 border-b border-white/10 pb-2 sticky top-16 bg-void/90 z-20 backdrop-blur-md lg:static lg:bg-transparent">{getIcon(category)}<h3 className="text-lg sm:text-xl font-bold font-display uppercase tracking-wider text-gray-200">{category}</h3></div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
                     {services.filter(s => s.category === category).map(service => (
-                      <motion.div key={service.id} variants={cardVariants} initial="idle" whileHover="hover" animate={selectedService?.id === service.id ? "active" : "idle"} layoutId={`card-${service.id}`} onClick={() => { setSelectedService(service as ServiceItem); setIsBooked(false); setSelectedDate(null); }} className="relative p-5 sm:p-6 rounded-2xl cursor-pointer overflow-hidden border touch-manipulation">
+                      <motion.div key={service.id} variants={cardVariants} initial="idle" whileHover="hover" animate={selectedService?.id === service.id ? "active" : "idle"} layoutId={`card-${service.id}`} onClick={() => { setSelectedService(service); setIsBooked(false); setSelectedDate(null); }} className="relative p-5 sm:p-6 rounded-2xl cursor-pointer overflow-hidden border touch-manipulation">
                         {selectedService?.id === service.id && <motion.div className="absolute inset-0 bg-gradient-to-b from-transparent via-accent/10 to-transparent pointer-events-none" initial={{ y: "-100%" }} animate={{ y: "100%" }} transition={{ repeat: Infinity, duration: 2, ease: "linear" }} />}
                         <div className="relative z-10">
                           <div className="flex justify-between items-start mb-2 gap-4"><h4 className={`font-bold text-base sm:text-lg leading-tight ${selectedService?.id === service.id ? 'text-white' : 'text-gray-200'}`}>{service.name}</h4><span className={`font-mono text-xs px-2 py-1 rounded-full whitespace-nowrap ${selectedService?.id === service.id ? 'bg-black/20 text-accent' : 'bg-white/10'}`}>${service.base_price}</span></div>
                           <p className={`text-sm mb-4 line-clamp-2 ${selectedService?.id === service.id ? 'text-gray-300' : 'text-gray-400'}`}>{service.description}</p>
-                          <div className={`flex items-center gap-2 text-xs font-mono uppercase tracking-wider ${selectedService?.id === service.id ? 'text-accent' : 'text-gray-500'}`}><Clock size={12} />{service.duration || 60} MIN</div>
+                          <div className={`flex items-center gap-2 text-xs font-mono uppercase tracking-wider ${selectedService?.id === service.id ? 'text-accent' : 'text-gray-400'}`}><Clock size={12} />{service.duration || 60} MIN</div>
                         </div>
                         {selectedService?.id === service.id && <div className="absolute bottom-4 right-4 text-accent"><CheckCircle2 size={20} /></div>}
                       </motion.div>
