@@ -26,6 +26,7 @@ import { NavDock, Header } from './components/Navigation';
 import { ToastProvider } from './components/ToastSystem';
 import { ScrollToTop } from './components/ScrollToTop';
 import { AuthProvider, ProtectedRoute } from './components/AuthProvider';
+import { SimpleFooter } from './components/SimpleFooter';
 
 // Loading skeleton for lazy components
 const PageSkeleton = () => (
@@ -252,6 +253,7 @@ function AppContent() {
         </AnimatePresence>
       </main>
 
+      <SimpleFooter />
       <NavDock currentPage={currentPage} setPage={setPage} />
       <ScrollToTop />
     </div>
