@@ -76,7 +76,7 @@ export const BackgroundScene = React.memo(({ activeCategory }: { activeCategory:
   }, []);
 
   return (
-    <div className="fixed inset-0 z-0 pointer-events-none opacity-40">
+    <div className="fixed inset-0 z-0 pointer-events-none opacity-40" aria-hidden="true">
       <Canvas
         frameloop={isTabActive ? 'always' : 'never'}
         camera={{ position: [0, 0, 5], fov: 45 }}
@@ -85,7 +85,7 @@ export const BackgroundScene = React.memo(({ activeCategory }: { activeCategory:
       >
         <PerformanceMonitor
           onDecline={() => setDpr(0.5)}
-          onIncline={() => setDpr(window.devicePixelRatio)}
+          onIncline={() => setDpr(Math.min(window.devicePixelRatio, 2))}
         />
         {/* @ts-ignore - Fix for ambientLight JSX error */}
         <ambientLight intensity={0.6} />
