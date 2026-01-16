@@ -1,4 +1,4 @@
-   import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { User, Plus, X, Mail, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -48,10 +48,10 @@ const formatDate = (dateString: string): string => {
 export const BlogSection = () => {
   const navigate = useNavigate();
   const { user: authUser, profile, isAdmin, signOut, isAuthenticated } = useAuthContext();
-  
+
   const [mode, setMode] = useState<'LIST' | 'READ' | 'EDIT'>('LIST');
   const [activePostSlug, setActivePostSlug] = useState<string | null>(null);
-  
+
   // Filter & Sort States
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
@@ -67,12 +67,12 @@ export const BlogSection = () => {
 
   // Use Supabase hooks
   const categoryFilter = activeCategory === 'All' ? undefined : activeCategory.toLowerCase() as any;
-  const { posts: supabasePosts, isLoading, error, refetch } = useBlogPosts({ 
+  const { posts: supabasePosts, isLoading, error, refetch } = useBlogPosts({
     category: categoryFilter
   });
-  
+
   // Transform posts for legacy components
-  const posts = useMemo(() => 
+  const posts = useMemo(() =>
     supabasePosts.map(transformPost),
     [supabasePosts]
   );
@@ -85,33 +85,33 @@ export const BlogSection = () => {
     }
   };
 
-  const navigateToRead = async (post: BlogPost) => { 
+  const navigateToRead = async (post: BlogPost) => {
     if (post.slug) {
       await blogService.incrementViews(post.id);
-      setActivePostSlug(post.slug); 
-      setMode('READ'); 
+      setActivePostSlug(post.slug);
+      setMode('READ');
       window.scrollTo(0, 0);
     }
   };
-  
-  const navigateToEdit = (post?: BlogPost) => { 
-    setActivePostSlug(post?.slug || null); 
-    setMode('EDIT'); 
+
+  const navigateToEdit = (post?: BlogPost) => {
+    setActivePostSlug(post?.slug || null);
+    setMode('EDIT');
   };
-  
-  const navigateToList = () => { 
-    setMode('LIST'); 
-    setActivePostSlug(null); 
+
+  const navigateToList = () => {
+    setMode('LIST');
+    setActivePostSlug(null);
     refetch();
   };
-  
+
   // Filter and sort posts
   const visiblePosts = useMemo(() => {
     return posts.filter(p => {
       const query = searchQuery.toLowerCase();
-      const matchesSearch = !searchQuery || 
-        p.title.toLowerCase().includes(query) || 
-        p.content.toLowerCase().includes(query) || 
+      const matchesSearch = !searchQuery ||
+        p.title.toLowerCase().includes(query) ||
+        p.content.toLowerCase().includes(query) ||
         p.tags.some(tag => tag.toLowerCase().includes(query));
       const matchesStatus = user?.isAdmin || p.status === 'published';
       return matchesSearch && matchesStatus;
@@ -119,19 +119,22 @@ export const BlogSection = () => {
   }, [posts, searchQuery, user?.isAdmin, sortMode]);
 
   return (
-    <section className="min-h-screen pt-20 sm:pt-24 pb-32 px-4 sm:px-6 max-w-[1400px] mx-auto text-gray-200 relative">
-      
-      {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-6 border-b border-white/10 pb-8">
-        <div><h2 className="text-4xl md:text-5xl font-display font-bold tracking-tight mb-2 text-white">JOURNAL</h2><p className="text-accent text-sm font-mono tracking-widest uppercase">Insights for the Modern Creative</p></div>
-        <div className="flex items-center gap-4">
+    <section className="min-h-screen-safe pt-20 md:pt-24 pb-32 px-4 sm:px-6 max-w-[1400px] mx-auto text-gray-200 relative safe-bottom">
+
+      {/* Header - mobile-optimized */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 md:mb-12 gap-4 md:gap-6 border-b border-white/10 pb-6 md:pb-8">
+        <div>
+          <h2 className="text-3xl md:text-5xl font-display font-bold tracking-tight mb-1 md:mb-2 text-white">JOURNAL</h2>
+          <p className="text-accent text-xs md:text-sm font-mono tracking-widest uppercase">Insights for the Modern Creative</p>
+        </div>
+        <div className="flex items-center gap-3 md:gap-4">
           {!user ? (
-            <button onClick={handleLogin} className="flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 hover:bg-white/5 transition-colors text-xs font-mono uppercase tracking-widest text-gray-400"><User size={14} /> Contributor Login</button>
+            <button onClick={handleLogin} className="flex items-center gap-2 px-4 py-2.5 rounded-full border border-white/10 hover:bg-white/5 transition-colors text-xs font-mono uppercase tracking-widest text-gray-400 touch-target"><User size={14} /> Login</button>
           ) : (
-            <div className="flex items-center gap-3 bg-white/5 p-1.5 rounded-full border border-white/10">
+            <div className="flex items-center gap-2 md:gap-3 bg-white/5 p-1.5 rounded-full border border-white/10">
               <img src={user.avatar} width={32} height={32} className="w-8 h-8 rounded-full border border-accent" alt="avatar" />
-              <button onClick={() => navigateToEdit()} className="p-2 bg-accent rounded-full hover:bg-white transition-colors text-void" title="New Post"><Plus size={16} /></button>
-              <button onClick={handleLogin} className="p-2 hover:bg-white/10 rounded-full text-gray-400 hover:text-white transition-colors"><X size={16} /></button>
+              <button onClick={() => navigateToEdit()} className="p-2.5 bg-accent rounded-full hover:bg-white transition-colors text-void touch-target" title="New Post"><Plus size={16} /></button>
+              <button onClick={handleLogin} className="p-2.5 hover:bg-white/10 rounded-full text-gray-400 hover:text-white transition-colors touch-target"><X size={16} /></button>
             </div>
           )}
         </div>
@@ -147,27 +150,27 @@ export const BlogSection = () => {
 
       <AnimatePresence mode="wait">
         {mode === 'LIST' && !error && (
-           <BlogList 
-             isLoading={isLoading} 
-             posts={visiblePosts} 
-             categories={['All', 'Creative', 'Tech', 'Ministry', 'Strategy']} 
-             activeCategory={activeCategory} setActiveCategory={setActiveCategory}
-             searchQuery={searchQuery} setSearchQuery={setSearchQuery}
-             sortMode={sortMode} setSortMode={setSortMode}
-             onRead={navigateToRead}
-             featuredPost={visiblePosts[0]}
-           />
+          <BlogList
+            isLoading={isLoading}
+            posts={visiblePosts}
+            categories={['All', 'Creative', 'Tech', 'Ministry', 'Strategy']}
+            activeCategory={activeCategory} setActiveCategory={setActiveCategory}
+            searchQuery={searchQuery} setSearchQuery={setSearchQuery}
+            sortMode={sortMode} setSortMode={setSortMode}
+            onRead={navigateToRead}
+            featuredPost={visiblePosts[0]}
+          />
         )}
-        
+
         {mode === 'READ' && activePostSlug && (
-           <BlogPostReader
-             slug={activePostSlug}
-             user={user}
-             onBack={navigateToList}
-             onEdit={navigateToEdit}
-             relatedPosts={visiblePosts}
-             onNavigate={navigateToRead}
-           />
+          <BlogPostReader
+            slug={activePostSlug}
+            user={user}
+            onBack={navigateToList}
+            onEdit={navigateToEdit}
+            relatedPosts={visiblePosts}
+            onNavigate={navigateToRead}
+          />
         )}
 
         {mode === 'EDIT' && (
@@ -182,7 +185,7 @@ export const BlogSection = () => {
 
       {/* Newsletter (Always visible at bottom in list mode) */}
       {mode === 'LIST' && (
-         <NewsletterSection />
+        <NewsletterSection />
       )}
     </section>
   );
@@ -198,7 +201,7 @@ const BlogPostReader: React.FC<{
   onNavigate: (post: BlogPost) => void;
 }> = ({ slug, user, onBack, onEdit, relatedPosts, onNavigate }) => {
   const { post, comments, isLoading, addComment, toggleLike } = useBlogPost(slug);
-  
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-24">
@@ -206,7 +209,7 @@ const BlogPostReader: React.FC<{
       </div>
     );
   }
-  
+
   if (!post) {
     return (
       <div className="text-center py-24">
@@ -215,9 +218,9 @@ const BlogPostReader: React.FC<{
       </div>
     );
   }
-  
+
   const transformedPost = transformPost(post);
-  
+
   // Transform comments to legacy format
   transformedPost.comments = comments.map(c => ({
     id: c.id,
@@ -226,13 +229,13 @@ const BlogPostReader: React.FC<{
     text: c.content,
     timestamp: new Date(c.created_at).getTime()
   }));
-  
+
   const handleLike = async () => {
     if (user) {
       await toggleLike(user.email);
     }
   };
-  
+
   const handleAddComment = async (comment: Comment) => {
     await addComment({
       content: comment.text,
@@ -241,22 +244,22 @@ const BlogPostReader: React.FC<{
       author_id: user?.email
     });
   };
-  
+
   // Get related posts (same category or shared tags)
   const related = relatedPosts
     .filter(p => p.id !== post.id && (
-      p.category === transformedPost.category || 
+      p.category === transformedPost.category ||
       p.tags.some(t => transformedPost.tags.includes(t))
     ))
     .slice(0, 3);
-  
+
   return (
-    <BlogPostView 
-      post={transformedPost} 
-      user={user} 
-      onBack={onBack} 
-      onEdit={() => onEdit(transformedPost)} 
-      onLike={handleLike} 
+    <BlogPostView
+      post={transformedPost}
+      user={user}
+      onBack={onBack}
+      onEdit={() => onEdit(transformedPost)}
+      onLike={handleLike}
       onAddComment={handleAddComment}
       relatedPosts={related}
       onNavigate={onNavigate}
@@ -273,7 +276,7 @@ const BlogPostEditor: React.FC<{
 }> = ({ slug, user, onCancel, onSave }) => {
   const { post, isLoading } = useBlogPost(slug || '');
   const [isSaving, setIsSaving] = useState(false);
-  
+
   if (isLoading && slug) {
     return (
       <div className="flex items-center justify-center py-24">
@@ -281,7 +284,7 @@ const BlogPostEditor: React.FC<{
       </div>
     );
   }
-  
+
   const handleSave = async (postData: BlogPost) => {
     setIsSaving(true);
     try {
@@ -319,12 +322,12 @@ const BlogPostEditor: React.FC<{
       setIsSaving(false);
     }
   };
-  
+
   const initialPost = post ? transformPost(post) : undefined;
-  
+
   return (
-    <Editor 
-      initialPost={initialPost} 
+    <Editor
+      initialPost={initialPost}
       onCancel={onCancel}
       onSave={handleSave}
       currentUser={user}
@@ -337,17 +340,17 @@ const BlogPostEditor: React.FC<{
 const NewsletterSection: React.FC = () => {
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
-  
+
   const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) return;
-    
+
     setStatus('loading');
     try {
       const { error } = await supabase
         .from('newsletter_subscribers')
         .insert({ email });
-      
+
       if (error) {
         if (error.code === '23505') {
           // Duplicate email
@@ -364,31 +367,31 @@ const NewsletterSection: React.FC = () => {
       setStatus('error');
     }
   };
-  
+
   return (
-    <div className="my-20 p-10 rounded-3xl bg-gradient-to-br from-secondary/20 to-void border border-accent/20 text-center relative overflow-hidden group">
-      <div className="absolute top-0 right-0 p-8 opacity-10"><Mail size={120} /></div>
+    <div className="my-12 md:my-20 p-6 md:p-10 rounded-2xl md:rounded-3xl bg-gradient-to-br from-secondary/20 to-void border border-accent/20 text-center relative overflow-hidden group">
+      <div className="absolute top-0 right-0 p-4 md:p-8 opacity-10"><Mail size={80} /></div>
       <div className="relative z-10 max-w-xl mx-auto">
-        <span className="text-accent font-mono text-xs uppercase tracking-widest mb-4 block">Intelligence Briefing</span>
-        <h3 className="text-3xl font-display font-bold mb-4 text-white">Join the Frequency</h3>
-        <p className="text-gray-400 mb-8 text-lg leading-relaxed">Receive weekly transmissions on the theology of technology, creative systems, and ministry strategy.</p>
-        
+        <span className="text-accent font-mono text-[10px] md:text-xs uppercase tracking-widest mb-3 md:mb-4 block">Intelligence Briefing</span>
+        <h3 className="text-2xl md:text-3xl font-display font-bold mb-3 md:mb-4 text-white">Join the Frequency</h3>
+        <p className="text-gray-400 mb-6 md:mb-8 text-sm md:text-lg leading-relaxed">Receive weekly transmissions on the theology of technology, creative systems, and ministry strategy.</p>
+
         {status === 'success' ? (
-          <p className="text-accent text-lg">✓ You're now subscribed!</p>
+          <p className="text-accent text-base md:text-lg">✓ You're now subscribed!</p>
         ) : (
-          <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row gap-3">
-            <input 
-              type="email" 
+          <form onSubmit={handleSubscribe} className="flex flex-col gap-3">
+            <input
+              type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="enter@your.email" 
-              className="flex-1 bg-black/40 border border-white/20 rounded-xl px-5 py-4 focus:outline-none focus:border-accent transition-colors"
+              placeholder="enter@your.email"
+              className="w-full bg-black/40 border border-white/20 rounded-xl px-4 md:px-5 py-3 md:py-4 focus:outline-none focus:border-accent transition-colors text-base"
               disabled={status === 'loading'}
             />
-            <button 
+            <button
               type="submit"
               disabled={status === 'loading'}
-              className="bg-accent text-void font-bold px-8 py-4 rounded-xl hover:bg-white transition-colors disabled:opacity-50"
+              className="w-full sm:w-auto bg-accent text-void font-bold px-6 md:px-8 py-3 md:py-4 rounded-xl hover:bg-white transition-colors disabled:opacity-50 touch-target"
             >
               {status === 'loading' ? 'Subscribing...' : 'Subscribe'}
             </button>

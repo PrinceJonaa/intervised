@@ -119,11 +119,50 @@ export function useSEO({
           setMetaTag(`article:tag`, tag, true); // Multiple tags support
         });
       }
+
+      // JSON-LD Structured Data for Rich Snippets
+      const structuredData = {
+        "@context": "https://schema.org",
+        "@type": "BlogPosting",
+        "headline": title,
+        "description": description,
+        "image": ogImage,
+        "datePublished": article.publishedTime,
+        "dateModified": article.modifiedTime || article.publishedTime,
+        "author": {
+          "@type": "Person",
+          "name": article.author || "Intervised Team"
+        },
+        "publisher": {
+          "@type": "Organization",
+          "name": "Intervised",
+          "logo": {
+            "@type": "ImageObject",
+            "url": `${BASE_URL}/logo.png`
+          }
+        },
+        "mainEntityOfPage": {
+          "@type": "WebPage",
+          "@id": canonical || window.location.href
+        }
+      };
+
+      // Inject or update JSON-LD script
+      let ldScript = document.querySelector('script[type="application/ld+json"]') as HTMLScriptElement;
+      if (!ldScript) {
+        ldScript = document.createElement('script');
+        ldScript.setAttribute('type', 'application/ld+json');
+        document.head.appendChild(ldScript);
+      }
+      ldScript.textContent = JSON.stringify(structuredData);
     }
 
     // Cleanup
     return () => {
       document.title = DEFAULT_TITLE;
+      // Remove JSON-LD on cleanup
+      const ldScript = document.querySelector('script[type="application/ld+json"]');
+      if (ldScript) ldScript.remove();
     };
   }, [title, description, canonical, ogImage, ogType, ogSiteName, ogLocale, article, noIndex]);
 }

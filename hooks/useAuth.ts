@@ -24,6 +24,7 @@ export interface AuthActions {
   signInWithEmail: (email: string) => Promise<void>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+  verifyAdminServer: () => Promise<{ isAdmin: boolean; userId?: string }>;
 }
 
 export type UseAuthReturn = AuthState & AuthActions;
@@ -155,6 +156,32 @@ export function useAuth(): UseAuthReturn {
     }
   }, [user]);
 
+  const verifyAdminServer = useCallback(async () => {
+    // Check cache
+    const now = Date.now();
+    if (
+      verificationCache &&
+      verificationCache.userId === user?.id &&
+      now - verificationCache.timestamp < CACHE_DURATION
+    ) {
+      return { isAdmin: verificationCache.isAdmin, userId: user?.id };
+    }
+
+    // Call server
+    const result = await authService.verifyAdminServer();
+
+    // Update cache
+    if (user) {
+      verificationCache = {
+        timestamp: now,
+        isAdmin: result.isAdmin,
+        userId: user.id
+      };
+    }
+
+    return result;
+  }, [user]);
+
   return {
     user,
     session,
@@ -167,8 +194,18 @@ export function useAuth(): UseAuthReturn {
     signInWithEmail,
     signOut,
     refreshProfile,
+    verifyAdminServer,
   };
 }
+
+// Cache for admin verification
+let verificationCache: {
+  timestamp: number;
+  isAdmin: boolean;
+  userId: string | null;
+} | null = null;
+
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 /**
  * Hook to require authentication - redirects if not authenticated

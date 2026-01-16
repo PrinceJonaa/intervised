@@ -398,45 +398,45 @@ function AdminDashboardContent() {
   ];
 
   return (
-    <section className="min-h-screen pt-28 pb-32 px-4 sm:px-6">
+    <section className="min-h-screen-safe pt-20 md:pt-28 pb-32 px-4 sm:px-6 safe-bottom">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
+        {/* Header - simplified for mobile */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 md:mb-8 gap-3 md:gap-4">
           <div>
-            <h1 className="text-3xl font-display font-bold">
+            <h1 className="text-2xl md:text-3xl font-display font-bold">
               COMMAND <span className="text-gray-500">CENTER</span>
             </h1>
-            <p className="text-gray-400 text-sm mt-1">
-              Welcome back, {profile?.full_name || user?.email}
+            <p className="text-gray-400 text-xs md:text-sm mt-1 truncate max-w-[200px] md:max-w-none">
+              Welcome, {profile?.full_name || user?.email?.split('@')[0]}
             </p>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 md:gap-4">
             <button
               onClick={loadData}
               disabled={isLoading}
-              className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-colors text-sm"
+              className="flex items-center gap-2 px-3 md:px-4 py-2 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-colors text-xs md:text-sm touch-target"
             >
               <RefreshCw size={14} className={isLoading ? 'animate-spin' : ''} />
-              Refresh
+              <span className="hidden sm:inline">Refresh</span>
             </button>
             <button
               onClick={handleSignOut}
-              className="flex items-center gap-2 px-4 py-2 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl hover:bg-red-500/20 transition-colors text-sm"
+              className="flex items-center gap-2 px-3 md:px-4 py-2 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl hover:bg-red-500/20 transition-colors text-xs md:text-sm touch-target"
             >
               <LogOut size={14} />
-              Sign Out
+              <span className="hidden sm:inline">Sign Out</span>
             </button>
           </div>
         </div>
 
-        {/* Tab Navigation */}
-        <div className="flex gap-2 mb-8 overflow-x-auto pb-2">
+        {/* Desktop Tab Navigation - horizontal scroll */}
+        <div className="hidden md:flex gap-2 mb-8 overflow-x-auto pb-2 scrollbar-hide">
           {tabs.map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-3 rounded-xl transition-all whitespace-nowrap ${activeTab === tab.id
+              className={`flex items-center gap-2 px-4 py-3 rounded-xl transition-all whitespace-nowrap touch-target ${activeTab === tab.id
                 ? 'bg-accent text-black font-bold'
                 : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
                 }`}
@@ -732,6 +732,36 @@ function AdminDashboardContent() {
           )}
         </AnimatePresence>
       </div>
+
+      {/* Mobile Bottom Navigation */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#001428]/95 backdrop-blur-xl border-t border-white/10 safe-bottom">
+        <div className="flex items-center justify-around px-2 py-2">
+          {[
+            { id: 'overview' as AdminTab, icon: Activity, label: 'Home' },
+            { id: 'contacts' as AdminTab, icon: Mail, label: 'Inbox', count: newContactsCount },
+            { id: 'bookings' as AdminTab, icon: Calendar, label: 'Bookings', count: pendingBookingsCount },
+            { id: 'blog' as AdminTab, icon: PenTool, label: 'Blog' },
+            { id: 'settings' as AdminTab, icon: Settings, label: 'More' },
+          ].map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all relative touch-target ${activeTab === tab.id
+                  ? 'text-accent'
+                  : 'text-gray-500'
+                }`}
+            >
+              <tab.icon size={20} />
+              <span className="text-[10px] font-medium">{tab.label}</span>
+              {tab.count !== undefined && tab.count > 0 && (
+                <span className="absolute -top-1 -right-1 w-5 h-5 bg-accent text-void text-[10px] font-bold rounded-full flex items-center justify-center">
+                  {tab.count}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+      </nav>
     </section>
   );
 }

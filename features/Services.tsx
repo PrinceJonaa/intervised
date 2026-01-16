@@ -115,6 +115,16 @@ export const ServicesSection = ({ onCategoryChange, setPage }: ServicesSectionPr
           <div className="space-y-12">
             {isLoading ? (
               <div className="space-y-12">{[1, 2, 3].map(i => (<div key={i}><div className="flex items-center gap-3 mb-6 border-b border-white/5 pb-2"><SkeletonPulse className="w-6 h-6 rounded-full" /><SkeletonPulse className="h-6 w-32" /></div><div className="grid grid-cols-1 md:grid-cols-2 gap-4">{[1, 2].map(j => <ServiceSkeleton key={j} />)}</div></div>))}</div>
+            ) : services.length === 0 ? (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-center py-16 px-8 rounded-3xl border border-white/10 bg-white/5"
+              >
+                <div className="text-4xl mb-4">🔧</div>
+                <h3 className="text-xl font-bold text-white mb-2">Services Coming Soon</h3>
+                <p className="text-gray-400 max-w-md mx-auto">We're preparing our service catalog. Check back soon for our full range of offerings.</p>
+              </motion.div>
             ) : (
               displayedCategories.map((category, idx) => (
                 <motion.div key={category} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.1 }}>

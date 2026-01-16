@@ -231,4 +231,22 @@ export const authService = {
   isAdmin,
   isContributor,
   onAuthStateChange,
+  verifyAdminServer,
 };
+
+/**
+ * Verify admin status server-side via Edge Function
+ */
+export async function verifyAdminServer(): Promise<{ isAdmin: boolean; userId?: string }> {
+  try {
+    const { data, error } = await supabase.functions.invoke('verify-admin', {
+      method: 'POST',
+    });
+
+    if (error) throw error;
+    return { isAdmin: !!data?.isAdmin, userId: data?.userId };
+  } catch (err) {
+    console.error('Server-side verification failed:', err);
+    return { isAdmin: false };
+  }
+}

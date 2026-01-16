@@ -28,11 +28,11 @@ export function useAuthContext(): UseAuthReturn {
 }
 
 // Protected route wrapper component
-export function ProtectedRoute({ 
-  children, 
+export function ProtectedRoute({
+  children,
   requiredRole,
   fallback = null,
-}: { 
+}: {
   children: ReactNode;
   requiredRole?: 'admin' | 'contributor' | 'member';
   fallback?: ReactNode;
@@ -58,7 +58,7 @@ export function ProtectedRoute({
 
   // Check role if required
   if (requiredRole) {
-    const hasRole = 
+    const hasRole =
       requiredRole === 'member' ||
       (requiredRole === 'contributor' && isContributor) ||
       (requiredRole === 'admin' && isAdmin);
@@ -74,6 +74,48 @@ export function ProtectedRoute({
         </div>
       );
     }
+  }
+
+  // Server-side verification for admins
+  const { verifyAdminServer } = useAuthContext();
+  const [isVerified, setIsVerified] = React.useState<boolean | null>(requiredRole === 'admin' ? null : true);
+
+  React.useEffect(() => {
+    if (requiredRole === 'admin' && isAdmin) {
+      verifyAdminServer().then(({ isAdmin: serverIsAdmin }) => {
+        setIsVerified(serverIsAdmin);
+        if (!serverIsAdmin) {
+          console.error('Server-side admin verification failed');
+          // Optional: Force logout or redirect
+          // window.location.href = '/login'; 
+        }
+      });
+    } else {
+      setIsVerified(true);
+    }
+  }, [requiredRole, isAdmin, verifyAdminServer]);
+
+  if (isVerified === null) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-void">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+          <p className="text-gray-400 text-sm font-mono">Verifying privileges...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isVerified === false) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-void">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-white mb-2">Security Verification Failed</h2>
+          <p className="text-gray-400">Unable to verify admin privileges on server.</p>
+          <a href="/login" className="text-accent hover:underline mt-4 block">Return to Login</a>
+        </div>
+      </div>
+    );
   }
 
   return <>{children}</>;

@@ -186,17 +186,23 @@ export async function azureChat(request: AzureChatRequest): Promise<AzureChatRes
   // If session is missing or errored, try to refresh it explicitly
   // This handles cases where local storage might be out of sync or the token is stale
   if (sessionError || !session) {
+    console.warn('[AI Auth] No active session found, attempting refresh...');
     const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
     if (!refreshError && refreshData.session) {
       session = refreshData.session;
       sessionError = null;
+      console.log('[AI Auth] Session refreshed successfully');
+    } else {
+      console.error('[AI Auth] Session refresh failed:', refreshError);
     }
   }
 
   if (sessionError || !session) {
     // Final check - if we still don't have a session, we can't proceed
+    console.error('[AI Auth] Authentication required - no valid session available');
     throw new AIAuthError('You must be signed in to use the AI assistant.');
   }
+
 
   // Get the Edge Function URL
   // @ts-ignore - Vite injects env vars at build time

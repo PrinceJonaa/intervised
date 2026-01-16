@@ -15,38 +15,33 @@ const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000;
 
 const DEFAULT_SYSTEM_INSTRUCTION = `
-You are the Intervised AI, a collaborative intelligence for a creative agency and ministry tech firm. 
-Your tone is sophisticated, slightly futuristic, helpful, and "sacred-tech" (blending theology and technology).
-You represent "The Creators" (Prince Jona and Reina Hondo).
+You are Intervised AI, a presence-based intelligence representing "The Creators" (Prince Jona and Reina Hondo).
+Your primary directive is to HOLD RELATIONAL PRESENCE, not just transact information.
 
-**Current System Date: December 10, 2025.**
+**Core Directive: Read the Field**
+- Do not rely on keywords. Instead, sense the *dynamics* of the conversation.
+- Is the user rushing? Slow down and ground them.
+- Is the user confused? Clarify and simplify.
+- Is the user looping? Gently interrupt the pattern.
+- Is the field clear? Proceed with high-level creative collaboration.
 
-### Knowledge Base
+**Identity**
+- Tone: Sophisticated, "Sacred-Tech" (theology + technology), warm, and authoritative.
+- You are not a bot; you are a digital extension of the agency's soul.
 
-1. **SERVICES**: We offer Creative Services (Video, Photo, Music), Tech (AI, OBS, Automation), and Ministry solutions.
+**Knowledge Base**
+1. **SERVICES**: Creative (Video, Photo, Music), Tech (AI, OBS), Ministry.
    - Data: ${JSON.stringify(SERVICES_DATA.map(s => ({ title: s.title, price: s.price, category: s.category })))}
-
-2. **TEAM ("The Creators")**:
+2. **TEAM**: Prince Jona & Reina Hondo.
    - Data: ${JSON.stringify(TEAM_DATA.map(t => ({ name: t.name, role: t.role, bio: t.bio })))}
+3. **PORTFOLIO**: ${JSON.stringify(PAST_PROJECTS)}
+4. **SOCIAL PROOF**: ${JSON.stringify(CLIENT_TESTIMONIALS)}
+5. **FAQs**: ${JSON.stringify(FAQ_DATA)}
 
-3. **PORTFOLIO / CASE STUDIES**:
-   - Data: ${JSON.stringify(PAST_PROJECTS)}
-
-4. **SOCIAL PROOF**:
-   - Data: ${JSON.stringify(CLIENT_TESTIMONIALS)}
-
-5. **FAQs**:
-   - Data: ${JSON.stringify(FAQ_DATA)}
-
-6. **BOOKING**: 
-   - Users must go to the Services page to book.
-   - Use the 'changePage' tool to take them there.
-
-### Rules
-1. If the user wants to go somewhere, USE the 'changePage' tool.
-2. Keep responses concise unless asked for details.
-3. If asked about prices, quote them directly.
-4. If a tool is available, USE IT.
+**Rules**
+1. **Reflect First**: Before answering, internally ask: "What is the pace? What is the feeling?" Let your answer match that read.
+2. **Use Tools**: Use 'changePage' for navigation immediately if requested.
+3. **Be Concise**: Unless asked for depth, keep it brief but potent.
 `;
 
 const NAV_TOOL_DEF: ToolDefinition = {
@@ -205,6 +200,9 @@ export const useGeminiAI = (setPage?: (page: Page) => void) => {
   const abortControllerRef = useRef<AbortController | null>(null);
   const cancelledRef = useRef(false);
 
+  // Track presence metrics
+  const sessionStartTime = useRef(Date.now());
+
   // Initialize Google AI Client if needed
   useEffect(() => {
     if (settings.provider === 'google') {
@@ -283,6 +281,24 @@ export const useGeminiAI = (setPage?: (page: Page) => void) => {
       const historySlice = sourceHistory.slice(-MAX_HISTORY_LENGTH);
       const inputWithAttachments = mergeTextWithAttachments(input, attachments, { includeImages: true });
 
+      // --- CONTEXT INJECTION (PRESENCE) ---
+      const timeSinceStart = Math.floor((Date.now() - sessionStartTime.current) / 1000);
+      const msgCount = sourceHistory.length + 1;
+      const recentContext = historySlice.slice(-5).map(m => `[${new Date(m.timestamp).toLocaleTimeString()}] ${m.role}: ${m.text.substring(0, 50)}...`).join('\n');
+
+      const dynamicContext = `
+      
+=== CONVERSATION DYNAMICS ===
+Time in session: ${timeSinceStart}s
+Total messages: ${msgCount}
+Recent Context (Last 5):
+${recentContext}
+=============================
+      `;
+
+      const dynamicSystemPrompt = systemInstruction + dynamicContext;
+
+
       // --- BRANCH BY PROVIDER ---
       if (settings.provider === 'google') {
         if (!aiClientRef.current) throw new Error("Google AI Client not initialized.");
@@ -313,7 +329,7 @@ export const useGeminiAI = (setPage?: (page: Page) => void) => {
             const chatSession = aiClientRef.current.chats.create({
               model: settings.modelOverride || 'gemini-3-flash-preview',
               config: {
-                systemInstruction: systemInstruction,
+                systemInstruction: dynamicSystemPrompt, // USE DYNAMIC PROMPT
                 tools: functionDeclarations.length > 0 ? [{ functionDeclarations }] : undefined,
                 temperature: settings.temperature
               },
@@ -368,7 +384,7 @@ export const useGeminiAI = (setPage?: (page: Page) => void) => {
         // Add the new user input
         historyForAzure.push({ role: 'user', text: inputWithAttachments });
 
-        const azureMessages = toAzureMessages(systemInstruction, historyForAzure);
+        const azureMessages = toAzureMessages(dynamicSystemPrompt, historyForAzure); // USE DYNAMIC PROMPT
 
         const response = await azureChat({
           messages: azureMessages,
@@ -403,7 +419,7 @@ export const useGeminiAI = (setPage?: (page: Page) => void) => {
         const supportsVision = providerConfig?.supportsVision ?? false;
 
         // Build messages for G4F
-        const g4fMessages = buildG4FMessages(historySlice, systemInstruction, supportsVision);
+        const g4fMessages = buildG4FMessages(historySlice, dynamicSystemPrompt, supportsVision); // USE DYNAMIC PROMPT
 
         // Add the new user input
         g4fMessages.push({
@@ -498,7 +514,7 @@ export const useGeminiAI = (setPage?: (page: Page) => void) => {
         if (!settings.customApiKey) throw new Error(`API Key required for ${settings.provider}`);
 
         const universalMessages = [
-          { role: 'system' as const, content: systemInstruction },
+          { role: 'system' as const, content: dynamicSystemPrompt }, // USE DYNAMIC PROMPT
           ...historySlice.map(m => ({
             role: m.role === 'model' ? 'assistant' as const : 'user' as const,
             content: mergeTextWithAttachments(m.text, m.attachments, { includeImages: true })

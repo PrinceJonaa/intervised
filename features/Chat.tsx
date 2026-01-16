@@ -87,25 +87,52 @@ export const ChatPage = ({ setPage }: { setPage: (p: Page) => void }) => {
   const [mobileView, setMobileView] = useState<'CHAT' | 'HISTORY'>('CHAT');
   const [isSettingsOpen, setSettingsOpen] = useState(false);
 
-  // Session State
+  // Session State - persisted to localStorage
   const [sessions, setSessions] = useState<ChatSession[]>([]);
-  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(() => {
+    // Restore from localStorage on mount
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('iv_chat_session_id') || null;
+    }
+    return null;
+  });
   const [activeSessionAnalysis, setActiveSessionAnalysis] = useState<any>(null);
 
-  // Load sessions from Supabase
+  // Persist activeSessionId to localStorage
+  useEffect(() => {
+    if (activeSessionId) {
+      localStorage.setItem('iv_chat_session_id', activeSessionId);
+    }
+  }, [activeSessionId]);
+
+  // Load sessions from Supabase and watch for auth changes
   useEffect(() => {
     if (user?.id) {
       (async () => {
         const loaded = await getChatSessions(user.id);
         setSessions(loaded);
-        if (!activeSessionId) {
-          if (loaded.length > 0) loadSession(loaded[0].id);
-          else createNewSession();
+
+        // Check if saved session still exists
+        const savedSessionId = localStorage.getItem('iv_chat_session_id');
+        const savedSessionExists = savedSessionId && loaded.some(s => s.id === savedSessionId);
+
+        if (savedSessionExists) {
+          loadSession(savedSessionId);
+        } else if (loaded.length > 0) {
+          loadSession(loaded[0].id);
+        } else {
+          createNewSession();
         }
       })();
+    } else {
+      // User logged out - clear sessions
+      setSessions([]);
+      setActiveSessionId(null);
+      setMessages([]);
+      localStorage.removeItem('iv_chat_session_id');
     }
     // eslint-disable-next-line
-  }, [user?.id]);
+  }, [user?.id]); // This will trigger when user logs in or out
 
   // Auto-resize textarea
   useEffect(() => {
@@ -326,7 +353,7 @@ export const ChatPage = ({ setPage }: { setPage: (p: Page) => void }) => {
   const canSend = (input.trim() || attachments.length > 0) && !isProcessingFiles;
 
   return (
-    <section className="fixed inset-0 z-30 pt-[70px] md:pt-24 pb-0 md:pb-6 px-0 md:px-6 w-full flex gap-6 overflow-hidden bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#0d2840] via-[#001428] to-[#000a14]">
+    <section className="fixed inset-0 z-30 pt-[70px] md:pt-24 pb-0 md:pb-6 px-0 md:px-6 w-full flex gap-6 overflow-hidden bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#0d2840] via-[#001428] to-[#000a14] h-screen-safe">
 
       <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-5 pointer-events-none mix-blend-overlay"></div>
 
@@ -351,7 +378,7 @@ export const ChatPage = ({ setPage }: { setPage: (p: Page) => void }) => {
             animate={{ x: 0 }}
             exit={{ x: '-100%' }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="absolute inset-0 z-50 bg-[#001428] md:hidden"
+            className="absolute inset-0 z-50 bg-[#001428] md:hidden safe-top"
           >
             <ChatSidebar
               isMobile={true}
@@ -370,11 +397,11 @@ export const ChatPage = ({ setPage }: { setPage: (p: Page) => void }) => {
 
       <div className="flex-1 flex flex-col relative h-full w-full overflow-hidden rounded-t-3xl md:rounded-3xl bg-surface/30 md:bg-black/20 border-t md:border border-white/5 backdrop-blur-sm shadow-2xl">
 
-        <div className="flex items-center justify-between px-4 py-3 border-b border-white/5 bg-[#001428]/80 backdrop-blur-md z-20 shrink-0">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-white/5 bg-[#001428]/80 backdrop-blur-md z-20 shrink-0 touch-target">
           <div className="flex items-center gap-3 overflow-hidden">
             <button
               onClick={() => setMobileView('HISTORY')}
-              className="md:hidden p-2 -ml-2 text-gray-400 hover:text-white transition-colors"
+              className="md:hidden p-2 -ml-2 text-gray-400 hover:text-white transition-colors touch-target"
             >
               <History size={20} />
             </button>
@@ -400,12 +427,12 @@ export const ChatPage = ({ setPage }: { setPage: (p: Page) => void }) => {
           </div>
 
           <div className="flex items-center gap-1 shrink-0">
-            <button onClick={createNewSession} className="md:hidden p-2 text-gray-400 hover:text-white transition-colors"><Plus size={20} /></button>
-            <button onClick={() => setSettingsOpen(true)} className="p-2 hover:bg-white/10 rounded-lg text-gray-400 hover:text-accent transition-colors"><Settings size={20} /></button>
+            <button onClick={createNewSession} className="md:hidden p-2 text-gray-400 hover:text-white transition-colors touch-target"><Plus size={20} /></button>
+            <button onClick={() => setSettingsOpen(true)} className="p-2 hover:bg-white/10 rounded-lg text-gray-400 hover:text-accent transition-colors touch-target"><Settings size={20} /></button>
           </div>
         </div>
 
-        <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-4 custom-scrollbar scroll-smooth relative">
+        <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-4 custom-scrollbar momentum-scroll scroll-smooth relative">
           <div className="pt-6 pb-48 md:pb-40 space-y-6">
 
             {messages.length <= 1 && (
@@ -428,7 +455,8 @@ export const ChatPage = ({ setPage }: { setPage: (p: Page) => void }) => {
           </div>
         </div>
 
-        <div className="absolute bottom-[90px] md:bottom-[100px] left-0 right-0 px-4 md:px-8 z-30 flex justify-center pointer-events-none">
+        {/* Input form - positioned above keyboard on mobile with safe area */}
+        <div className="absolute left-0 right-0 px-4 md:px-8 z-30 flex justify-center pointer-events-none safe-bottom" style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 80px)' }}>
           <form onSubmit={handleSubmit} className="relative group w-full max-w-3xl pointer-events-auto">
             <div
               className={`relative w-full bg-[#001428]/90 md:bg-black/80 border border-white/20 md:border-white/10 rounded-3xl shadow-2xl backdrop-blur-xl transition-all focus-within:border-accent/50 focus-within:bg-black ${isDragging ? 'border-accent/60 bg-black/90' : ''}`}
