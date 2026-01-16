@@ -23,7 +23,7 @@ const BackgroundScene = lazy(() => import('./components/Background3D').then(m =>
 import { NavDock, Header } from './components/Navigation';
 import { ToastProvider } from './components/ToastSystem';
 import { ScrollToTop } from './components/ScrollToTop';
-import { AuthProvider } from './components/AuthProvider';
+import { AuthProvider, ProtectedRoute } from './components/AuthProvider';
 
 // Loading skeleton for lazy components
 const PageSkeleton = () => (
@@ -88,11 +88,11 @@ function HomePage({ setPage }: { setPage: (p: Page) => void }) {
   );
 }
 
-function ServicesPage({ 
-  setPage, 
-  onCategoryChange 
-}: { 
-  setPage: (p: Page) => void; 
+function ServicesPage({
+  setPage,
+  onCategoryChange
+}: {
+  setPage: (p: Page) => void;
   onCategoryChange: (cat: string | null) => void;
 }) {
   useSEO(SEO_CONFIG.services);
@@ -140,8 +140,8 @@ function ChatPageWrapper({ setPage }: { setPage: (p: Page) => void }) {
 }
 
 function LoginPageWrapper() {
-  useSEO({ 
-    title: 'Sign In | Intervised', 
+  useSEO({
+    title: 'Sign In | Intervised',
     description: 'Sign in to your Intervised account to access exclusive features and manage your content.',
     path: '/login'
   });
@@ -153,8 +153,8 @@ function LoginPageWrapper() {
 }
 
 function AdminPageWrapper() {
-  useSEO({ 
-    title: 'Admin Dashboard | Intervised', 
+  useSEO({
+    title: 'Admin Dashboard | Intervised',
     description: 'Manage contacts, bookings, and content from the admin dashboard.',
     path: '/admin'
   });
@@ -193,15 +193,15 @@ function AppContent() {
         <BackgroundScene activeCategory={activeCategory} />
       </Suspense>
       <Header />
-      
+
       <main className="relative">
         <AnimatePresence mode="wait">
           <Suspense fallback={<PageSkeleton />}>
             <Routes location={location} key={location.pathname}>
               <Route path="/" element={<HomePage setPage={setPage} />} />
-              <Route 
-                path="/services" 
-                element={<ServicesPage setPage={setPage} onCategoryChange={setActiveCategory} />} 
+              <Route
+                path="/services"
+                element={<ServicesPage setPage={setPage} onCategoryChange={setActiveCategory} />}
               />
               <Route path="/team" element={<TeamPage />} />
               <Route path="/blog" element={<BlogPage />} />
@@ -209,7 +209,11 @@ function AppContent() {
               <Route path="/contact" element={<ContactPage />} />
               <Route path="/chat" element={<ChatPageWrapper setPage={setPage} />} />
               <Route path="/login" element={<LoginPageWrapper />} />
-              <Route path="/admin" element={<AdminPageWrapper />} />
+              <Route path="/admin" element={
+                <ProtectedRoute requiredRole="admin" fallback={<LoginPageWrapper />}>
+                  <AdminPageWrapper />
+                </ProtectedRoute>
+              } />
               {/* Fallback route */}
               <Route path="*" element={<HomePage setPage={setPage} />} />
             </Routes>
@@ -227,7 +231,7 @@ export default function App() {
   // Initialize Vercel Analytics and Speed Insights on app mount
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    
+
     (async () => {
       // Initialize Vercel Analytics
       try {
