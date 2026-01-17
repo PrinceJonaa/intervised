@@ -32,13 +32,14 @@ export function ProfilePage() {
         try {
             const updates = {
                 id: user.id,
+                email: user.email,
                 full_name: fullName,
                 bio,
                 avatar_url: avatarUrl,
                 updated_at: new Date().toISOString(),
             };
 
-            const { error } = await supabase.from('profiles').upsert(updates);
+            const { error } = await supabase.from('profiles').upsert(updates as any);
 
             if (error) throw error;
             addToast('Profile updated successfully', 'success');
@@ -158,11 +159,11 @@ export function ProfilePage() {
                                 </h4>
                                 <div className="grid grid-cols-2 gap-2 text-xs text-gray-500">
                                     <div className="flex items-center gap-2">
-                                        <span className={`w-2 h-2 rounded-full ${profile?.permissions?.can_blog ? 'bg-green-500' : 'bg-red-500/50'}`} />
+                                        <span className={`w-2 h-2 rounded-full ${profile?.permissions && (profile.permissions as any).can_blog ? 'bg-green-500' : 'bg-red-500/50'}`} />
                                         Create Blog Posts
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <span className={`w-2 h-2 rounded-full ${profile?.permissions?.can_comment !== false ? 'bg-green-500' : 'bg-red-500/50'}`} />
+                                        <span className={`w-2 h-2 rounded-full ${profile?.permissions && (profile.permissions as any).can_comment !== false ? 'bg-green-500' : 'bg-red-500/50'}`} />
                                         Post Comments
                                     </div>
                                 </div>
