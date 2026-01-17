@@ -39,7 +39,8 @@ export interface G4FProviderConfig {
   providerParam?: string; // For g4f.dev/v1 provider parameter
 }
 
-const G4F_GATEWAY_BASE_URL = 'https://g4f.dev/v1';
+// G4F gateway uses /api/{provider}/ pattern
+const G4F_GATEWAY_BASE = 'https://g4f.dev/api';
 
 // Provider configurations with base URLs and capabilities
 export const G4F_PROVIDERS: G4FProviderConfig[] = [
@@ -197,7 +198,7 @@ export const G4F_PROVIDERS: G4FProviderConfig[] = [
     id: 'g4f-main',
     label: 'G4F Main',
     description: 'Full G4F API with all providers',
-    baseUrl: 'https://g4f.dev/v1',
+    baseUrl: 'https://g4f.dev/api/default',
     requiresAuth: true,
     supportsVision: true,
     supportsStreaming: true,
@@ -350,13 +351,27 @@ function resolveProviderEndpoint(
   }
 
   const useGateway = !customBaseUrl && config.useGateway;
-  const baseUrl = customBaseUrl || (useGateway ? G4F_GATEWAY_BASE_URL : config.baseUrl);
+
+  // G4F gateway uses pattern: https://g4f.dev/api/{provider}/
+  // Direct providers use their own base URL
+  let baseUrl: string;
+  if (customBaseUrl) {
+    baseUrl = customBaseUrl;
+  } else if (useGateway) {
+    // Use g4f.dev gateway with provider-specific path
+    const providerPath = config.providerParam || provider;
+    baseUrl = `${G4F_GATEWAY_BASE}/${providerPath}`;
+  } else {
+    baseUrl = config.baseUrl;
+  }
+
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
   };
 
-  const authKey = apiKey || ((useGateway || provider === 'g4f-main') ? DEFAULT_G4F_API_KEY : undefined);
-  if ((useGateway || config.requiresAuth || provider === 'g4f-main') && authKey) {
+  // G4F gateway doesn't require auth for most providers
+  const authKey = apiKey || (provider === 'g4f-main' ? DEFAULT_G4F_API_KEY : undefined);
+  if ((config.requiresAuth || provider === 'g4f-main') && authKey) {
     headers['Authorization'] = `Bearer ${authKey}`;
   }
 
@@ -364,7 +379,8 @@ function resolveProviderEndpoint(
     config,
     baseUrl,
     headers,
-    providerParam: useGateway ? (config.providerParam || provider) : undefined,
+    // No longer needed since provider is in URL path
+    providerParam: undefined,
   };
 }
 
