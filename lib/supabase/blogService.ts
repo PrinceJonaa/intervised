@@ -870,6 +870,92 @@ export function truncateText(text: string, maxLength: number): string {
 }
 
 // ============================================
+// NEWSLETTER SUBSCRIPTIONS (Phase 5)
+// ============================================
+
+/**
+ * Subscribe to newsletter
+ */
+export async function subscribeToNewsletter(email: string, source = 'blog'): Promise<boolean> {
+  const { error } = await supabase
+    .from('newsletter_subscribers')
+    .insert({ email, source } as any);
+
+  if (error) {
+    if (error.code === '23505') {
+      // Duplicate - already subscribed
+      return true;
+    }
+    console.error('Newsletter subscription error:', error);
+    throw error;
+  }
+  return true;
+}
+
+// ============================================
+// POST BOOKMARKS (Phase 6)
+// ============================================
+
+/**
+ * Toggle bookmark on a post
+ */
+export async function toggleBookmark(postId: string, userId: string): Promise<{ bookmarked: boolean }> {
+  // Check if exists
+  const { data: existing } = await supabase
+    .from('blog_bookmarks')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('post_id', postId)
+    .single();
+
+  if (existing) {
+    // Remove bookmark
+    await supabase
+      .from('blog_bookmarks')
+      .delete()
+      .eq('user_id', userId)
+      .eq('post_id', postId);
+    return { bookmarked: false };
+  } else {
+    // Add bookmark
+    await supabase
+      .from('blog_bookmarks')
+      .insert({ user_id: userId, post_id: postId } as any);
+    return { bookmarked: true };
+  }
+}
+
+/**
+ * Get user's bookmarked posts
+ */
+export async function getBookmarkedPosts(userId: string): Promise<BlogPost[]> {
+  const { data, error } = await supabase
+    .from('blog_bookmarks')
+    .select(`
+      post_id,
+      blog_posts!inner(*)
+    `)
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+  return (data || []).map((b: any) => b.blog_posts);
+}
+
+/**
+ * Check if post is bookmarked
+ */
+export async function isBookmarked(postId: string, userId: string): Promise<boolean> {
+  const { data } = await supabase
+    .from('blog_bookmarks')
+    .select('post_id')
+    .eq('user_id', userId)
+    .eq('post_id', postId)
+    .single();
+  return !!data;
+}
+
+// ============================================
 // POST REVISIONS (Version History)
 // ============================================
 
@@ -1045,4 +1131,12 @@ export const blogService = {
   formatDate,
   formatRelativeTime,
   truncateText,
+
+  // Newsletter (Phase 5)
+  subscribeToNewsletter,
+
+  // Bookmarks (Phase 6)
+  toggleBookmark,
+  getBookmarkedPosts,
+  isBookmarked,
 };
