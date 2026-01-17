@@ -176,6 +176,110 @@ export async function getPostStats(): Promise<{ published: number; draft: number
 }
 
 // ============================================
+// DISCOVERY & FILTERING (Phase 3)
+// ============================================
+
+/**
+ * Get posts by author
+ */
+export async function getPostsByAuthor(authorId: string, limit = 10): Promise<BlogPost[]> {
+  const { data, error } = await supabase
+    .from('blog_posts')
+    .select('*')
+    .eq('author_id', authorId)
+    .eq('status', 'published')
+    .order('published_at', { ascending: false })
+    .limit(limit);
+
+  if (error) throw error;
+  return data || [];
+}
+
+/**
+ * Get posts by date range
+ */
+export async function getPostsByDateRange(startDate: string, endDate: string): Promise<BlogPost[]> {
+  const { data, error } = await supabase
+    .from('blog_posts')
+    .select('*')
+    .eq('status', 'published')
+    .gte('published_at', startDate)
+    .lte('published_at', endDate)
+    .order('published_at', { ascending: false });
+
+  if (error) throw error;
+  return data || [];
+}
+
+/**
+ * Get posts by month/year for archive
+ */
+export async function getPostsByMonth(year: number, month: number): Promise<BlogPost[]> {
+  const startDate = new Date(year, month - 1, 1).toISOString();
+  const endDate = new Date(year, month, 0, 23, 59, 59).toISOString();
+  return getPostsByDateRange(startDate, endDate);
+}
+
+/**
+ * Get popular posts (by views)
+ */
+export async function getPopularPosts(limit = 5): Promise<BlogPost[]> {
+  const { data, error } = await supabase
+    .from('blog_posts')
+    .select('*')
+    .eq('status', 'published')
+    .order('views', { ascending: false })
+    .limit(limit);
+
+  if (error) throw error;
+  return data || [];
+}
+
+/**
+ * Get recent posts
+ */
+export async function getRecentPosts(limit = 5): Promise<BlogPost[]> {
+  const { data, error } = await supabase
+    .from('blog_posts')
+    .select('*')
+    .eq('status', 'published')
+    .order('published_at', { ascending: false })
+    .limit(limit);
+
+  if (error) throw error;
+  return data || [];
+}
+
+/**
+ * Get monthly archive (posts grouped by month)
+ */
+export async function getMonthlyArchive(): Promise<{ year: number; month: number; count: number }[]> {
+  const { data, error } = await supabase
+    .from('blog_posts')
+    .select('published_at')
+    .eq('status', 'published')
+    .order('published_at', { ascending: false });
+
+  if (error) throw error;
+
+  const archiveMap = new Map<string, { year: number; month: number; count: number }>();
+  (data || []).forEach((post: any) => {
+    if (post.published_at) {
+      const date = new Date(post.published_at);
+      const key = `${date.getFullYear()}-${date.getMonth() + 1}`;
+      const existing = archiveMap.get(key);
+      if (existing) {
+        existing.count++;
+      } else {
+        archiveMap.set(key, { year: date.getFullYear(), month: date.getMonth() + 1, count: 1 });
+      }
+    }
+  });
+
+  return Array.from(archiveMap.values());
+}
+
+// ============================================
 // BLOG POSTS - WRITE OPERATIONS
 // ============================================
 
@@ -886,6 +990,15 @@ export const blogService = {
   getPostsByTag,
   getAllTags,
   getAdminPosts,
+  getPostStats,
+
+  // Discovery & Filtering (Phase 3)
+  getPostsByAuthor,
+  getPostsByDateRange,
+  getPostsByMonth,
+  getPopularPosts,
+  getRecentPosts,
+  getMonthlyArchive,
 
   // Write operations
   createPost,
