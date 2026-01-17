@@ -180,8 +180,8 @@ export const GeneralTab: React.FC<GeneralTabProps> = ({ settings, setSettings, o
               key={p.id}
               onClick={() => handleProviderChange(p.id)}
               className={`flex flex-col items-center gap-2 p-4 rounded-2xl border transition-all relative overflow-hidden group ${settings.provider === p.id
-                  ? 'bg-accent/10 border-accent shadow-[0_0_20px_rgba(244,201,93,0.15)]'
-                  : 'bg-white/5 border-white/10 hover:border-white/20 hover:bg-white/10'
+                ? 'bg-accent/10 border-accent shadow-[0_0_20px_rgba(244,201,93,0.15)]'
+                : 'bg-white/5 border-white/10 hover:border-white/20 hover:bg-white/10'
                 } ${p.id === 'intervised' ? 'col-span-2 sm:col-span-1 ring-2 ring-accent/30' : ''}`}
             >
               {p.id === 'intervised' && (
@@ -232,8 +232,8 @@ export const GeneralTab: React.FC<GeneralTabProps> = ({ settings, setSettings, o
                 key={provider.id}
                 onClick={() => handleG4FSubProviderChange(provider.id)}
                 className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border transition-all relative group ${settings.g4f?.subProvider === provider.id
-                    ? 'bg-green-500/10 border-green-500/50 shadow-[0_0_15px_rgba(34,197,94,0.15)]'
-                    : 'bg-white/5 border-white/10 hover:border-white/20 hover:bg-white/10'
+                  ? 'bg-green-500/10 border-green-500/50 shadow-[0_0_15px_rgba(34,197,94,0.15)]'
+                  : 'bg-white/5 border-white/10 hover:border-white/20 hover:bg-white/10'
                   }`}
               >
                 <span className="text-xl group-hover:scale-110 transition-transform">{provider.icon}</span>
@@ -335,8 +335,8 @@ export const GeneralTab: React.FC<GeneralTabProps> = ({ settings, setSettings, o
                       key={model}
                       onClick={() => handleG4FModelSelect(model)}
                       className={`w-full text-left px-4 py-2.5 rounded-lg transition-all text-sm font-mono ${settings.g4f?.model === model
-                          ? 'bg-green-500/20 border border-green-500/30 text-green-400'
-                          : 'bg-white/5 hover:bg-white/10 text-gray-300 border border-transparent'
+                        ? 'bg-green-500/20 border border-green-500/30 text-green-400'
+                        : 'bg-white/5 hover:bg-white/10 text-gray-300 border border-transparent'
                         }`}
                     >
                       <div className="flex items-center justify-between">
@@ -372,7 +372,7 @@ export const GeneralTab: React.FC<GeneralTabProps> = ({ settings, setSettings, o
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* API Key (for g4f-main) */}
             {currentG4FProvider?.requiresAuth && (
-              <div className="bg-white/5 border border-white/10 p-4 rounded-xl space-y-3">
+              <form onSubmit={(e) => e.preventDefault()} className="bg-white/5 border border-white/10 p-4 rounded-xl space-y-3">
                 <label className="text-xs font-mono text-gray-400 uppercase tracking-widest flex items-center gap-2">
                   <Key size={14} className="text-green-400" /> G4F API Key
                 </label>
@@ -393,7 +393,7 @@ export const GeneralTab: React.FC<GeneralTabProps> = ({ settings, setSettings, o
                     {showKey ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
                 </div>
-              </div>
+              </form>
             )}
 
             {/* Custom Base URL (for custom/ollama) */}
@@ -469,12 +469,12 @@ export const GeneralTab: React.FC<GeneralTabProps> = ({ settings, setSettings, o
                 key={model.id}
                 onClick={() => setSettings(p => ({ ...p, modelOverride: model.id }))}
                 className={`flex items-center gap-4 p-4 rounded-xl border transition-all ${settings.modelOverride === model.id
-                    ? 'bg-accent/10 border-accent'
-                    : 'bg-white/5 border-white/10 hover:border-white/20'
+                  ? 'bg-accent/10 border-accent'
+                  : 'bg-white/5 border-white/10 hover:border-white/20'
                   }`}
               >
                 <div className={`w-3 h-3 rounded-full ${model.tier === 'budget' ? 'bg-green-400' :
-                    model.tier === 'standard' ? 'bg-blue-400' : 'bg-purple-400'
+                  model.tier === 'standard' ? 'bg-blue-400' : 'bg-purple-400'
                   }`} />
                 <div className="text-left flex-1">
                   <div className={`text-sm font-medium ${settings.modelOverride === model.id ? 'text-accent' : 'text-white'}`}>
@@ -502,7 +502,7 @@ export const GeneralTab: React.FC<GeneralTabProps> = ({ settings, setSettings, o
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* API Key */}
-            <div className="bg-white/5 border border-white/10 p-6 rounded-2xl space-y-4">
+            <form onSubmit={(e) => e.preventDefault()} className="bg-white/5 border border-white/10 p-6 rounded-2xl space-y-4">
               <div className="flex justify-between items-center">
                 <label className="text-xs font-mono text-gray-400 uppercase tracking-widest flex items-center gap-2">
                   <Key size={14} className="text-accent" /> Authentication
@@ -530,7 +530,7 @@ export const GeneralTab: React.FC<GeneralTabProps> = ({ settings, setSettings, o
                 <Info size={12} />
                 {settings.provider === 'google' ? 'Optional (uses system key if empty)' : 'Mandatory for external protocols'}
               </div>
-            </div>
+            </form>
 
             {/* Model Selection */}
             <div className="bg-white/5 border border-white/10 p-6 rounded-2xl space-y-4">

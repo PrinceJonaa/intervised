@@ -389,80 +389,22 @@ function resolveProviderEndpoint(
 
 /**
  * Fetch available models from a G4F provider
- * For gateway providers, returns popularModels directly (no /models endpoint)
- * For direct providers, fetches from their API with caching
+ * Since g4f.dev endpoints are unreliable, we skip API calls and use popularModels directly.
+ * This prevents 500 error spam in console.
  */
 export async function fetchG4FModels(
   provider: G4FSubProvider,
-  apiKey?: string,
-  customBaseUrl?: string
+  _apiKey?: string,
+  _customBaseUrl?: string
 ): Promise<string[]> {
-  let config: G4FProviderConfig;
-  let baseUrl: string;
-  let headers: Record<string, string>;
-
-  try {
-    ({ config, baseUrl, headers } = resolveProviderEndpoint(provider, apiKey, customBaseUrl));
-  } catch (error) {
+  const config = getG4FProvider(provider);
+  if (!config) {
     return [];
   }
 
-  // Gateway providers (g4f.dev/api/*) don't have reliable /models endpoints - use popularModels
-  // Direct providers (pollinations, ollama, custom, g4f-main with /v1) can fetch models
-  if (config.useGateway && !customBaseUrl) {
-    return config.popularModels;
-  }
-
-  // For direct providers (pollinations, ollama, custom), try to fetch models
-  const cacheKey = `${provider}-${baseUrl}`;
-  const cached = modelCache.get(cacheKey);
-
-  // Return cached if still valid
-  if (cached && Date.now() - cached.timestamp < MODEL_CACHE_TTL) {
-    return cached.models;
-  }
-
-  try {
-    // Try /models endpoint for direct providers only
-    const response = await fetchWithRetry(`${baseUrl}/models`, {
-      method: 'GET',
-      headers,
-    });
-
-    if (!response.ok) {
-      return config.popularModels;
-    }
-
-    let data;
-    try {
-      data = await response.json();
-    } catch {
-      return config.popularModels;
-    }
-    let models: string[] = [];
-
-    // Handle different response formats
-    if (Array.isArray(data)) {
-      models = data.map((m: G4FModelInfo | string) =>
-        typeof m === 'string' ? m : m.id
-      );
-    } else if (data.data && Array.isArray(data.data)) {
-      models = data.data.map((m: G4FModelInfo) => m.id);
-    } else if (data.models && Array.isArray(data.models)) {
-      models = data.models;
-    }
-
-    // Filter and sort models
-    models = models.filter(m => m && typeof m === 'string');
-
-    // Cache the result
-    modelCache.set(cacheKey, { models, timestamp: Date.now() });
-
-    return models.length > 0 ? models : config.popularModels;
-  } catch {
-    // Silent fail - use popularModels as fallback
-    return config.popularModels;
-  }
+  // Always return popularModels - skip API calls to prevent 500 error spam
+  // The g4f.dev /models endpoints are unreliable
+  return config.popularModels;
 }
 
 /**
