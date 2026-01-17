@@ -346,18 +346,28 @@ export async function getUserAISettings(): Promise<UserAISettings | null> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
 
-  const { data, error } = await supabase
-    .from('user_ai_settings')
-    .select('*')
-    .eq('user_id', user.id)
-    .single();
+  try {
+    const { data, error } = await supabase
+      .from('user_ai_settings')
+      .select('*')
+      .eq('user_id', user.id)
+      .single();
 
-  if (error && error.code !== 'PGRST116') { // PGRST116 = JSON object not found (no row)
-    console.error('Failed to load AI settings:', error);
+    // Handle missing table (406) or no row found (PGRST116)
+    if (error) {
+      if (error.code === 'PGRST116' || error.code === '42P01' || error.message?.includes('406')) {
+        // Table doesn't exist or no settings yet - return defaults
+        return null;
+      }
+      console.error('Failed to load AI settings:', error);
+      return null;
+    }
+
+    return data as unknown as UserAISettings;
+  } catch (err) {
+    // Silently return null for any network/table errors
     return null;
   }
-
-  return data as unknown as UserAISettings;
 }
 
 export async function updateUserAISettings(settings: Partial<UserAISettings>) {
