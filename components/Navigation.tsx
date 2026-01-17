@@ -145,6 +145,8 @@ const DockItem: React.FC<DockItemProps> = ({ item, isActive, onClick }) => (
   </button>
 );
 
+import { NotificationBell } from './NotificationBell';
+
 export const Header = () => (
   <header className="fixed top-0 left-0 right-0 z-40 p-4 sm:p-6 flex justify-between items-center pointer-events-none">
     <Link to="/" className="flex items-center gap-3 pointer-events-auto cursor-pointer group" aria-label="Intervised Home">
@@ -157,10 +159,15 @@ export const Header = () => (
         <span className="text-[10px] font-mono text-white/50 tracking-[0.2em] hidden sm:block">MUTUALLY ENVISIONED</span>
       </div>
     </Link>
-    <div className="pointer-events-auto hidden sm:block">
-      <div className="flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/10 bg-black/20 backdrop-blur-md">
-        <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse"></div>
-        <span className="text-[10px] font-mono text-white/80">SYSTEM OPTIMAL</span>
+
+    <div className="pointer-events-auto flex items-center gap-4">
+      <NotificationBell />
+
+      <div className="hidden sm:block">
+        <div className="flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/10 bg-black/20 backdrop-blur-md">
+          <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse"></div>
+          <span className="text-[10px] font-mono text-white/80">SYSTEM OPTIMAL</span>
+        </div>
       </div>
     </div>
   </header>

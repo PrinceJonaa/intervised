@@ -1139,4 +1139,191 @@ export const blogService = {
   toggleBookmark,
   getBookmarkedPosts,
   isBookmarked,
+
+  // Voting (Phase 7)
+  voteComment,
+  getCommentVoteStatus,
+
+  // Reporting (Phase 7)
+  reportContent,
+  getReports,
+  updateReportStatus,
 };
+
+// ============================================
+// COMMENT VOTING (Phase 7)
+// ============================================
+
+export type VoteType = 'up' | 'down';
+
+/**
+ * Vote on a comment (upvote or downvote)
+ * If already voted, changes the vote or removes it
+ */
+export async function voteComment(
+  commentId: string,
+  voteType: VoteType
+): Promise<{ upvotes: number; downvotes: number; userVote: VoteType | null }> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Must be logged in to vote');
+
+  // Check existing vote
+  const { data: existing } = await supabase
+    .from('comment_votes')
+    .select('*')
+    .eq('user_id', user.id)
+    .eq('comment_id', commentId)
+    .maybeSingle();
+
+  if (existing) {
+    if ((existing as any).vote_type === voteType) {
+      // Same vote - remove it
+      await supabase
+        .from('comment_votes')
+        .delete()
+        .eq('id', (existing as any).id);
+    } else {
+      // Different vote - update it
+      await supabase
+        .from('comment_votes')
+        .update({ vote_type: voteType })
+        .eq('id', (existing as any).id);
+    }
+  } else {
+    // New vote
+    await supabase
+      .from('comment_votes')
+      .insert({
+        user_id: user.id,
+        comment_id: commentId,
+        vote_type: voteType,
+      });
+  }
+
+  // Get updated counts
+  const { data: comment } = await supabase
+    .from('blog_comments')
+    .select('upvotes, downvotes')
+    .eq('id', commentId)
+    .single();
+
+  // Get current user vote
+  const { data: userVote } = await supabase
+    .from('comment_votes')
+    .select('vote_type')
+    .eq('user_id', user.id)
+    .eq('comment_id', commentId)
+    .maybeSingle();
+
+  return {
+    upvotes: (comment as any)?.upvotes || 0,
+    downvotes: (comment as any)?.downvotes || 0,
+    userVote: (userVote as any)?.vote_type || null,
+  };
+}
+
+/**
+ * Get current user's vote status on a comment
+ */
+export async function getCommentVoteStatus(
+  commentId: string
+): Promise<VoteType | null> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const { data } = await supabase
+    .from('comment_votes')
+    .select('vote_type')
+    .eq('user_id', user.id)
+    .eq('comment_id', commentId)
+    .maybeSingle();
+
+  return (data as any)?.vote_type || null;
+}
+
+// ============================================
+// CONTENT REPORTING (Phase 7)
+// ============================================
+
+export type ReportReason = 'spam' | 'abuse' | 'harassment' | 'misinformation' | 'other';
+export type ReportStatus = 'pending' | 'reviewed' | 'resolved' | 'dismissed';
+export type ContentType = 'comment' | 'post' | 'profile';
+
+export interface ContentReport {
+  id: string;
+  reporter_id: string | null;
+  content_type: ContentType;
+  content_id: string;
+  reason: ReportReason;
+  description: string | null;
+  status: ReportStatus;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  created_at: string;
+}
+
+/**
+ * Report content (comment, post, or profile)
+ */
+export async function reportContent(
+  contentType: ContentType,
+  contentId: string,
+  reason: ReportReason,
+  description?: string
+): Promise<void> {
+  const { data: { user } } = await supabase.auth.getUser();
+
+  const { error } = await supabase
+    .from('content_reports')
+    .insert({
+      reporter_id: user?.id || null,
+      content_type: contentType,
+      content_id: contentId,
+      reason,
+      description: description || null,
+    });
+
+  if (error) throw error;
+}
+
+/**
+ * Get all reports (admin only)
+ */
+export async function getReports(
+  status?: ReportStatus
+): Promise<ContentReport[]> {
+  let query = supabase
+    .from('content_reports')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (status) {
+    query = query.eq('status', status);
+  }
+
+  const { data, error } = await query;
+  if (error) throw error;
+  return (data || []) as ContentReport[];
+}
+
+/**
+ * Update report status (admin only)
+ */
+export async function updateReportStatus(
+  reportId: string,
+  status: ReportStatus
+): Promise<void> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Not authenticated');
+
+  const { error } = await supabase
+    .from('content_reports')
+    .update({
+      status,
+      reviewed_by: user.id,
+      reviewed_at: new Date().toISOString(),
+    })
+    .eq('id', reportId);
+
+  if (error) throw error;
+}

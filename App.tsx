@@ -19,6 +19,9 @@ const ProfilePage = lazy(() => import('./features/Profile').then(m => ({ default
 const PrivacyPage = lazy(() => import('./features/Privacy').then(m => ({ default: m.PrivacyPage })));
 const TermsPage = lazy(() => import('./features/Terms').then(m => ({ default: m.TermsPage })));
 const NotFoundPage = lazy(() => import('./features/NotFound').then(m => ({ default: m.NotFoundPage })));
+const UserProfile = lazy(() => import('./features/blog/components/UserProfile').then(m => ({ default: m.default })));
+const ProfileSettings = lazy(() => import('./features/blog/components/ProfileSettings').then(m => ({ default: m.default })));
+const GuestAuthorApplication = lazy(() => import('./features/blog/components/GuestAuthorApplication').then(m => ({ default: m.default })));
 
 // Lazy load heavy 3D background (1MB+ Three.js bundle)
 const BackgroundScene = lazy(() => import('./components/Background3D').then(m => ({ default: m.BackgroundScene })));
@@ -270,6 +273,22 @@ function AppContent() {
               <Route path="/profile" element={
                 <ProtectedRoute fallback={<LoginPageWrapper />}>
                   <ProfilePageWrapper />
+                </ProtectedRoute>
+              } />
+              <Route path="/user/:id" element={<UserProfile />} />
+              <Route path="/settings/profile" element={
+                <ProtectedRoute fallback={<LoginPageWrapper />}>
+                  <ProfileSettings />
+                </ProtectedRoute>
+              } />
+              <Route path="/settings/notifications" element={
+                <ProtectedRoute fallback={<LoginPageWrapper />}>
+                  <ProfileSettings />
+                </ProtectedRoute>
+              } />
+              <Route path="/apply/author" element={
+                <ProtectedRoute fallback={<LoginPageWrapper />}>
+                  <GuestAuthorApplication />
                 </ProtectedRoute>
               } />
               <Route path="/privacy" element={<PrivacyPageWrapper />} />

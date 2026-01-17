@@ -45,6 +45,10 @@ export interface Comment {
   content: string;
   date: number;
   avatar?: string;
+  user_id?: string;
+  upvotes?: number;
+  downvotes?: number;
+  replies?: Comment[];
 }
 
 export interface BlogPost {
