@@ -89,6 +89,17 @@ body {
   min-width: 44px;
 }
 
+/* Focus-visible for keyboard accessibility */
+*:focus-visible {
+  outline: 2px solid #F4C95D;
+  outline-offset: 2px;
+}
+
+/* Remove focus ring for mouse users */
+*:focus:not(:focus-visible) {
+  outline: none;
+}
+
 /* Smooth momentum scrolling on iOS */
 .momentum-scroll {
   -webkit-overflow-scrolling: touch;

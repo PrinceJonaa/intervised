@@ -18,28 +18,28 @@ export const SimpleFooter = () => {
                 </div>
 
                 {/* Links */}
-                <div className="flex items-center gap-6">
+                <nav className="flex items-center gap-6" aria-label="Footer navigation">
                     <Link
                         to="/privacy"
                         className="hover:text-accent transition-colors"
                     >
                         Privacy Policy
                     </Link>
-                    <div className="w-1 h-1 bg-gray-700 rounded-full" />
+                    <div className="w-1 h-1 bg-gray-700 rounded-full" aria-hidden="true" />
                     <Link
                         to="/terms"
                         className="hover:text-accent transition-colors"
                     >
                         Terms of Service
                     </Link>
-                    <div className="w-1 h-1 bg-gray-700 rounded-full" />
+                    <div className="w-1 h-1 bg-gray-700 rounded-full" aria-hidden="true" />
                     <a
                         href="mailto:contact@intervised.com"
                         className="hover:text-accent transition-colors"
                     >
                         Contact
                     </a>
-                </div>
+                </nav>
             </div>
 
             {/* Spacer for NavDock */}

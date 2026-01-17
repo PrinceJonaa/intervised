@@ -18,6 +18,7 @@ const AdminPage = lazy(() => import('./features/Admin').then(m => ({ default: m.
 const ProfilePage = lazy(() => import('./features/Profile').then(m => ({ default: m.ProfilePage })));
 const PrivacyPage = lazy(() => import('./features/Privacy').then(m => ({ default: m.PrivacyPage })));
 const TermsPage = lazy(() => import('./features/Terms').then(m => ({ default: m.TermsPage })));
+const NotFoundPage = lazy(() => import('./features/NotFound').then(m => ({ default: m.NotFoundPage })));
 
 // Lazy load heavy 3D background (1MB+ Three.js bundle)
 const BackgroundScene = lazy(() => import('./components/Background3D').then(m => ({ default: m.BackgroundScene })));
@@ -28,6 +29,7 @@ import { ToastProvider } from './components/ToastSystem';
 import { ScrollToTop } from './components/ScrollToTop';
 import { AuthProvider, ProtectedRoute } from './components/AuthProvider';
 import { SimpleFooter } from './components/SimpleFooter';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 // Loading skeleton for lazy components
 const PageSkeleton = () => (
@@ -233,12 +235,19 @@ function AppContent() {
 
   return (
     <div className="relative min-h-screen text-white font-sans selection:bg-accent/30 selection:text-accent">
+      {/* Skip Link for Accessibility */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[200] focus:px-4 focus:py-2 focus:bg-accent focus:text-void focus:rounded-lg focus:font-bold"
+      >
+        Skip to main content
+      </a>
       <Suspense fallback={<BackgroundPlaceholder />}>
         <BackgroundScene activeCategory={activeCategory} />
       </Suspense>
       <Header />
 
-      <main className="relative">
+      <main id="main-content" className="relative">
         <AnimatePresence mode="wait">
           <Suspense fallback={<PageSkeleton />}>
             <Routes location={location} key={location.pathname}>
@@ -265,8 +274,8 @@ function AppContent() {
               } />
               <Route path="/privacy" element={<PrivacyPageWrapper />} />
               <Route path="/terms" element={<TermsPageWrapper />} />
-              {/* Fallback route */}
-              <Route path="*" element={<HomePage setPage={setPage} />} />
+              {/* 404 Not Found */}
+              <Route path="*" element={<NotFoundPage />} />
             </Routes>
           </Suspense>
         </AnimatePresence>
@@ -302,11 +311,13 @@ export default function App() {
 
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <ToastProvider>
-          <AppContent />
-        </ToastProvider>
-      </AuthProvider>
+      <ErrorBoundary>
+        <AuthProvider>
+          <ToastProvider>
+            <AppContent />
+          </ToastProvider>
+        </AuthProvider>
+      </ErrorBoundary>
       <SpeedInsights debug={import.meta.env.DEV} />
     </BrowserRouter>
   );
