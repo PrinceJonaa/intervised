@@ -65,17 +65,20 @@ export const BlogSection = () => {
     avatar: profile?.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${authUser.email}`
   } : null;
 
-  // Use Supabase hooks
-  const categoryFilter = activeCategory === 'All' ? undefined : activeCategory.toLowerCase() as any;
+  // Use Supabase hooks - Keep category case as-is (DB enum is capitalized)
+  const categoryFilter = activeCategory === 'All' ? undefined : activeCategory as any;
   const { posts: supabasePosts, isLoading, error, refetch } = useBlogPosts({
     category: categoryFilter
   });
 
-  // Transform posts for legacy components
-  const posts = useMemo(() =>
-    supabasePosts.map(transformPost),
-    [supabasePosts]
-  );
+  // Transform posts for legacy components (handle errors gracefully)
+  const posts = useMemo(() => {
+    if (error) {
+      console.error('Blog posts fetch error:', error);
+      return [];
+    }
+    return supabasePosts.map(transformPost);
+  }, [supabasePosts, error]);
 
   const handleLogin = async () => {
     if (user) {
