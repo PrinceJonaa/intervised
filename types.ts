@@ -20,6 +20,7 @@ export interface ServiceItem {
   title: string;
   description: string;
   price: number;
+  displayPrice?: string;
   durationMinutes: number;
   hourly?: boolean; // If true, price scales with duration
   providers?: string[]; // e.g., ['Prince Jona', 'Reina Hondo']

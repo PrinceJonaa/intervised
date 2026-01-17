@@ -60,6 +60,7 @@ export const ServicesSection = ({ onCategoryChange, setPage }: ServicesSectionPr
           title: s.name,
           description: s.description || '',
           price: s.base_price,
+          displayPrice: s.price_display,
           durationMinutes: s.duration || 60,
           category: s.category,
           features: [], // Default empty features if not in DB
@@ -135,7 +136,7 @@ export const ServicesSection = ({ onCategoryChange, setPage }: ServicesSectionPr
                       <motion.div key={service.id} variants={cardVariants} initial="idle" whileHover="hover" animate={selectedService?.id === service.id ? "active" : "idle"} layoutId={`card-${service.id}`} onClick={() => { setSelectedService(service); setIsBooked(false); setSelectedDate(null); }} className="relative p-5 sm:p-6 rounded-2xl cursor-pointer overflow-hidden border touch-manipulation">
                         {selectedService?.id === service.id && <motion.div className="absolute inset-0 bg-gradient-to-b from-transparent via-accent/10 to-transparent pointer-events-none" initial={{ y: "-100%" }} animate={{ y: "100%" }} transition={{ repeat: Infinity, duration: 2, ease: "linear" }} />}
                         <div className="relative z-10">
-                          <div className="flex justify-between items-start mb-2 gap-4"><h4 className={`font-bold text-base sm:text-lg leading-tight ${selectedService?.id === service.id ? 'text-white' : 'text-gray-200'}`}>{service.name}</h4><span className={`font-mono text-xs px-2 py-1 rounded-full whitespace-nowrap ${selectedService?.id === service.id ? 'bg-black/20 text-accent' : 'bg-white/10'}`}>${service.base_price}</span></div>
+                          <div className="flex justify-between items-start mb-2 gap-4"><h4 className={`font-bold text-base sm:text-lg leading-tight ${selectedService?.id === service.id ? 'text-white' : 'text-gray-200'}`}>{service.title}</h4><span className={`font-mono text-xs px-2 py-1 rounded-full whitespace-nowrap ${selectedService?.id === service.id ? 'bg-black/20 text-accent' : 'bg-white/10'}`}>{service.displayPrice || `$${service.price}`}</span></div>
                           <p className={`text-sm mb-4 line-clamp-2 ${selectedService?.id === service.id ? 'text-gray-300' : 'text-gray-400'}`}>{service.description}</p>
                           <div className={`flex items-center gap-2 text-xs font-mono uppercase tracking-wider ${selectedService?.id === service.id ? 'text-accent' : 'text-gray-400'}`}><Clock size={12} />{service.duration || 60} MIN</div>
                         </div>

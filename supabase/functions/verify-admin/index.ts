@@ -4,7 +4,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.21.0"
 
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-application-name',
 }
 
 serve(async (req) => {
@@ -14,6 +14,13 @@ serve(async (req) => {
     }
 
     try {
+        const authHeader = req.headers.get('Authorization');
+        console.log(`[verify-admin] Auth header present: ${!!authHeader}`);
+
+        if (!authHeader) {
+            throw new Error('Missing Authorization header');
+        }
+
         // Create a Supabase client with the Auth context of the logged-in user
         const supabaseClient = createClient(
             // Supabase API URL - env var automatically populated by Supabase
@@ -21,22 +28,23 @@ serve(async (req) => {
             // Supabase Anon Key - env var automatically populated by Supabase
             Deno.env.get('SUPABASE_ANON_KEY') ?? '',
             // Global header to inject the user's JWT
-            { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
+            { global: { headers: { Authorization: authHeader } } }
         )
 
         // Get the user from the JWT
-        // This server-side check ensures the token is valid and not tampered with
         const {
             data: { user },
             error: userError,
         } = await supabaseClient.auth.getUser()
 
         if (userError || !user) {
+            console.error('[verify-admin] User fetch error:', userError);
             throw new Error('Invalid token or user not found')
         }
 
-        // Now check the user's role in your 'profiles' table
-        // (Assuming you store roles in a 'profiles' table, adapting to your schema)
+        console.log(`[verify-admin] Verified user: ${user.id} (${user.email})`);
+
+        // Check profile
         const { data: profile, error: profileError } = await supabaseClient
             .from('profiles')
             .select('role')
@@ -44,13 +52,14 @@ serve(async (req) => {
             .single()
 
         if (profileError) {
-            console.error('Error fetching profile:', profileError)
+            console.error('[verify-admin] Profile fetch error:', profileError)
             throw new Error('Failed to fetch user profile')
         }
 
+        console.log(`[verify-admin] User role: ${profile?.role}`);
+
         const isAdmin = profile?.role === 'admin'
 
-        // Return the verification result
         return new Response(
             JSON.stringify({
                 isAdmin,
@@ -65,6 +74,7 @@ serve(async (req) => {
         )
 
     } catch (error) {
+        console.error('[verify-admin] Error:', error.message);
         return new Response(
             JSON.stringify({ error: error.message }),
             {

@@ -8,6 +8,7 @@ export interface Service {
   name: string;
   description?: string;
   base_price: number;
+  price_display?: string;
   duration?: number;
   is_scalable?: boolean;
   providers?: string[];
