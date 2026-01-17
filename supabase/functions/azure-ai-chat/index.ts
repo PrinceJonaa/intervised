@@ -7,6 +7,16 @@ const corsHeaders = {
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-application-name',
 }
 
+// Map UI model names to Azure AI Foundry deployment names
+const MODEL_MAP: Record<string, string> = {
+    'deepseek-v3.2': 'DeepSeek-V3.2',
+    'gpt-4.1': 'gpt-4.1',
+    'grok-4-fast': 'grok-4-fast-reasoning',
+    'kimi-k2': 'Kimi-K2-Thinking',
+    // Fallback
+    'default': 'DeepSeek-V3.2'
+};
+
 serve(async (req) => {
     // 1. Handle CORS
     if (req.method === 'OPTIONS') {
@@ -20,34 +30,28 @@ serve(async (req) => {
 
         const supabaseClient = createClient(
             Deno.env.get('SUPABASE_URL') ?? '',
-            Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '', // Use Service Role for DB writes/RPC
+            Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
             { auth: { persistSession: false } }
         )
 
         const token = authHeader.replace('Bearer ', '');
-
-        // Custom Manual Verification
         const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token)
 
         if (userError || !user) {
-            console.error('Auth error:', userError);
             return new Response(
                 JSON.stringify({ error: 'Invalid token', details: userError }),
                 { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
             )
         }
 
-        // 3. Azure Configuration (Set via Supabase Dashboard > Edge Functions > Secrets)
+        // 3. Azure AI Foundry Configuration
         const AZURE_ENDPOINT = Deno.env.get('AZURE_OPENAI_ENDPOINT');
         const AZURE_KEY = Deno.env.get('AZURE_OPENAI_KEY');
 
         if (!AZURE_ENDPOINT || !AZURE_KEY) {
-            console.error('Missing Azure Secrets');
             return new Response(
-                JSON.stringify({
-                    error: 'Azure OpenAI configuration missing. Please set AZURE_OPENAI_ENDPOINT and AZURE_OPENAI_KEY secrets.'
-                }),
-                { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 503 } // 503 Service Unavailable
+                JSON.stringify({ error: 'Azure AI configuration missing' }),
+                { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 503 }
             )
         }
 
@@ -73,8 +77,6 @@ serve(async (req) => {
             });
 
         if (limitError) {
-            console.error('Spending check error:', limitError);
-            // Return specific error for debugging
             return new Response(
                 JSON.stringify({ error: `Spending check failed: ${limitError.message}` }),
                 { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
@@ -84,18 +86,18 @@ serve(async (req) => {
         const spending = limitData?.[0] || { is_under_limit: true, current_spending: 0 };
         if (!spending.is_under_limit) {
             return new Response(
-                JSON.stringify({
-                    message: 'Monthly AI spending limit reached ($5.00).',
-                    spending
-                }),
+                JSON.stringify({ message: 'Monthly AI spending limit reached ($5.00).', spending }),
                 { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 429 }
             )
         }
 
-        // 6. Call Azure OpenAI
-        const AZURE_DEPLOYMENT = model === 'gpt-4.1' ? 'gpt-4' : 'gpt-35-turbo';
+        // 6. Map model to Azure deployment name
+        const modelKey = (model || 'default').toLowerCase();
+        const deploymentName = MODEL_MAP[modelKey] || MODEL_MAP['default'];
 
-        const azureUrl = `${AZURE_ENDPOINT}/openai/deployments/${AZURE_DEPLOYMENT}/chat/completions?api-version=2024-02-15-preview`;
+        // 7. Call Azure AI Foundry (new format)
+        // Format: https://{resource}.services.ai.azure.com/models/chat/completions
+        const azureUrl = `${AZURE_ENDPOINT}/models/chat/completions?api-version=2024-05-01-preview`;
 
         const azureResponse = await fetch(azureUrl, {
             method: 'POST',
@@ -104,62 +106,55 @@ serve(async (req) => {
                 'api-key': AZURE_KEY
             },
             body: JSON.stringify({
+                model: deploymentName,
                 messages,
                 temperature: temperature ?? 0.7,
-                max_tokens: maxTokens ?? 1000,
-                stream: false
+                max_tokens: maxTokens ?? 1000
             })
         });
 
         if (!azureResponse.ok) {
             const errText = await azureResponse.text();
-            console.error('Azure API Error:', errText);
+            console.error('Azure API Error:', azureResponse.status, errText);
             return new Response(
                 JSON.stringify({ error: `Azure API error: ${azureResponse.status}`, details: errText }),
-                { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 502 } // 502 Bad Gateway
+                { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 502 }
             )
         }
 
         const azureData = await azureResponse.json();
-        const content = azureData.choices[0]?.message?.content || '';
+        const content = azureData.choices?.[0]?.message?.content || '';
         const usage = azureData.usage || { prompt_tokens: 0, completion_tokens: 0 };
 
-        const isGpt4 = model === 'gpt-4.1';
-        const costInput = isGpt4 ? 30 : 0.5;
-        const costOutput = isGpt4 ? 60 : 1.5;
-        const costUsd = ((usage.prompt_tokens * costInput) + (usage.completion_tokens * costOutput)) / 1000000;
+        // Cost estimation (rough)
+        const costUsd = ((usage.prompt_tokens + usage.completion_tokens) * 0.001) / 1000;
 
-        // 7. Log Usage
-        const { error: logError } = await supabaseClient.from('ai_usage').insert({
+        // 8. Log Usage
+        await supabaseClient.from('ai_usage').insert({
             user_id: user.id,
-            model_name: model || 'gpt-3.5-turbo',
+            model_name: deploymentName,
             input_tokens: usage.prompt_tokens,
             output_tokens: usage.completion_tokens,
             cost_usd: costUsd,
             ip_address: req.headers.get('x-forwarded-for') || 'unknown'
         });
 
-        if (logError) {
-            console.error('Usage logging error:', logError);
-            // Non-blocking error, but good to know
-        }
-
-        // 8. Return Response
+        // 9. Return Response
         return new Response(
             JSON.stringify({
                 content,
-                model: model,
+                model: deploymentName,
                 usage: {
                     inputTokens: usage.prompt_tokens,
                     outputTokens: usage.completion_tokens,
                     cost: costUsd
                 },
                 spending: {
-                    current: spending.current + costUsd,
+                    current: (spending.current_spending || 0) + costUsd,
                     limit: 5.0,
-                    remaining: 5.0 - (spending.current + costUsd)
+                    remaining: 5.0 - ((spending.current_spending || 0) + costUsd)
                 },
-                finishReason: azureData.choices[0]?.finish_reason
+                finishReason: azureData.choices?.[0]?.finish_reason
             }),
             { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
         )
