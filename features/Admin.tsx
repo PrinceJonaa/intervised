@@ -100,23 +100,26 @@ function ContactCard({
         <div className="flex items-center gap-2">
           <button
             onClick={onView}
-            className="p-2 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white transition-colors"
+            className="p-3 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white transition-colors touch-target"
+            aria-label="View details"
           >
-            <Eye size={14} />
+            <Eye size={16} />
           </button>
           {contact.status !== 'replied' && (
             <button
               onClick={() => onStatusChange('replied')}
-              className="p-2 hover:bg-green-500/20 rounded-lg text-gray-400 hover:text-green-400 transition-colors"
+              className="p-3 hover:bg-green-500/20 rounded-lg text-gray-400 hover:text-green-400 transition-colors touch-target"
+              aria-label="Mark as replied"
             >
-              <CheckCircle2 size={14} />
+              <CheckCircle2 size={16} />
             </button>
           )}
           <button
             onClick={() => onStatusChange('archived')}
-            className="p-2 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white transition-colors"
+            className="p-3 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white transition-colors touch-target"
+            aria-label="Archive"
           >
-            <Archive size={14} />
+            <Archive size={16} />
           </button>
         </div>
       </div>
@@ -163,11 +166,11 @@ function BookingCard({
 
       <div className="flex items-center justify-between pt-3 border-t border-white/5">
         <span className="text-accent font-mono font-bold">${booking.total_price}</span>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2">
           {booking.status === 'pending' && (
             <button
               onClick={() => onStatusChange('confirmed')}
-              className="px-3 py-1 text-xs bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 transition-colors"
+              className="px-4 py-2 text-xs bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 transition-colors touch-target"
             >
               Confirm
             </button>
@@ -175,7 +178,7 @@ function BookingCard({
           {booking.status === 'confirmed' && (
             <button
               onClick={() => onStatusChange('in_progress')}
-              className="px-3 py-1 text-xs bg-purple-500/20 text-purple-400 rounded-lg hover:bg-purple-500/30 transition-colors"
+              className="px-4 py-2 text-xs bg-purple-500/20 text-purple-400 rounded-lg hover:bg-purple-500/30 transition-colors touch-target"
             >
               Start
             </button>
@@ -183,7 +186,7 @@ function BookingCard({
           {booking.status === 'in_progress' && (
             <button
               onClick={() => onStatusChange('completed')}
-              className="px-3 py-1 text-xs bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30 transition-colors"
+              className="px-4 py-2 text-xs bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30 transition-colors touch-target"
             >
               Complete
             </button>
@@ -191,7 +194,7 @@ function BookingCard({
           {booking.status !== 'cancelled' && booking.status !== 'completed' && (
             <button
               onClick={() => onStatusChange('cancelled')}
-              className="px-3 py-1 text-xs bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors"
+              className="px-4 py-2 text-xs bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors touch-target"
             >
               Cancel
             </button>
@@ -747,8 +750,8 @@ function AdminDashboardContent() {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all relative touch-target ${activeTab === tab.id
-                  ? 'text-accent'
-                  : 'text-gray-500'
+                ? 'text-accent'
+                : 'text-gray-500'
                 }`}
             >
               <tab.icon size={20} />

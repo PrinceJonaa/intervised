@@ -15,40 +15,32 @@ serve(async (req) => {
 
     try {
         const authHeader = req.headers.get('Authorization');
-        console.log(`[verify-admin] Auth header present: ${!!authHeader}`);
 
         if (!authHeader) {
             throw new Error('Missing Authorization header');
         }
 
-        // Create a Supabase client
+        // Create a Supabase client with persistSession false
         const supabaseClient = createClient(
-            // Supabase API URL - env var automatically populated by Supabase
             Deno.env.get('SUPABASE_URL') ?? '',
-            // Supabase Anon Key - env var automatically populated by Supabase
             Deno.env.get('SUPABASE_ANON_KEY') ?? '',
             {
-                auth: {
-                    persistSession: false // Critical for server-side usage
-                }
+                auth: { persistSession: false }
             }
         )
 
         // Extract token
         const token = authHeader.replace('Bearer ', '');
 
-        // Get the user from the JWT explicitely
+        // Get the user from the JWT explicitly
         const {
             data: { user },
             error: userError,
         } = await supabaseClient.auth.getUser(token)
 
         if (userError || !user) {
-            console.error('[verify-admin] User fetch error:', userError);
             throw new Error('Invalid token or user not found')
         }
-
-        console.log(`[verify-admin] Verified user: ${user.id} (${user.email})`);
 
         // Check profile
         const { data: profile, error: profileError } = await supabaseClient
@@ -58,13 +50,9 @@ serve(async (req) => {
             .single()
 
         if (profileError) {
-            console.error('[verify-admin] Profile fetch error:', profileError)
-            // Fallback: If profile fetch fails (e.g. RLS issues), checks if user metadata has role?
-            // But let's throw for now to be safe.
+            console.error('Profile fetch error:', profileError)
             throw new Error('Failed to fetch user profile')
         }
-
-        console.log(`[verify-admin] User role: ${profile?.role}`);
 
         const isAdmin = profile?.role === 'admin'
 
@@ -82,7 +70,6 @@ serve(async (req) => {
         )
 
     } catch (error) {
-        console.error('[verify-admin] Error:', error.message);
         return new Response(
             JSON.stringify({ error: error.message }),
             {

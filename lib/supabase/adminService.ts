@@ -1,6 +1,48 @@
 
 import { supabase } from './client';
 
+export type UserPermission = {
+    can_blog?: boolean;
+    can_comment?: boolean;
+    view_analytics?: boolean;
+};
+
+export async function inviteUser(email: string, fullName: string) {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) throw new Error('Not authenticated');
+
+    const { data, error } = await supabase.functions.invoke('manage-users', {
+        body: { action: 'invite_user', payload: { email, fullName } },
+        headers: { Authorization: `Bearer ${session.access_token}` } // Explicit header just in case
+    });
+
+    if (error) throw error;
+    return data;
+}
+
+export async function deleteUser(userId: string) {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) throw new Error('Not authenticated');
+
+    const { data, error } = await supabase.functions.invoke('manage-users', {
+        body: { action: 'delete_user', payload: { userId } },
+        headers: { Authorization: `Bearer ${session.access_token}` }
+    });
+
+    if (error) throw error;
+    return data;
+}
+
+export async function updateUserPermissions(userId: string, permissions: UserPermission) {
+    // Direct DB update since we added RLS policy for admins
+    const { error } = await supabase
+        .from('profiles')
+        .update({ permissions })
+        .eq('id', userId);
+
+    if (error) throw error;
+}
+
 export interface TransparencyMetric {
     id: string;
     metric_type: 'revenue' | 'expenses' | 'donations' | 'carbon_offset' | 'server_costs';

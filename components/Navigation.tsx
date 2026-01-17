@@ -3,7 +3,7 @@ import React, { useState, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import { Layout, Cpu, User, Mail, Sparkles, X, Send, Settings2, CheckCircle2, Circle, Mic, MessageSquare, BookOpen, Zap } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Page } from '../types';
 
 // Lazy load the AI panel content to defer loading the heavy useGeminiAI hook
@@ -11,6 +11,7 @@ const AIPanelContent = lazy(() => import('./AIPanelContent'));
 
 export const NavDock = ({ currentPage, setPage }: { currentPage: Page; setPage: (p: Page) => void }) => {
   const [isAiActive, setIsAiActive] = useState(false);
+  const navigate = useNavigate();
 
   const navItems = [
     { page: Page.HOME, icon: Layout, label: 'Home' },
@@ -18,6 +19,7 @@ export const NavDock = ({ currentPage, setPage }: { currentPage: Page; setPage: 
     { page: Page.BLOG, icon: BookOpen, label: 'Blog' },
     { page: Page.TEAM, icon: User, label: 'Team' },
     { page: Page.CHAT, icon: MessageSquare, label: 'Chat' },
+    { page: '/profile' as any, icon: Settings2, label: 'Profile' },
   ];
 
   return (
@@ -94,8 +96,8 @@ export const NavDock = ({ currentPage, setPage }: { currentPage: Page; setPage: 
           </button>
 
           {/* Remaining Items including Chat */}
-          {navItems.slice(3, 5).map((item) => (
-            <DockItem key={item.page} item={item} isActive={currentPage === item.page} onClick={() => setPage(item.page)} />
+          {navItems.slice(3, 6).map((item) => (
+            <DockItem key={item.label} item={item} isActive={currentPage === item.page || (item.label === 'Profile' && location.pathname === '/profile')} onClick={() => item.label === 'Profile' ? navigate('/profile') : setPage(item.page)} />
           ))}
 
           <button

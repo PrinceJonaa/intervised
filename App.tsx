@@ -15,6 +15,7 @@ const ContactSection = lazy(() => import('./features/Contact').then(m => ({ defa
 const ChatPage = lazy(() => import('./features/Chat').then(m => ({ default: m.ChatPage })));
 const LoginPage = lazy(() => import('./features/Login').then(m => ({ default: m.LoginPage })));
 const AdminPage = lazy(() => import('./features/Admin').then(m => ({ default: m.AdminPage })));
+const ProfilePage = lazy(() => import('./features/Profile').then(m => ({ default: m.ProfilePage })));
 const PrivacyPage = lazy(() => import('./features/Privacy').then(m => ({ default: m.PrivacyPage })));
 const TermsPage = lazy(() => import('./features/Terms').then(m => ({ default: m.TermsPage })));
 
@@ -56,6 +57,7 @@ const routeToPage: Record<string, Page> = {
   '/chat': Page.CHAT,
   '/login': Page.HOME, // Map to HOME for NavDock (no specific login page in enum)
   '/admin': Page.HOME, // Map to HOME for NavDock (no specific admin page in enum)
+  '/profile': Page.HOME, // Map to HOME/Default for NavDock
 };
 
 const pageToRoute: Record<Page, string> = {
@@ -168,6 +170,19 @@ function AdminPageWrapper() {
   );
 }
 
+function ProfilePageWrapper() {
+  useSEO({
+    title: 'My Profile | Intervised',
+    description: 'Manage your profile settings.',
+    noIndex: true
+  });
+  return (
+    <PageWrapper>
+      <ProfilePage />
+    </PageWrapper>
+  );
+}
+
 function PrivacyPageWrapper() {
   useSEO({
     title: 'Privacy Policy | Intervised',
@@ -241,6 +256,11 @@ function AppContent() {
               <Route path="/admin" element={
                 <ProtectedRoute requiredRole="admin" fallback={<LoginPageWrapper />}>
                   <AdminPageWrapper />
+                </ProtectedRoute>
+              } />
+              <Route path="/profile" element={
+                <ProtectedRoute fallback={<LoginPageWrapper />}>
+                  <ProfilePageWrapper />
                 </ProtectedRoute>
               } />
               <Route path="/privacy" element={<PrivacyPageWrapper />} />
