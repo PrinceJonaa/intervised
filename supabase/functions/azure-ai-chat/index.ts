@@ -37,7 +37,7 @@ serve(async (req) => {
             )
         }
 
-        // 3. Check Secrets (BEFORE parsing body, to give clear error if configured wrong)
+        // 3. Azure Configuration (Set via Supabase Dashboard > Edge Functions > Secrets)
         const AZURE_ENDPOINT = Deno.env.get('AZURE_OPENAI_ENDPOINT');
         const AZURE_KEY = Deno.env.get('AZURE_OPENAI_KEY');
 
