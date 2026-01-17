@@ -21,21 +21,27 @@ serve(async (req) => {
             throw new Error('Missing Authorization header');
         }
 
-        // Create a Supabase client with the Auth context of the logged-in user
+        // Create a Supabase client
         const supabaseClient = createClient(
             // Supabase API URL - env var automatically populated by Supabase
             Deno.env.get('SUPABASE_URL') ?? '',
             // Supabase Anon Key - env var automatically populated by Supabase
             Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-            // Global header to inject the user's JWT
-            { global: { headers: { Authorization: authHeader } } }
+            {
+                auth: {
+                    persistSession: false // Critical for server-side usage
+                }
+            }
         )
 
-        // Get the user from the JWT
+        // Extract token
+        const token = authHeader.replace('Bearer ', '');
+
+        // Get the user from the JWT explicitely
         const {
             data: { user },
             error: userError,
-        } = await supabaseClient.auth.getUser()
+        } = await supabaseClient.auth.getUser(token)
 
         if (userError || !user) {
             console.error('[verify-admin] User fetch error:', userError);
@@ -53,6 +59,8 @@ serve(async (req) => {
 
         if (profileError) {
             console.error('[verify-admin] Profile fetch error:', profileError)
+            // Fallback: If profile fetch fails (e.g. RLS issues), checks if user metadata has role?
+            // But let's throw for now to be safe.
             throw new Error('Failed to fetch user profile')
         }
 
