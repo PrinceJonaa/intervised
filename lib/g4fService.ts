@@ -39,7 +39,10 @@ export interface G4FProviderConfig {
   providerParam?: string; // For g4f.dev/v1 provider parameter
 }
 
-// G4F gateway uses /api/{provider}/ pattern
+// G4F API endpoints
+// Main API (requires API key): https://g4f.dev/v1
+// Proxied providers (no key): https://g4f.dev/api/{provider}/
+const G4F_V1_BASE = 'https://g4f.dev/v1';
 const G4F_GATEWAY_BASE = 'https://g4f.dev/api';
 
 // Provider configurations with base URLs and capabilities
@@ -197,8 +200,8 @@ export const G4F_PROVIDERS: G4FProviderConfig[] = [
   {
     id: 'g4f-main',
     label: 'G4F Main',
-    description: 'Full G4F API with all providers',
-    baseUrl: 'https://g4f.dev/api/default',
+    description: 'Full G4F API with API key - all providers',
+    baseUrl: 'https://g4f.dev/v1',
     requiresAuth: true,
     supportsVision: true,
     supportsStreaming: true,
@@ -206,14 +209,14 @@ export const G4F_PROVIDERS: G4FProviderConfig[] = [
     supportsAudio: true,
     supportsWebSearch: true,
     icon: '🔮',
-    popularModels: ['gpt-4o', 'gpt-4o-mini', 'claude-3.5-sonnet', 'gemini-2.5-flash', 'deepseek-v3', 'llama-3.3-70b'],
+    popularModels: ['gpt-4o', 'gpt-4o-mini', 'claude-3.5-sonnet', 'gemini-2.5-flash', 'deepseek-v3', 'llama-3.3-70b', 'gpt-oss-120b'],
     providerParam: undefined
   },
   {
     id: 'auto',
     label: 'Auto Select',
-    description: 'Automatically pick best provider',
-    baseUrl: 'https://text.pollinations.ai/openai',
+    description: 'Auto-select best provider via g4f gateway',
+    baseUrl: 'https://g4f.dev/api/auto',
     requiresAuth: false,
     supportsVision: true,
     supportsStreaming: true,
@@ -221,7 +224,7 @@ export const G4F_PROVIDERS: G4FProviderConfig[] = [
     supportsAudio: false,
     useGateway: true,
     icon: '🎯',
-    popularModels: ['openai', 'gpt-4o', 'claude-3.5-sonnet', 'gemini-2.5-flash'],
+    popularModels: ['gpt-4o', 'gpt-4o-mini', 'claude-3.5-sonnet', 'gemini-2.5-flash', 'deepseek-v3'],
     providerParam: 'auto'
   },
   {
@@ -404,8 +407,8 @@ export async function fetchG4FModels(
     return [];
   }
 
-  // Gateway providers (g4f.dev) don't have /models endpoint - use popularModels
-  // Only direct providers like pollinations have working /models endpoints
+  // Gateway providers (g4f.dev/api/*) don't have reliable /models endpoints - use popularModels
+  // Direct providers (pollinations, ollama, custom, g4f-main with /v1) can fetch models
   if (config.useGateway && !customBaseUrl) {
     return config.popularModels;
   }
