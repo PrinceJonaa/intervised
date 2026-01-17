@@ -186,7 +186,7 @@ export async function createPost(post: BlogPostInsert): Promise<BlogPost> {
   // Generate slug from title if not provided
   const slug = post.slug || generateSlug(post.title);
   const readTime = calculateReadTime(post.content);
-  
+
   const { data, error } = await supabase
     .from('blog_posts')
     .insert({
@@ -402,7 +402,7 @@ export async function getPendingComments(): Promise<(BlogComment & { post_title?
     .order('created_at', { ascending: false });
 
   if (error) throw error;
-  
+
   // Flatten the response
   return (data || []).map(item => ({
     ...item,
@@ -574,12 +574,12 @@ export function formatDate(dateString: string | null): string {
  */
 export function formatRelativeTime(dateString: string | null): string {
   if (!dateString) return 'Unknown';
-  
+
   const date = new Date(dateString);
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-  
+
   if (diffDays === 0) return 'Today';
   if (diffDays === 1) return 'Yesterday';
   if (diffDays < 7) return `${diffDays} days ago`;
@@ -597,6 +597,114 @@ export function truncateText(text: string, maxLength: number): string {
 }
 
 // ============================================
+// POST REVISIONS (Version History)
+// ============================================
+
+export interface PostRevision {
+  id: string;
+  post_id: string;
+  title: string;
+  content: string;
+  excerpt: string | null;
+  revision_number: number;
+  created_at: string;
+  created_by: string | null;
+}
+
+/**
+ * Save a new revision of a post
+ */
+export async function saveRevision(postId: string, title: string, content: string, excerpt?: string): Promise<PostRevision> {
+  // Get current revision count
+  const { data: existing } = await supabase
+    .from('blog_post_revisions')
+    .select('revision_number')
+    .eq('post_id', postId)
+    .order('revision_number', { ascending: false })
+    .limit(1);
+
+  const nextRevision = (existing?.[0]?.revision_number || 0) + 1;
+
+  const { data: { user } } = await supabase.auth.getUser();
+
+  const { data, error } = await supabase
+    .from('blog_post_revisions')
+    .insert({
+      post_id: postId,
+      title,
+      content,
+      excerpt: excerpt || null,
+      revision_number: nextRevision,
+      created_by: user?.id || null,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error saving revision:', error);
+    throw error;
+  }
+  return data as PostRevision;
+}
+
+/**
+ * Get all revisions for a post
+ */
+export async function getRevisions(postId: string): Promise<PostRevision[]> {
+  const { data, error } = await supabase
+    .from('blog_post_revisions')
+    .select('*')
+    .eq('post_id', postId)
+    .order('revision_number', { ascending: false });
+
+  if (error) throw error;
+  return (data || []) as PostRevision[];
+}
+
+/**
+ * Get a specific revision
+ */
+export async function getRevision(revisionId: string): Promise<PostRevision | null> {
+  const { data, error } = await supabase
+    .from('blog_post_revisions')
+    .select('*')
+    .eq('id', revisionId)
+    .single();
+
+  if (error) {
+    if (error.code === 'PGRST116') return null;
+    throw error;
+  }
+  return data as PostRevision;
+}
+
+/**
+ * Restore a post to a previous revision
+ */
+export async function restoreRevision(postId: string, revisionId: string): Promise<BlogPost> {
+  const revision = await getRevision(revisionId);
+  if (!revision) throw new Error('Revision not found');
+
+  // Save current state as a new revision before restoring
+  const { data: currentPost } = await supabase
+    .from('blog_posts')
+    .select('title, content, excerpt')
+    .eq('id', postId)
+    .single();
+
+  if (currentPost) {
+    await saveRevision(postId, currentPost.title, currentPost.content, currentPost.excerpt || undefined);
+  }
+
+  // Restore the old revision
+  return updatePost(postId, {
+    title: revision.title,
+    content: revision.content,
+    excerpt: revision.excerpt,
+  });
+}
+
+// ============================================
 // NAMESPACE EXPORT - For convenient grouped access
 // ============================================
 
@@ -609,33 +717,39 @@ export const blogService = {
   getPostsByTag,
   getAllTags,
   getAdminPosts,
-  
+
   // Write operations
   createPost,
   updatePost,
   deletePost,
   publishPost,
   archivePost,
-  
+
   // Engagement
   incrementViews,
   toggleLike,
-  
+
   // Comments
   getComments,
   addComment,
   approveComment,
   deleteComment,
-  
+
   // Subscriptions
   subscribeToNewPosts,
   subscribeToPostUpdates,
   subscribeToComments,
-  
+
   // Storage
   uploadBlogImage,
   deleteBlogImage,
-  
+
+  // Revisions
+  saveRevision,
+  getRevisions,
+  getRevision,
+  restoreRevision,
+
   // Utilities
   generateSlug,
   calculateReadTime,
