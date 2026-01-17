@@ -386,7 +386,8 @@ function resolveProviderEndpoint(
 
 /**
  * Fetch available models from a G4F provider
- * Always fetches current list from API with caching
+ * For gateway providers, returns popularModels directly (no /models endpoint)
+ * For direct providers, fetches from their API with caching
  */
 export async function fetchG4FModels(
   provider: G4FSubProvider,
@@ -400,10 +401,16 @@ export async function fetchG4FModels(
   try {
     ({ config, baseUrl, headers } = resolveProviderEndpoint(provider, apiKey, customBaseUrl));
   } catch (error) {
-    console.warn(error instanceof Error ? error.message : 'Unknown provider');
     return [];
   }
 
+  // Gateway providers (g4f.dev) don't have /models endpoint - use popularModels
+  // Only direct providers like pollinations have working /models endpoints
+  if (config.useGateway && !customBaseUrl) {
+    return config.popularModels;
+  }
+
+  // For direct providers (pollinations, ollama, custom), try to fetch models
   const cacheKey = `${provider}-${baseUrl}`;
   const cached = modelCache.get(cacheKey);
 
@@ -413,14 +420,13 @@ export async function fetchG4FModels(
   }
 
   try {
-    // Try /models endpoint
+    // Try /models endpoint for direct providers only
     const response = await fetchWithRetry(`${baseUrl}/models`, {
       method: 'GET',
       headers,
     });
 
     if (!response.ok) {
-      // Silent fail for external provider issues - expected when services are down
       return config.popularModels;
     }
 
@@ -428,7 +434,6 @@ export async function fetchG4FModels(
     try {
       data = await response.json();
     } catch {
-      console.warn(`Invalid JSON from ${provider} models endpoint`);
       return config.popularModels;
     }
     let models: string[] = [];
@@ -451,12 +456,8 @@ export async function fetchG4FModels(
     modelCache.set(cacheKey, { models, timestamp: Date.now() });
 
     return models.length > 0 ? models : config.popularModels;
-  } catch (error) {
-    // Silent fail - external providers may be unavailable
-    // Use debug level to avoid console spam
-    if (import.meta.env.DEV) {
-      console.debug(`Model fetch failed for ${provider}:`, error instanceof Error ? error.message : 'Unknown');
-    }
+  } catch {
+    // Silent fail - use popularModels as fallback
     return config.popularModels;
   }
 }

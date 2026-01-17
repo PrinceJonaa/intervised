@@ -49,7 +49,7 @@ export const GeneralTab: React.FC<GeneralTabProps> = ({ settings, setSettings, o
     if (settings.provider === 'g4f' && settings.g4f?.subProvider) {
       setIsLoadingModels(true);
       setProviderStatus(null);
-      
+
       const fetchModels = async () => {
         try {
           const models = await fetchG4FModels(
@@ -58,7 +58,7 @@ export const GeneralTab: React.FC<GeneralTabProps> = ({ settings, setSettings, o
             settings.g4f?.customBaseUrl
           );
           setG4fModels(models);
-          
+
           // Test provider connectivity
           const status = await testG4FProvider(
             settings.g4f!.subProvider,
@@ -76,7 +76,7 @@ export const GeneralTab: React.FC<GeneralTabProps> = ({ settings, setSettings, o
           setIsLoadingModels(false);
         }
       };
-      
+
       fetchModels();
     }
   }, [settings.provider, settings.g4f?.subProvider, settings.g4f?.apiKey, settings.g4f?.customBaseUrl, currentG4FProvider]);
@@ -132,10 +132,10 @@ export const GeneralTab: React.FC<GeneralTabProps> = ({ settings, setSettings, o
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-10">
-      
+
       {/* Intervised AI Usage Banner */}
       {settings.provider === 'intervised' && spending && (
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           className="bg-gradient-to-r from-accent/20 via-accent/10 to-transparent border border-accent/30 p-6 rounded-2xl"
@@ -157,7 +157,7 @@ export const GeneralTab: React.FC<GeneralTabProps> = ({ settings, setSettings, o
           </div>
           <div className="mt-4">
             <div className="h-2 bg-black/40 rounded-full overflow-hidden">
-              <motion.div 
+              <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${(spending.remaining / spending.limit) * 100}%` }}
                 className="h-full bg-gradient-to-r from-accent to-green-400 rounded-full"
@@ -179,11 +179,10 @@ export const GeneralTab: React.FC<GeneralTabProps> = ({ settings, setSettings, o
             <button
               key={p.id}
               onClick={() => handleProviderChange(p.id)}
-              className={`flex flex-col items-center gap-2 p-4 rounded-2xl border transition-all relative overflow-hidden group ${
-                settings.provider === p.id 
-                  ? 'bg-accent/10 border-accent shadow-[0_0_20px_rgba(244,201,93,0.15)]' 
+              className={`flex flex-col items-center gap-2 p-4 rounded-2xl border transition-all relative overflow-hidden group ${settings.provider === p.id
+                  ? 'bg-accent/10 border-accent shadow-[0_0_20px_rgba(244,201,93,0.15)]'
                   : 'bg-white/5 border-white/10 hover:border-white/20 hover:bg-white/10'
-              } ${p.id === 'intervised' ? 'col-span-2 sm:col-span-1 ring-2 ring-accent/30' : ''}`}
+                } ${p.id === 'intervised' ? 'col-span-2 sm:col-span-1 ring-2 ring-accent/30' : ''}`}
             >
               {p.id === 'intervised' && (
                 <div className="absolute top-1 right-1 bg-accent text-black text-[8px] font-bold px-2 py-0.5 rounded-full">
@@ -214,34 +213,32 @@ export const GeneralTab: React.FC<GeneralTabProps> = ({ settings, setSettings, o
       {settings.provider === 'g4f' && (
         <div className="space-y-6">
           <SectionHeader title="Provider Gateway" subtitle="Select from 30+ AI providers with 900+ models. All free!" />
-          
+
           {/* Provider Status Badge */}
           {providerStatus && (
             <div className={`flex items-center gap-2 text-xs ${providerStatus.success ? 'text-green-400' : 'text-red-400'}`}>
               <div className={`w-2 h-2 rounded-full ${providerStatus.success ? 'bg-green-400 animate-pulse' : 'bg-red-400'}`} />
-              {providerStatus.success 
+              {providerStatus.success
                 ? `Connected • ${providerStatus.latency}ms latency`
                 : `Connection failed: ${providerStatus.latency}ms`
               }
             </div>
           )}
-          
+
           {/* Sub-Provider Grid */}
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
             {G4F_PROVIDERS.filter(p => p.id !== 'custom').map((provider) => (
               <button
                 key={provider.id}
                 onClick={() => handleG4FSubProviderChange(provider.id)}
-                className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border transition-all relative group ${
-                  settings.g4f?.subProvider === provider.id 
-                    ? 'bg-green-500/10 border-green-500/50 shadow-[0_0_15px_rgba(34,197,94,0.15)]' 
+                className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border transition-all relative group ${settings.g4f?.subProvider === provider.id
+                    ? 'bg-green-500/10 border-green-500/50 shadow-[0_0_15px_rgba(34,197,94,0.15)]'
                     : 'bg-white/5 border-white/10 hover:border-white/20 hover:bg-white/10'
-                }`}
+                  }`}
               >
                 <span className="text-xl group-hover:scale-110 transition-transform">{provider.icon}</span>
-                <span className={`text-[9px] font-bold uppercase tracking-wider text-center leading-tight ${
-                  settings.g4f?.subProvider === provider.id ? 'text-green-400' : 'text-gray-400'
-                }`}>
+                <span className={`text-[9px] font-bold uppercase tracking-wider text-center leading-tight ${settings.g4f?.subProvider === provider.id ? 'text-green-400' : 'text-gray-400'
+                  }`}>
                   {provider.label}
                 </span>
                 {/* Capability icons */}
@@ -311,7 +308,7 @@ export const GeneralTab: React.FC<GeneralTabProps> = ({ settings, setSettings, o
                 {isLoadingModels && <RefreshCw size={10} className="inline ml-1 animate-spin" />}
               </span>
             </div>
-            
+
             {/* Search */}
             <div className="relative">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
@@ -337,11 +334,10 @@ export const GeneralTab: React.FC<GeneralTabProps> = ({ settings, setSettings, o
                     <button
                       key={model}
                       onClick={() => handleG4FModelSelect(model)}
-                      className={`w-full text-left px-4 py-2.5 rounded-lg transition-all text-sm font-mono ${
-                        settings.g4f?.model === model
+                      className={`w-full text-left px-4 py-2.5 rounded-lg transition-all text-sm font-mono ${settings.g4f?.model === model
                           ? 'bg-green-500/20 border border-green-500/30 text-green-400'
                           : 'bg-white/5 hover:bg-white/10 text-gray-300 border border-transparent'
-                      }`}
+                        }`}
                     >
                       <div className="flex items-center justify-between">
                         <span className="truncate">{model}</span>
@@ -383,6 +379,7 @@ export const GeneralTab: React.FC<GeneralTabProps> = ({ settings, setSettings, o
                 <div className="relative">
                   <input
                     type={showKey ? "text" : "password"}
+                    autoComplete="off"
                     value={settings.g4f?.apiKey || ''}
                     onChange={(e) => setSettings(p => ({ ...p, g4f: { ...p.g4f!, apiKey: e.target.value } }))}
                     placeholder="g4f_u_..."
@@ -423,15 +420,13 @@ export const GeneralTab: React.FC<GeneralTabProps> = ({ settings, setSettings, o
                 </label>
                 <button
                   onClick={() => setSettings(p => ({ ...p, g4f: { ...p.g4f!, streaming: !p.g4f?.streaming } }))}
-                  className={`w-12 h-6 rounded-full transition-all ${
-                    settings.g4f?.streaming ? 'bg-green-500' : 'bg-gray-600'
-                  }`}
+                  className={`w-12 h-6 rounded-full transition-all ${settings.g4f?.streaming ? 'bg-green-500' : 'bg-gray-600'
+                    }`}
                 >
                   <motion.div
                     layout
-                    className={`w-5 h-5 bg-white rounded-full shadow-lg ${
-                      settings.g4f?.streaming ? 'ml-[26px]' : 'ml-[2px]'
-                    }`}
+                    className={`w-5 h-5 bg-white rounded-full shadow-lg ${settings.g4f?.streaming ? 'ml-[26px]' : 'ml-[2px]'
+                      }`}
                   />
                 </button>
               </div>
@@ -447,15 +442,13 @@ export const GeneralTab: React.FC<GeneralTabProps> = ({ settings, setSettings, o
                   </label>
                   <button
                     onClick={() => setSettings(p => ({ ...p, g4f: { ...p.g4f!, webSearch: !p.g4f?.webSearch } }))}
-                    className={`w-12 h-6 rounded-full transition-all ${
-                      settings.g4f?.webSearch ? 'bg-blue-500' : 'bg-gray-600'
-                    }`}
+                    className={`w-12 h-6 rounded-full transition-all ${settings.g4f?.webSearch ? 'bg-blue-500' : 'bg-gray-600'
+                      }`}
                   >
                     <motion.div
                       layout
-                      className={`w-5 h-5 bg-white rounded-full shadow-lg ${
-                        settings.g4f?.webSearch ? 'ml-[26px]' : 'ml-[2px]'
-                      }`}
+                      className={`w-5 h-5 bg-white rounded-full shadow-lg ${settings.g4f?.webSearch ? 'ml-[26px]' : 'ml-[2px]'
+                        }`}
                     />
                   </button>
                 </div>
@@ -474,17 +467,15 @@ export const GeneralTab: React.FC<GeneralTabProps> = ({ settings, setSettings, o
             {INTERVISED_MODELS.map((model) => (
               <button
                 key={model.id}
-                onClick={() => setSettings(p => ({...p, modelOverride: model.id}))}
-                className={`flex items-center gap-4 p-4 rounded-xl border transition-all ${
-                  settings.modelOverride === model.id 
-                    ? 'bg-accent/10 border-accent' 
+                onClick={() => setSettings(p => ({ ...p, modelOverride: model.id }))}
+                className={`flex items-center gap-4 p-4 rounded-xl border transition-all ${settings.modelOverride === model.id
+                    ? 'bg-accent/10 border-accent'
                     : 'bg-white/5 border-white/10 hover:border-white/20'
-                }`}
+                  }`}
               >
-                <div className={`w-3 h-3 rounded-full ${
-                  model.tier === 'budget' ? 'bg-green-400' : 
-                  model.tier === 'standard' ? 'bg-blue-400' : 'bg-purple-400'
-                }`} />
+                <div className={`w-3 h-3 rounded-full ${model.tier === 'budget' ? 'bg-green-400' :
+                    model.tier === 'standard' ? 'bg-blue-400' : 'bg-purple-400'
+                  }`} />
                 <div className="text-left flex-1">
                   <div className={`text-sm font-medium ${settings.modelOverride === model.id ? 'text-accent' : 'text-white'}`}>
                     {model.label}
@@ -508,93 +499,94 @@ export const GeneralTab: React.FC<GeneralTabProps> = ({ settings, setSettings, o
       {settings.provider !== 'intervised' && (
         <div className="space-y-6">
           <SectionHeader title="Connection Parameters" subtitle="Secure authentication and model addressing." />
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* API Key */}
-          <div className="bg-white/5 border border-white/10 p-6 rounded-2xl space-y-4">
-            <div className="flex justify-between items-center">
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* API Key */}
+            <div className="bg-white/5 border border-white/10 p-6 rounded-2xl space-y-4">
+              <div className="flex justify-between items-center">
+                <label className="text-xs font-mono text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                  <Key size={14} className="text-accent" /> Authentication
+                </label>
+                <span className="text-[10px] text-gray-600 font-mono">ENCRYPTED AT REST</span>
+              </div>
+              <div className="relative">
+                <input
+                  type={showKey ? "text" : "password"}
+                  autoComplete="off"
+                  value={settings.customApiKey || ''}
+                  onChange={(e) => setSettings(p => ({ ...p, customApiKey: e.target.value }))}
+                  placeholder={`Enter ${settings.provider.toUpperCase()} API Key`}
+                  className="w-full bg-black/40 border border-white/10 rounded-xl py-3 px-4 text-sm focus:border-accent/50 outline-none text-white pr-12 font-mono"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowKey(!showKey)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors"
+                >
+                  {showKey ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+              <div className="flex items-center gap-2 text-[10px] text-gray-500 italic">
+                <Info size={12} />
+                {settings.provider === 'google' ? 'Optional (uses system key if empty)' : 'Mandatory for external protocols'}
+              </div>
+            </div>
+
+            {/* Model Selection */}
+            <div className="bg-white/5 border border-white/10 p-6 rounded-2xl space-y-4">
               <label className="text-xs font-mono text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                <Key size={14} className="text-accent" /> Authentication
+                <Cpu size={14} className="text-accent" /> Model Identifier
               </label>
-              <span className="text-[10px] text-gray-600 font-mono">ENCRYPTED AT REST</span>
-            </div>
-            <div className="relative">
-              <input 
-                type={showKey ? "text" : "password"} 
-                value={settings.customApiKey || ''}
-                onChange={(e) => setSettings(p => ({...p, customApiKey: e.target.value}))}
-                placeholder={`Enter ${settings.provider.toUpperCase()} API Key`}
-                className="w-full bg-black/40 border border-white/10 rounded-xl py-3 px-4 text-sm focus:border-accent/50 outline-none text-white pr-12 font-mono"
+              <input
+                type="text"
+                value={settings.modelOverride || ''}
+                onChange={(e) => setSettings(p => ({ ...p, modelOverride: e.target.value }))}
+                placeholder="e.g. gpt-4o, claude-3-opus"
+                className="w-full bg-black/40 border border-white/10 rounded-xl py-3 px-4 text-sm focus:border-accent/50 outline-none text-white font-mono"
               />
-              <button 
-                type="button" 
-                onClick={() => setShowKey(!showKey)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors"
+              <div className="flex justify-between items-center text-[10px] text-gray-500">
+                <span className="font-mono uppercase tracking-tighter">Current Vector: {settings.modelOverride}</span>
+                <a href="#" className="hover:text-accent underline">Docs</a>
+              </div>
+            </div>
+          </div>
+
+          {/* Azure Specific Config */}
+          <AnimatePresence>
+            {settings.provider === 'azure' && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="grid grid-cols-1 md:grid-cols-2 gap-6 overflow-hidden"
               >
-                {showKey ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
-            </div>
-            <div className="flex items-center gap-2 text-[10px] text-gray-500 italic">
-              <Info size={12} />
-              {settings.provider === 'google' ? 'Optional (uses system key if empty)' : 'Mandatory for external protocols'}
-            </div>
-          </div>
-
-          {/* Model Selection */}
-          <div className="bg-white/5 border border-white/10 p-6 rounded-2xl space-y-4">
-            <label className="text-xs font-mono text-gray-400 uppercase tracking-widest flex items-center gap-2">
-              <Cpu size={14} className="text-accent" /> Model Identifier
-            </label>
-            <input 
-              type="text" 
-              value={settings.modelOverride || ''}
-              onChange={(e) => setSettings(p => ({...p, modelOverride: e.target.value}))}
-              placeholder="e.g. gpt-4o, claude-3-opus"
-              className="w-full bg-black/40 border border-white/10 rounded-xl py-3 px-4 text-sm focus:border-accent/50 outline-none text-white font-mono"
-            />
-            <div className="flex justify-between items-center text-[10px] text-gray-500">
-              <span className="font-mono uppercase tracking-tighter">Current Vector: {settings.modelOverride}</span>
-              <a href="#" className="hover:text-accent underline">Docs</a>
-            </div>
-          </div>
-        </div>
-
-        {/* Azure Specific Config */}
-        <AnimatePresence>
-          {settings.provider === 'azure' && (
-            <motion.div 
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="grid grid-cols-1 md:grid-cols-2 gap-6 overflow-hidden"
-            >
-              <div className="bg-white/5 border border-white/10 p-6 rounded-2xl space-y-4">
-                <label className="text-xs font-mono text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                  <Globe size={14} className="text-accent" /> Endpoint URL
-                </label>
-                <input 
-                  type="text" 
-                  value={settings.azureEndpoint || ''}
-                  onChange={(e) => setSettings(p => ({...p, azureEndpoint: e.target.value}))}
-                  placeholder="https://YOUR_RESOURCE.openai.azure.com"
-                  className="w-full bg-black/40 border border-white/10 rounded-xl py-3 px-4 text-sm focus:border-accent/50 outline-none text-white font-mono"
-                />
-              </div>
-              <div className="bg-white/5 border border-white/10 p-6 rounded-2xl space-y-4">
-                <label className="text-xs font-mono text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                  <Server size={14} className="text-accent" /> Deployment Name
-                </label>
-                <input 
-                  type="text" 
-                  value={settings.azureDeployment || ''}
-                  onChange={(e) => setSettings(p => ({...p, azureDeployment: e.target.value}))}
-                  placeholder="e.g. MyGpt4Deployment"
-                  className="w-full bg-black/40 border border-white/10 rounded-xl py-3 px-4 text-sm focus:border-accent/50 outline-none text-white font-mono"
-                />
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+                <div className="bg-white/5 border border-white/10 p-6 rounded-2xl space-y-4">
+                  <label className="text-xs font-mono text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                    <Globe size={14} className="text-accent" /> Endpoint URL
+                  </label>
+                  <input
+                    type="text"
+                    value={settings.azureEndpoint || ''}
+                    onChange={(e) => setSettings(p => ({ ...p, azureEndpoint: e.target.value }))}
+                    placeholder="https://YOUR_RESOURCE.openai.azure.com"
+                    className="w-full bg-black/40 border border-white/10 rounded-xl py-3 px-4 text-sm focus:border-accent/50 outline-none text-white font-mono"
+                  />
+                </div>
+                <div className="bg-white/5 border border-white/10 p-6 rounded-2xl space-y-4">
+                  <label className="text-xs font-mono text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                    <Server size={14} className="text-accent" /> Deployment Name
+                  </label>
+                  <input
+                    type="text"
+                    value={settings.azureDeployment || ''}
+                    onChange={(e) => setSettings(p => ({ ...p, azureDeployment: e.target.value }))}
+                    placeholder="e.g. MyGpt4Deployment"
+                    className="w-full bg-black/40 border border-white/10 rounded-xl py-3 px-4 text-sm focus:border-accent/50 outline-none text-white font-mono"
+                  />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       )}
 
@@ -609,23 +601,23 @@ export const GeneralTab: React.FC<GeneralTabProps> = ({ settings, setSettings, o
             </div>
             <div className="flex items-center gap-4">
               <span className="text-[10px] text-gray-600 font-bold">STABLE</span>
-              <input 
-                type="range" min="0" max="2" step="0.1" 
-                value={settings.temperature} 
-                onChange={(e) => setSettings(p => ({...p, temperature: parseFloat(e.target.value)}))} 
-                className="flex-1 accent-accent h-1 bg-white/10 rounded-lg appearance-none cursor-pointer" 
+              <input
+                type="range" min="0" max="2" step="0.1"
+                value={settings.temperature}
+                onChange={(e) => setSettings(p => ({ ...p, temperature: parseFloat(e.target.value) }))}
+                className="flex-1 accent-accent h-1 bg-white/10 rounded-lg appearance-none cursor-pointer"
               />
               <span className="text-[10px] text-gray-600 font-bold">CREATIVE</span>
             </div>
           </div>
-          
+
           <div className="bg-white/5 border border-white/10 p-6 rounded-2xl">
             <label className="text-xs font-mono text-gray-400 uppercase tracking-widest mb-6 block">System Tone calibration</label>
             <div className="flex bg-black/40 p-1 rounded-xl border border-white/5">
               {(['formal', 'creative', 'technical'] as const).map(tone => (
-                <button 
-                  key={tone} 
-                  onClick={() => setSettings(p => ({...p, systemTone: tone}))} 
+                <button
+                  key={tone}
+                  onClick={() => setSettings(p => ({ ...p, systemTone: tone }))}
                   className={`flex-1 py-2 text-[10px] font-bold uppercase rounded-lg transition-all ${settings.systemTone === tone ? 'bg-secondary text-white shadow-lg' : 'text-gray-500 hover:text-white'}`}
                 >
                   {tone}
@@ -637,8 +629,8 @@ export const GeneralTab: React.FC<GeneralTabProps> = ({ settings, setSettings, o
       </div>
 
       <div className="pt-8 border-t border-white/10">
-        <button 
-          onClick={onFactoryReset} 
+        <button
+          onClick={onFactoryReset}
           className="w-full md:w-auto px-6 py-3 border border-red-500/30 bg-red-500/5 text-red-400 hover:bg-red-500 hover:text-white rounded-xl transition-all text-sm font-bold flex items-center justify-center gap-2 group"
         >
           <Trash2 size={16} className="group-hover:rotate-12 transition-transform" /> Reset System Memory & Config
