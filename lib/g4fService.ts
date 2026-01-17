@@ -404,7 +404,7 @@ export async function fetchG4FModels(
     });
 
     if (!response.ok) {
-      console.warn(`Failed to fetch models from ${provider}: ${response.status}`);
+      // Silent fail for external provider issues - expected when services are down
       return config.popularModels;
     }
 
@@ -436,7 +436,11 @@ export async function fetchG4FModels(
 
     return models.length > 0 ? models : config.popularModels;
   } catch (error) {
-    console.error(`Error fetching models from ${provider}:`, error);
+    // Silent fail - external providers may be unavailable
+    // Use debug level to avoid console spam
+    if (import.meta.env.DEV) {
+      console.debug(`Model fetch failed for ${provider}:`, error instanceof Error ? error.message : 'Unknown');
+    }
     return config.popularModels;
   }
 }
