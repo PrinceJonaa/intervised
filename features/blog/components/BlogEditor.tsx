@@ -55,6 +55,11 @@ export const Editor = ({
   const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  // AI Assistant State
+  const [showAIPanel, setShowAIPanel] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState('');
+  const [aiLoading, setAiLoading] = useState(false);
+
   const fontSizeMap = { sm: 'text-sm', md: 'text-base md:text-xl', lg: 'text-lg md:text-2xl', xl: 'text-xl md:text-3xl' };
   const titleFontMap = { sm: 'text-2xl md:text-4xl', md: 'text-3xl md:text-6xl', lg: 'text-4xl md:text-7xl', xl: 'text-5xl md:text-8xl' };
 
@@ -172,6 +177,83 @@ export const Editor = ({
       reader.readAsDataURL(file);
     }
   };
+
+  // AI Tool Handler
+  const handleAITool = async (tool: string, customPrompt?: string) => {
+    setAiLoading(true);
+    const textarea = textareaRef.current;
+    const selectedText = textarea ? textarea.value.substring(textarea.selectionStart, textarea.selectionEnd) : '';
+    const content = formData.content || '';
+    const title = formData.title || '';
+
+    const prompts: Record<string, string> = {
+      generate_title: `Generate 5 compelling blog post titles based on this content:\n\n${content.substring(0, 500)}`,
+      generate_outline: `Create a detailed outline with sections and bullet points for a blog post titled "${title}" about:\n\n${content.substring(0, 500)}`,
+      expand: `Expand and elaborate on this text, adding more detail and context:\n\n${selectedText || content.substring(0, 500)}`,
+      rewrite: `Rewrite this text to be more engaging and professional:\n\n${selectedText || content.substring(0, 500)}`,
+      grammar: `Fix any grammar, spelling, and punctuation errors in this text. Return only the corrected text:\n\n${selectedText || content}`,
+      shorten: `Make this text more concise while keeping the key points:\n\n${selectedText || content.substring(0, 500)}`,
+      seo: `Optimize this blog post for SEO. Suggest title, meta description, keywords, and content improvements:\n\nTitle: ${title}\n\nContent:\n${content.substring(0, 1000)}`,
+      emoji: `Add relevant emojis to enhance this text:\n\n${selectedText || content.substring(0, 500)}`,
+      custom: customPrompt || ''
+    };
+
+    const systemPrompt = "You are a professional blog writing assistant. Be concise, creative, and helpful. Format responses in markdown when appropriate.";
+    const userPrompt = prompts[tool];
+
+    try {
+      const response = await fetch('https://jnfnqtohljybohlcslnm.supabase.co/functions/v1/azure-ai-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt }
+          ],
+          model: 'gpt-4o-mini'
+        })
+      });
+
+      const data = await response.json();
+      const aiResponse = data.choices?.[0]?.message?.content || data.content || '';
+
+      if (aiResponse) {
+        if (tool === 'generate_title') {
+          addToast('Title suggestions generated! Check below or apply one.', 'success');
+          setFormData({ ...formData, content: content + '\n\n---\n### AI Title Suggestions:\n' + aiResponse });
+        } else if (tool === 'generate_outline') {
+          setFormData({ ...formData, content: content + '\n\n' + aiResponse });
+          addToast('Outline added to content!', 'success');
+        } else if (selectedText && textarea) {
+          // Replace selected text
+          const before = content.substring(0, textarea.selectionStart);
+          const after = content.substring(textarea.selectionEnd);
+          setFormData({ ...formData, content: before + aiResponse + after });
+          addToast('Selection updated!', 'success');
+        } else {
+          setFormData({ ...formData, content: content + '\n\n' + aiResponse });
+          addToast('AI response added!', 'success');
+        }
+        setAiPrompt('');
+      }
+    } catch (error) {
+      console.error('AI error:', error);
+      addToast('AI request failed. Try again.', 'error');
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  // AI Tool Button Component
+  const AIToolBtn = ({ label, onClick }: { label: string; onClick: () => void }) => (
+    <button
+      onClick={onClick}
+      disabled={aiLoading}
+      className="px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-[10px] font-mono text-gray-300 hover:text-white transition-all disabled:opacity-50"
+    >
+      {label}
+    </button>
+  );
 
   const insertMarkdown = (prefix: string, suffix: string = '') => {
     const textarea = textareaRef.current;
@@ -394,9 +476,57 @@ export const Editor = ({
                   <ToolbarBtn icon={Quote} onClick={() => insertMarkdown('> ', '')} />
                   <ToolbarBtn icon={List} onClick={() => insertMarkdown('- ', '')} />
                   <ToolbarBtn icon={ImageIcon} onClick={() => insertMarkdown('![Image Alt Text](', ')')} />
+                  <ToolbarBtn icon={LinkIcon} onClick={() => insertMarkdown('[', '](url)')} label="Link" />
+                  <ToolbarBtn icon={Terminal} onClick={() => insertMarkdown('```\n', '\n```')} label="Code" />
                   <div className="h-6 w-px bg-white/10 mx-1 shrink-0" />
-                  <ToolbarBtn icon={Sparkles} onClick={() => { }} color="text-accent" label="AI" />
+                  <ToolbarBtn icon={Sparkles} onClick={() => setShowAIPanel(!showAIPanel)} color={showAIPanel ? 'text-accent' : 'text-gray-400'} label="AI" />
                 </div>
+
+                {/* AI Assistant Panel */}
+                <AnimatePresence>
+                  {showAIPanel && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      className="bg-gradient-to-r from-accent/10 via-purple-500/10 to-pink-500/10 border-b border-white/10 overflow-hidden"
+                    >
+                      <div className="p-4 space-y-3">
+                        <div className="flex items-center gap-2 text-xs text-accent font-bold">
+                          <Sparkles size={14} /> AI Writing Assistant
+                        </div>
+                        <div className="flex gap-2 flex-wrap">
+                          <AIToolBtn label="Generate Title" onClick={() => handleAITool('generate_title')} />
+                          <AIToolBtn label="Generate Outline" onClick={() => handleAITool('generate_outline')} />
+                          <AIToolBtn label="Expand Selection" onClick={() => handleAITool('expand')} />
+                          <AIToolBtn label="Rewrite" onClick={() => handleAITool('rewrite')} />
+                          <AIToolBtn label="Fix Grammar" onClick={() => handleAITool('grammar')} />
+                          <AIToolBtn label="Make Shorter" onClick={() => handleAITool('shorten')} />
+                          <AIToolBtn label="SEO Optimize" onClick={() => handleAITool('seo')} />
+                          <AIToolBtn label="Add Emoji" onClick={() => handleAITool('emoji')} />
+                        </div>
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            placeholder="Ask AI anything about your content..."
+                            value={aiPrompt}
+                            onChange={e => setAiPrompt(e.target.value)}
+                            onKeyDown={e => e.key === 'Enter' && handleAITool('custom', aiPrompt)}
+                            className="flex-1 bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-white placeholder:text-gray-500 outline-none focus:border-accent"
+                          />
+                          <button
+                            onClick={() => handleAITool('custom', aiPrompt)}
+                            disabled={aiLoading || !aiPrompt}
+                            className="px-4 py-2 bg-accent text-void rounded-lg text-xs font-bold hover:bg-white transition-colors disabled:opacity-50 flex items-center gap-2"
+                          >
+                            {aiLoading ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
+                            Generate
+                          </button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
 
                 <div className={`flex-1 relative p-6 md:p-12 overflow-y-auto custom-scrollbar transition-colors ${editorTheme === 'light' ? 'bg-white' : ''}`}>
                   <div className="max-w-4xl mx-auto space-y-6">
