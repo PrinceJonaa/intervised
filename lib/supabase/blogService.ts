@@ -411,8 +411,177 @@ export async function getPendingComments(): Promise<(BlogComment & { post_title?
 }
 
 // ============================================
-// REAL-TIME SUBSCRIPTIONS
+// THREADED COMMENTS & LIKES (Phase 2)
 // ============================================
+
+export interface ThreadedComment extends BlogComment {
+  replies?: ThreadedComment[];
+  parent_id?: string | null;
+  likes?: number;
+  reply_count?: number;
+  user_has_liked?: boolean;
+}
+
+/**
+ * Get comments with threading structure
+ */
+export async function getThreadedComments(postId: string, userId?: string): Promise<ThreadedComment[]> {
+  const { data, error } = await supabase
+    .from('blog_comments')
+    .select('*')
+    .eq('post_id', postId)
+    .eq('is_approved', true)
+    .order('created_at', { ascending: true });
+
+  if (error) throw error;
+
+  const comments = (data || []) as any[];
+
+  // Check which comments user has liked
+  let userLikes: Set<string> = new Set();
+  if (userId) {
+    const { data: likesData } = await supabase
+      .from('blog_comment_likes')
+      .select('comment_id')
+      .eq('user_id', userId);
+    userLikes = new Set((likesData || []).map(l => (l as any).comment_id));
+  }
+
+  // Build tree structure
+  const commentMap = new Map<string, ThreadedComment>();
+  const rootComments: ThreadedComment[] = [];
+
+  comments.forEach(c => {
+    commentMap.set(c.id, { ...c, replies: [], user_has_liked: userLikes.has(c.id) });
+  });
+
+  comments.forEach(c => {
+    const comment = commentMap.get(c.id)!;
+    if (c.parent_id && commentMap.has(c.parent_id)) {
+      commentMap.get(c.parent_id)!.replies!.push(comment);
+    } else {
+      rootComments.push(comment);
+    }
+  });
+
+  return rootComments;
+}
+
+/**
+ * Add a reply to a comment
+ */
+export async function addReply(parentCommentId: string, postId: string, content: string, userId: string): Promise<BlogComment> {
+  const { data, error } = await supabase
+    .from('blog_comments')
+    .insert({
+      post_id: postId,
+      user_id: userId,
+      content,
+      parent_id: parentCommentId,
+      is_approved: true, // Auto-approve replies from authenticated users
+      created_at: new Date().toISOString(),
+    } as any)
+    .select()
+    .single();
+
+  if (error) throw error;
+
+  // Increment reply count on parent
+  await supabase
+    .from('blog_comments')
+    .update({ reply_count: supabase.rpc('increment', { x: 1 }) } as any)
+    .eq('id', parentCommentId);
+
+  return data;
+}
+
+/**
+ * Toggle like on a comment
+ */
+export async function toggleCommentLike(commentId: string, userId: string): Promise<{ liked: boolean; newCount: number }> {
+  // Check if already liked
+  const { data: existing } = await supabase
+    .from('blog_comment_likes')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('comment_id', commentId)
+    .single();
+
+  if (existing) {
+    // Unlike
+    await supabase
+      .from('blog_comment_likes')
+      .delete()
+      .eq('user_id', userId)
+      .eq('comment_id', commentId);
+
+    // Decrement count
+    const { data: comment } = await supabase
+      .from('blog_comments')
+      .select('likes')
+      .eq('id', commentId)
+      .single();
+
+    const newCount = Math.max(0, ((comment as any)?.likes || 1) - 1);
+    await supabase
+      .from('blog_comments')
+      .update({ likes: newCount } as any)
+      .eq('id', commentId);
+
+    return { liked: false, newCount };
+  } else {
+    // Like
+    await supabase
+      .from('blog_comment_likes')
+      .insert({ user_id: userId, comment_id: commentId } as any);
+
+    // Increment count
+    const { data: comment } = await supabase
+      .from('blog_comments')
+      .select('likes')
+      .eq('id', commentId)
+      .single();
+
+    const newCount = ((comment as any)?.likes || 0) + 1;
+    await supabase
+      .from('blog_comments')
+      .update({ likes: newCount } as any)
+      .eq('id', commentId);
+
+    return { liked: true, newCount };
+  }
+}
+
+/**
+ * Get comments sorted by different criteria
+ */
+export async function getCommentsSorted(
+  postId: string,
+  sortBy: 'newest' | 'oldest' | 'most_liked' = 'newest'
+): Promise<BlogComment[]> {
+  let query = supabase
+    .from('blog_comments')
+    .select('*')
+    .eq('post_id', postId)
+    .eq('is_approved', true)
+    .is('parent_id', null); // Only root comments
+
+  switch (sortBy) {
+    case 'newest':
+      query = query.order('created_at', { ascending: false });
+      break;
+    case 'oldest':
+      query = query.order('created_at', { ascending: true });
+      break;
+    case 'most_liked':
+      query = query.order('likes', { ascending: false });
+      break;
+  }
+
+  const { data, error } = await query;
+  if (error) throw error;
+  return data || [];
+}
 
 /**
  * Subscribe to new blog posts
@@ -734,6 +903,13 @@ export const blogService = {
   addComment,
   approveComment,
   deleteComment,
+  getPendingComments,
+
+  // Threaded Comments & Likes
+  getThreadedComments,
+  addReply,
+  toggleCommentLike,
+  getCommentsSorted,
 
   // Subscriptions
   subscribeToNewPosts,
