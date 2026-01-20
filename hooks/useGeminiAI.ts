@@ -165,31 +165,56 @@ export const useGeminiAI = (setPage?: (page: Page) => void) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isListening, setIsListening] = useState(false);
 
-  const [settings, setSettings] = useState<ChatSettings>(() => {
-    const saved = localStorage.getItem('iv_ai_settings');
-    return saved ? JSON.parse(saved) : {
-      temperature: 0.7,
-      systemTone: 'creative',
-      enableHistory: true,
-      provider: 'g4f', // Default to G4F (free multi-provider)
-      customApiKey: '',
-      modelOverride: '',
-      // Default G4F settings
-      g4f: {
-        subProvider: 'pollinations',
-        model: 'openai',
-        apiKey: DEFAULT_G4F_API_KEY,
-        streaming: true,
-        webSearch: false
-      }
-    };
-  });
+  const defaultSettings: ChatSettings = {
+    temperature: 0.7,
+    systemTone: 'creative',
+    enableHistory: true,
+    provider: 'g4f', // Default to G4F (free multi-provider)
+    customApiKey: '',
+    modelOverride: '',
+    // Default G4F settings
+    g4f: {
+      subProvider: 'pollinations',
+      model: 'openai',
+      apiKey: DEFAULT_G4F_API_KEY,
+      streaming: true,
+      webSearch: false
+    }
+  };
+
+  const loadSettings = (): ChatSettings => {
+    if (typeof window === 'undefined') {
+      return defaultSettings;
+    }
+    try {
+      const saved = localStorage.getItem('iv_ai_settings');
+      if (!saved) return defaultSettings;
+      const parsed = JSON.parse(saved) as Partial<ChatSettings>;
+      return {
+        ...defaultSettings,
+        ...parsed,
+        g4f: {
+          ...defaultSettings.g4f,
+          ...(parsed.g4f || {})
+        }
+      };
+    } catch {
+      return defaultSettings;
+    }
+  };
+
+  const [settings, setSettings] = useState<ChatSettings>(loadSettings);
 
   // Track spending for Intervised AI
   const [spending, setSpending] = useState<SpendingInfo | null>(null);
 
   useEffect(() => {
-    localStorage.setItem('iv_ai_settings', JSON.stringify(settings));
+    if (typeof window === 'undefined') return;
+    try {
+      localStorage.setItem('iv_ai_settings', JSON.stringify(settings));
+    } catch {
+      // Ignore storage errors (e.g., private mode)
+    }
   }, [settings]);
 
   const [systemInstruction, setSystemInstruction] = useState(DEFAULT_SYSTEM_INSTRUCTION);
