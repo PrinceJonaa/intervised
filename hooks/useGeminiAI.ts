@@ -7,7 +7,7 @@ import { getInitialTools } from '../lib/aiTools';
 import { executeTool } from '../lib/toolExecutor';
 import { universalChat } from '../lib/universalAI';
 import { azureChat, toAzureMessages, AISpendingLimitError, AIAuthError, getSpendingInfo, type SpendingInfo } from '../lib/supabase/aiService';
-import { g4fChat, g4fChatStream, getG4FProvider, DEFAULT_G4F_API_KEY, type G4FChatRequest, type G4FContentPart, type G4FMessage } from '../lib/g4fService';
+import { g4fChat, g4fChatStream, getG4FProvider, type G4FChatRequest, type G4FContentPart, type G4FMessage } from '../lib/g4fService';
 
 // --- Configuration ---
 const MAX_HISTORY_LENGTH = 20;
@@ -178,7 +178,7 @@ export const useGeminiAI = (setPage?: (page: Page) => void) => {
       g4f: {
         subProvider: 'pollinations',
         model: 'openai',
-        apiKey: DEFAULT_G4F_API_KEY,
+        apiKey: '',
         streaming: true,
         webSearch: false
       }
@@ -438,7 +438,7 @@ ${recentContext}
           messages: g4fMessages,
           temperature: settings.temperature,
           maxTokens: 4096,
-          apiKey: g4fSettings.apiKey || (g4fSettings.subProvider === 'g4f-main' ? DEFAULT_G4F_API_KEY : undefined),
+          apiKey: g4fSettings.apiKey,
           customBaseUrl: g4fSettings.customBaseUrl,
           signal: abortControllerRef.current?.signal,
           providerOptions: {

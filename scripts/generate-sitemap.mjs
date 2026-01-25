@@ -17,9 +17,14 @@ const BASE_URL = 'https://intervised.com';
 const TODAY = new Date().toISOString().split('T')[0];
 
 // Supabase client for fetching blog posts
-const supabaseUrl = process.env.VITE_PUBLIC_SUPABASE_URL || 'https://jnfnqtohljybohlcslnm.supabase.co';
-const supabaseAnonKey = process.env.VITE_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpuZm5xdG9obGp5Ym9obGNzbG5tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc2NjA1MDksImV4cCI6MjA4MzIzNjUwOX0.1z3v0yieVMz88w3oyccht2zJowHzFEUnfg2tB_5iYmc';
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+const supabaseUrl = process.env.VITE_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.VITE_PUBLIC_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.warn('⚠️  Missing Supabase environment variables. Blog posts will not be included in sitemap.');
+}
+
+const supabase = (supabaseUrl && supabaseAnonKey) ? createClient(supabaseUrl, supabaseAnonKey) : null;
 
 // Static routes configuration
 const STATIC_ROUTES = [
@@ -58,6 +63,10 @@ async function main() {
 
   // Fetch published blog posts from Supabase
   try {
+    if (!supabase) {
+      throw new Error('Supabase client not initialized');
+    }
+
     const { data: posts, error } = await supabase
       .from('blog_posts')
       .select('slug, updated_at')
