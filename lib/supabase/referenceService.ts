@@ -19,12 +19,16 @@ export interface Service {
   updated_at?: string;
 }
 
-export async function getServices(category?: string): Promise<Service[]> {
+export async function getServices(category?: string, includeInactive: boolean = false): Promise<Service[]> {
   let query = supabase
     .from('services')
-    .select('*')
-    .eq('is_active', true)
-    .order('sort_order', { ascending: true });
+    .select('*');
+
+  if (!includeInactive) {
+    query = query.eq('is_active', true);
+  }
+
+  query = query.order('sort_order', { ascending: true });
 
   if (category) {
     query = query.eq('category', category);
