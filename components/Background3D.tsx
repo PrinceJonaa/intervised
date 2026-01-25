@@ -4,19 +4,6 @@ import { Canvas, useFrame, ThreeElements } from '@react-three/fiber';
 import { Sphere, Float, Stars, PerformanceMonitor } from '@react-three/drei';
 import * as THREE from 'three';
 
-// Fix for missing JSX types in the current environment
-// Augmenting both global JSX and React.JSX namespaces for maximum compatibility with @react-three/fiber
-declare global {
-  namespace JSX {
-    interface IntrinsicElements extends ThreeElements { }
-  }
-  namespace React {
-    namespace JSX {
-      interface IntrinsicElements extends ThreeElements { }
-    }
-  }
-}
-
 const COLORS: Record<string, string> = {
   'Creative': '#F4C95D', // Gold
   'Tech': '#003F72',     // Deep Blue Hover
@@ -50,7 +37,6 @@ const AnimatedSphere = ({ activeCategory }: { activeCategory: string | null }) =
   return (
     <Float speed={1.2} rotationIntensity={0.25} floatIntensity={0.3}>
       <Sphere args={[1, 32, 32]} scale={2} ref={meshRef}>
-        {/* @ts-ignore - Fix for meshStandardMaterial JSX error */}
         <meshStandardMaterial
           ref={materialRef}
           color={COLORS['default']}
@@ -87,9 +73,7 @@ export const BackgroundScene = React.memo(({ activeCategory }: { activeCategory:
           onDecline={() => setDpr(0.5)}
           onIncline={() => setDpr(Math.min(window.devicePixelRatio, 2))}
         />
-        {/* @ts-ignore - Fix for ambientLight JSX error */}
         <ambientLight intensity={0.6} />
-        {/* @ts-ignore - Fix for directionalLight JSX error */}
         <directionalLight position={[5, 5, 5]} intensity={0.8} color="#F4C95D" />
         <AnimatedSphere activeCategory={activeCategory} />
         <Stars radius={80} depth={30} count={300} factor={3} fade speed={0.2} />
