@@ -573,16 +573,37 @@ export async function* g4fChatStream(
 
         if (!trimmed || trimmed === 'data: [DONE]') continue;
 
+        if (trimmed === 'data: [DONE]') continue;
+
         if (trimmed.startsWith('data: ')) {
+          const dataStr = trimmed.slice(6);
           try {
-            const json = JSON.parse(trimmed.slice(6));
+            const json = JSON.parse(dataStr);
             const content = json.choices?.[0]?.delta?.content;
             if (content) {
               yielded = true;
               yield content;
             }
           } catch {
-            // Skip malformed JSON chunks
+            // Try to recover from concatenated JSON (e.g. data: {...}data: {...})
+            // This happens with some non-compliant providers
+            const parts = trimmed.split('data: ');
+            for (let i = 1; i < parts.length; i++) {
+              try {
+                const part = parts[i];
+                // Skip if obviously not JSON
+                if (!part.trim().startsWith('{')) continue;
+
+                const json = JSON.parse(part);
+                const content = json.choices?.[0]?.delta?.content;
+                if (content) {
+                  yielded = true;
+                  yield content;
+                }
+              } catch {
+                // Still failed, ignore
+              }
+            }
           }
         }
       }

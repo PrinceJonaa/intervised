@@ -111,7 +111,7 @@ const AIPanelContent: React.FC<AIPanelContentProps> = ({ setPage, onClose }) => 
 
       {/* Output Display */}
       <div className="min-h-[80px] flex items-center justify-center text-center p-2">
-        {isProcessing || isListening ? (
+        {(isProcessing && !aiDisplayMessage) || isListening ? (
           <div className="flex flex-col items-center gap-3">
             <div className="flex gap-1 items-center h-6">
               {[1, 2, 3, 4, 5].map(i => (

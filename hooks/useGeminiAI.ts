@@ -458,11 +458,14 @@ ${recentContext}
           }]);
 
           let fullContent = '';
+          let hasReceivedChunks = false;
 
           try {
             for await (const chunk of g4fChatStream(g4fRequest)) {
               if (cancelledRef.current) break;
               fullContent += chunk;
+              hasReceivedChunks = true;
+
               // Update the message in place
               setMessages(prev => prev.map(msg =>
                 msg.id === messageId
@@ -475,7 +478,8 @@ ${recentContext}
           }
 
           // If streaming failed or yielded no content, try fallback
-          if (fullContent.trim().length === 0 && !cancelledRef.current) {
+          // Only fallback if we received absolutely nothing (or empty string total)
+          if (!hasReceivedChunks && fullContent.trim().length === 0 && !cancelledRef.current) {
             try {
               const response = await g4fChat(g4fRequest);
               if (response.content) {
