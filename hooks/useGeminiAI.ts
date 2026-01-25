@@ -458,6 +458,11 @@ ${recentContext}
           }]);
 
           let fullContent = '';
+          /**
+           * Flag to track if we received ANY valid chunks.
+           * If we received chunks (even just whitespace), we assume the connection worked
+           * and avoid triggering the fallback, which would restart the request.
+           */
           let hasReceivedChunks = false;
 
           try {

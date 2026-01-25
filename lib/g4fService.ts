@@ -494,7 +494,20 @@ export async function g4fChat(request: G4FChatRequest): Promise<G4FChatResponse>
 
 /**
  * G4F streaming chat function
- * Returns an async generator that yields chunks
+ * Returns an async generator that yields chunks.
+ *
+ * @remarks
+ * This function includes robust error handling for non-standard Server-Sent Events (SSE).
+ * Many G4F providers do not strictly follow the SSE spec.
+ *
+ * Key behaviors:
+ * 1. Handles `data: [DONE]` explicitly.
+ * 2. Recovers from concatenated JSON chunks (e.g. `data: {...}data: {...}`) which happen when
+ *    provider buffers flush multiple events in a single line.
+ * 3. Falls back to non-streaming if the stream yields absolutely no content.
+ *
+ * @param request - The chat request configuration
+ * @returns AsyncGenerator yielding text chunks
  */
 export async function* g4fChatStream(
   request: G4FChatRequest
