@@ -22,6 +22,15 @@ const PHASE_TRIGGERS: Record<string, string[]> = {
   'Integration': ['peace', 'understand', 'settle', 'whole', 'calm', 'clear']
 };
 
+// Pre-compile regexes for performance
+const TONE_REGEXES: Record<string, RegExp> = {};
+Object.entries(TONE_LEXICON).forEach(([tone, keywords]) => {
+  // Create a single regex for all keywords in this tone
+  // \b matches word boundaries
+  const pattern = `\\b(${keywords.join('|')})\\b`;
+  TONE_REGEXES[tone] = new RegExp(pattern, 'gi');
+});
+
 export const analyzeJournalEntry = (text: string) => {
   const lowerText = text.toLowerCase();
   const words = lowerText.match(/\b\w+\b/g) || [];
@@ -29,13 +38,9 @@ export const analyzeJournalEntry = (text: string) => {
   // 1. Advanced Tone Analysis
   const toneScores: Record<string, number> = {};
   
-  Object.entries(TONE_LEXICON).forEach(([tone, keywords]) => {
-    toneScores[tone] = 0;
-    keywords.forEach(k => {
-      const regex = new RegExp(`\\b${k}\\b`, 'gi');
-      const count = (text.match(regex) || []).length;
-      toneScores[tone] += count;
-    });
+  Object.entries(TONE_REGEXES).forEach(([tone, regex]) => {
+    const count = (text.match(regex) || []).length;
+    toneScores[tone] = count;
   });
 
   // Find dominant tone
