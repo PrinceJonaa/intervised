@@ -748,4 +748,4 @@ export function clearModelCache(provider?: G4FSubProvider): void {
 }
 
 // Default G4F API key (can be overridden by user)
-export const DEFAULT_G4F_API_KEY = 'g4f_u_mk4lyf_6acb6461af049be7b75e638d8f7f7d6a262504574eaccf57_c3e14805';
+export const DEFAULT_G4F_API_KEY = import.meta.env.VITE_G4F_API_KEY || '';
