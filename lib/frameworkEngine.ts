@@ -98,10 +98,12 @@ export const analyzeJournalEntry = (text: string) => {
   let bestSentence = sentences[0];
   let maxKeywords = 0;
 
+  const ALL_KEYWORDS = [...Object.values(TONE_LEXICON).flat(), ...Object.values(PHASE_TRIGGERS).flat()];
+
   sentences.forEach(s => {
      let count = 0;
      const sLower = s.toLowerCase();
-     [...Object.values(TONE_LEXICON).flat(), ...Object.values(PHASE_TRIGGERS).flat()].forEach(k => {
+     ALL_KEYWORDS.forEach(k => {
         if (sLower.includes(k)) count++;
      });
      if (count > maxKeywords) {
