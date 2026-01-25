@@ -467,12 +467,33 @@ const _toolImplementations = {
     try {
       let allContent = db.getPosts();
 
-      // Filter by query
-      let matches = allContent.filter(p =>
-        p.title.toLowerCase().includes(queryLower) ||
-        p.content.toLowerCase().includes(queryLower) ||
-        p.tags.some(t => t.toLowerCase().includes(queryLower))
-      );
+      // Use cached normalized content if available to avoid repeated toLowerCase calls
+      // Attach cache to db object to persist across tool executions
+      const dbWithCache = db as any;
+      // Compute a signature for cache invalidation based on content length and last modified times.
+      // This detects updates, additions, and deletions more reliably than just checking the first post.
+      const signature = allContent.length + '-' + allContent.reduce((sum, p) => sum + (p.lastModified || p.timestamp || 0), 0);
+
+      if (!dbWithCache._searchCache || dbWithCache._searchCache.signature !== signature) {
+        dbWithCache._searchCache = {
+          signature,
+          items: allContent.map((p: any) => ({
+            original: p,
+            titleLower: p.title.toLowerCase(),
+            contentLower: p.content.toLowerCase(),
+            tagsLower: p.tags.map((t: string) => t.toLowerCase())
+          }))
+        };
+      }
+
+      // Filter by query using cache
+      let matches = dbWithCache._searchCache.items
+        .filter((item: any) =>
+          item.titleLower.includes(queryLower) ||
+          item.contentLower.includes(queryLower) ||
+          item.tagsLower.some((t: string) => t.includes(queryLower))
+        )
+        .map((item: any) => item.original);
 
       // Filter by category (using category as content_type proxy)
       if (content_type !== 'all') {
