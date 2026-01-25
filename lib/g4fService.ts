@@ -586,8 +586,6 @@ export async function* g4fChatStream(
 
         if (!trimmed || trimmed === 'data: [DONE]') continue;
 
-        if (trimmed === 'data: [DONE]') continue;
-
         if (trimmed.startsWith('data: ')) {
           const dataStr = trimmed.slice(6);
           try {
