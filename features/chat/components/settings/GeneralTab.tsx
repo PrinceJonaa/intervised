@@ -5,7 +5,7 @@ import { Trash2, Key, Cpu, Eye, EyeOff, ExternalLink, Globe, Server, Info, Shiel
 import { ChatSettings, AIProvider, G4FSubProvider } from '../../../../types';
 import { SectionHeader } from './Shared';
 import { type SpendingInfo } from '../../../../lib/supabase/aiService';
-import { G4F_PROVIDERS, fetchG4FModels, searchModels, testG4FProvider, getG4FProvider, DEFAULT_G4F_API_KEY, type G4FProviderConfig } from '../../../../lib/g4fService';
+import { G4F_PROVIDERS, fetchG4FModels, searchModels, testG4FProvider, getG4FProvider, type G4FProviderConfig } from '../../../../lib/g4fService';
 
 interface GeneralTabProps {
   settings: ChatSettings;
@@ -98,7 +98,7 @@ export const GeneralTab: React.FC<GeneralTabProps> = ({ settings, setSettings, o
         g4f: {
           subProvider: 'pollinations',
           model: 'openai',
-          apiKey: DEFAULT_G4F_API_KEY,
+          apiKey: import.meta.env.VITE_G4F_API_KEY || '',
           streaming: true,
           webSearch: false
         }
