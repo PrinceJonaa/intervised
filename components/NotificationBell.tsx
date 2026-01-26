@@ -150,8 +150,10 @@ export function NotificationBell() {
                                                         to={notif.link}
                                                         onClick={() => setIsOpen(false)}
                                                         className="p-1 text-gray-500 hover:text-accent"
+                                                        aria-label="Open link"
+                                                        title="Open link"
                                                     >
-                                                        <ExternalLink size={14} />
+                                                        <ExternalLink size={14} aria-hidden="true" />
                                                     </Link>
                                                 )}
                                                 {!notif.is_read && (
@@ -159,8 +161,9 @@ export function NotificationBell() {
                                                         onClick={() => handleMarkAsRead(notif.id)}
                                                         className="p-1 text-gray-500 hover:text-green-400"
                                                         title="Mark as read"
+                                                        aria-label="Mark as read"
                                                     >
-                                                        <Check size={14} />
+                                                        <Check size={14} aria-hidden="true" />
                                                     </button>
                                                 )}
                                             </div>
