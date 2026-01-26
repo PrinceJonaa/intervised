@@ -1,6 +1,5 @@
 
-
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useId } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Calendar as CalendarIcon, Cpu, ChevronRight, CheckCircle2, Zap, User, Clock, Settings2, FileText, Copy, Mail, RefreshCw, MessageSquare, AlertCircle } from 'lucide-react';
 import { ServiceItem, ServiceOption, Page } from '../types';
@@ -31,6 +30,10 @@ export const BookingConsole: React.FC<BookingConsoleProps> = ({
   const [durationMultiplier, setDurationMultiplier] = useState(1);
   const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
   const [projectContext, setProjectContext] = useState('');
+
+  // Accessibility IDs
+  const durationScopeId = useId();
+  const missionContextId = useId();
 
   // Computed States
   const [totalPrice, setTotalPrice] = useState(0);
@@ -358,11 +361,12 @@ Mission: ${projectContext || 'N/A'}`;
                     {(selectedService.hourly || selectedService.durationMinutes >= 60) && (
                       <div className="space-y-4">
                         <div className="flex justify-between items-center">
-                          <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2"><Clock size={12} /> Duration Scope</label>
+                          <label htmlFor={durationScopeId} className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2"><Clock size={12} /> Duration Scope</label>
                           <span className="text-xs font-mono text-accent">{selectedService.durationMinutes * durationMultiplier} MIN</span>
                         </div>
                         <div className="relative h-6 flex items-center">
                           <input
+                            id={durationScopeId}
                             type="range"
                             min="1"
                             max="8"
@@ -388,6 +392,7 @@ Mission: ${projectContext || 'N/A'}`;
                             <button
                               key={opt.id}
                               onClick={() => toggleOption(opt.id)}
+                              aria-pressed={selectedOptions.includes(opt.id)}
                               className={`flex items-center justify-between p-3 rounded-xl border transition-all text-sm ${selectedOptions.includes(opt.id) ? 'bg-accent/10 border-accent/50 text-white' : 'bg-white/5 border-white/5 text-gray-400 hover:border-white/20'}`}
                             >
                               <div className="flex items-center gap-2">
@@ -405,8 +410,9 @@ Mission: ${projectContext || 'N/A'}`;
 
                     {/* Project Context Form */}
                     <div className="space-y-3">
-                      <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2"><FileText size={12} /> Mission Context</label>
+                      <label htmlFor={missionContextId} className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2"><FileText size={12} /> Mission Context</label>
                       <textarea
+                        id={missionContextId}
                         value={projectContext}
                         onChange={(e) => setProjectContext(e.target.value)}
                         placeholder="Briefly describe your specific needs or vision..."
@@ -422,7 +428,7 @@ Mission: ${projectContext || 'N/A'}`;
                     <div className="grid grid-cols-7 gap-1">
                       {[...Array(1)].map((_, i) => <div key={`empty-${i}`} />)}
                       {days.slice(0, 28).map((day) => (
-                        <button key={day} onClick={() => !isBooked && setSelectedDate(day)} disabled={isBooked} className={`aspect-square rounded-md flex items-center justify-center text-xs transition-all relative overflow-hidden touch-manipulation ${selectedDate === day ? 'bg-accent text-void font-bold shadow-lg' : 'hover:bg-white/10 text-gray-400 hover:text-white'} ${isBooked ? 'opacity-50' : ''}`}>{day}</button>
+                        <button key={day} onClick={() => !isBooked && setSelectedDate(day)} disabled={isBooked} aria-label={`Select day ${day}`} className={`aspect-square rounded-md flex items-center justify-center text-xs transition-all relative overflow-hidden touch-manipulation ${selectedDate === day ? 'bg-accent text-void font-bold shadow-lg' : 'hover:bg-white/10 text-gray-400 hover:text-white'} ${isBooked ? 'opacity-50' : ''}`}>{day}</button>
                       ))}
                     </div>
                   </div>
