@@ -1,6 +1,6 @@
 
 
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useId } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Calendar as CalendarIcon, Cpu, ChevronRight, CheckCircle2, Zap, User, Clock, Settings2, FileText, Copy, Mail, RefreshCw, MessageSquare, AlertCircle } from 'lucide-react';
 import { ServiceItem, ServiceOption, Page } from '../types';
@@ -21,6 +21,9 @@ export const BookingConsole: React.FC<BookingConsoleProps> = ({
   selectedService, selectedDate, setSelectedDate, isBooked, setIsBooked, days, setPage
 }) => {
   const { addToast } = useToast();
+  const missionContextId = useId();
+  const durationScopeId = useId();
+  const providerGroupId = useId();
   const [holdProgress, setHoldProgress] = useState(0);
   const holdIntervalRef = useRef<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -338,12 +341,14 @@ Mission: ${projectContext || 'N/A'}`;
 
                     {/* Providers */}
                     {selectedService.providers && selectedService.providers.length > 1 && (
-                      <div className="space-y-3">
-                        <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2"><User size={12} /> Lead Creative</label>
+                      <div className="space-y-3" role="radiogroup" aria-labelledby={providerGroupId}>
+                        <label id={providerGroupId} className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2"><User size={12} /> Lead Creative</label>
                         <div className="flex gap-2 p-1 bg-black/40 rounded-xl border border-white/5">
                           {selectedService.providers.map(p => (
                             <button
                               key={p}
+                              role="radio"
+                              aria-checked={selectedProvider === p}
                               onClick={() => setSelectedProvider(p)}
                               className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all ${selectedProvider === p ? 'bg-white/10 text-white shadow-sm border border-white/10' : 'text-gray-500 hover:text-white'}`}
                             >
@@ -358,11 +363,12 @@ Mission: ${projectContext || 'N/A'}`;
                     {(selectedService.hourly || selectedService.durationMinutes >= 60) && (
                       <div className="space-y-4">
                         <div className="flex justify-between items-center">
-                          <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2"><Clock size={12} /> Duration Scope</label>
+                          <label htmlFor={durationScopeId} className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2"><Clock size={12} /> Duration Scope</label>
                           <span className="text-xs font-mono text-accent">{selectedService.durationMinutes * durationMultiplier} MIN</span>
                         </div>
                         <div className="relative h-6 flex items-center">
                           <input
+                            id={durationScopeId}
                             type="range"
                             min="1"
                             max="8"
@@ -387,6 +393,7 @@ Mission: ${projectContext || 'N/A'}`;
                           {selectedService.options.map(opt => (
                             <button
                               key={opt.id}
+                              aria-pressed={selectedOptions.includes(opt.id)}
                               onClick={() => toggleOption(opt.id)}
                               className={`flex items-center justify-between p-3 rounded-xl border transition-all text-sm ${selectedOptions.includes(opt.id) ? 'bg-accent/10 border-accent/50 text-white' : 'bg-white/5 border-white/5 text-gray-400 hover:border-white/20'}`}
                             >
@@ -405,8 +412,9 @@ Mission: ${projectContext || 'N/A'}`;
 
                     {/* Project Context Form */}
                     <div className="space-y-3">
-                      <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2"><FileText size={12} /> Mission Context</label>
+                      <label htmlFor={missionContextId} className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2"><FileText size={12} /> Mission Context</label>
                       <textarea
+                        id={missionContextId}
                         value={projectContext}
                         onChange={(e) => setProjectContext(e.target.value)}
                         placeholder="Briefly describe your specific needs or vision..."
@@ -417,7 +425,7 @@ Mission: ${projectContext || 'N/A'}`;
 
                   {/* CALENDAR & CONFIRM */}
                   <div className="mb-6 bg-white/5 rounded-2xl p-4 border border-white/5 shrink-0">
-                    <div className="flex justify-between items-center mb-4"><h4 className="font-bold text-xs text-gray-300 uppercase tracking-widest">Select Target Date</h4><div className="flex gap-1"><button className="p-1 hover:bg-white/10 rounded"><ChevronRight className="rotate-180 w-4 h-4" /></button><button className="p-1 hover:bg-white/10 rounded"><ChevronRight className="w-4 h-4" /></button></div></div>
+                    <div className="flex justify-between items-center mb-4"><h4 className="font-bold text-xs text-gray-300 uppercase tracking-widest">Select Target Date</h4><div className="flex gap-1"><button className="p-1 hover:bg-white/10 rounded" aria-label="Previous month"><ChevronRight className="rotate-180 w-4 h-4" aria-hidden="true" /></button><button className="p-1 hover:bg-white/10 rounded" aria-label="Next month"><ChevronRight className="w-4 h-4" aria-hidden="true" /></button></div></div>
                     <div className="grid grid-cols-7 gap-1 mb-2 text-center text-[9px] font-mono text-gray-600"><div>S</div><div>M</div><div>T</div><div>W</div><div>T</div><div>F</div><div>S</div></div>
                     <div className="grid grid-cols-7 gap-1">
                       {[...Array(1)].map((_, i) => <div key={`empty-${i}`} />)}
