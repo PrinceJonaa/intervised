@@ -373,7 +373,13 @@ function resolveProviderEndpoint(
   };
 
   // G4F gateway doesn't require auth for most providers
-  const authKey = apiKey || (provider === 'g4f-main' ? DEFAULT_G4F_API_KEY : undefined);
+  const defaultKey = import.meta.env.VITE_G4F_API_KEY;
+  const authKey = apiKey || (provider === 'g4f-main' ? defaultKey : undefined);
+
+  if (!authKey && provider === 'g4f-main') {
+    console.warn('⚠️ Missing VITE_G4F_API_KEY for g4f-main provider');
+  }
+
   if ((config.requiresAuth || provider === 'g4f-main') && authKey) {
     headers['Authorization'] = `Bearer ${authKey}`;
   }
@@ -768,5 +774,3 @@ export function clearModelCache(provider?: G4FSubProvider): void {
   }
 }
 
-// Default G4F API key (can be overridden by user)
-export const DEFAULT_G4F_API_KEY = 'g4f_u_mk4lyf_6acb6461af049be7b75e638d8f7f7d6a262504574eaccf57_c3e14805';
