@@ -1,24 +1,32 @@
 
 
-import React, { useState } from 'react';
+import React, { useState, useId } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, CheckCircle2, Loader2, Mail, MapPin, Clock, Globe, ArrowRight, DollarSign, Calendar, AlertCircle } from 'lucide-react';
 import { useToast } from '../components/ToastSystem';
 import { submitContactMessage } from '../lib/supabase/contactService';
 
-const ContactInput = ({ label, value, onChange, placeholder, type = "text", disabled }: any) => (
-  <div className="group">
-    <label className="block text-[10px] font-mono text-gray-500 mb-2 uppercase tracking-widest group-focus-within:text-accent transition-colors">{label}</label>
-    <input 
-      type={type}
-      value={value}
-      onChange={onChange}
-      className="w-full bg-black/20 border border-white/10 rounded-xl py-3 px-4 focus:outline-none focus:border-accent/50 focus:bg-black/40 transition-all text-sm text-white placeholder-gray-700 hover:border-white/20" 
-      placeholder={placeholder}
-      disabled={disabled}
-    />
-  </div>
-);
+const ContactInput = ({ label, value, onChange, placeholder, type = "text", disabled, required }: any) => {
+  const id = useId();
+  return (
+    <div className="group">
+      <label htmlFor={id} className="block text-[10px] font-mono text-gray-500 mb-2 uppercase tracking-widest group-focus-within:text-accent transition-colors">
+        {label}
+        {required && <span className="text-accent ml-1" aria-hidden="true">*</span>}
+      </label>
+      <input
+        id={id}
+        type={type}
+        value={value}
+        onChange={onChange}
+        className="w-full bg-black/20 border border-white/10 rounded-xl py-3 px-4 focus:outline-none focus:border-accent/50 focus:bg-black/40 transition-all text-sm text-white placeholder-gray-700 hover:border-white/20"
+        placeholder={placeholder}
+        disabled={disabled}
+        required={required}
+      />
+    </div>
+  );
+};
 
 const SelectButton = ({ active, onClick, label, icon: Icon }: any) => (
   <button 
@@ -35,6 +43,7 @@ export const ContactSection = () => {
   const { addToast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const messageId = useId();
   
   // Form State
   const [formData, setFormData] = useState({
@@ -160,8 +169,8 @@ export const ContactSection = () => {
                     <div className="space-y-4">
                        <h4 className="text-xs font-bold text-accent uppercase tracking-widest flex items-center gap-2"><Globe size={14}/> Identity Protocol</h4>
                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <ContactInput label="Name" placeholder="Enter full name" value={formData.name} onChange={(e: any) => setFormData({...formData, name: e.target.value})} disabled={isSubmitting} />
-                          <ContactInput label="Email" placeholder="name@domain.com" type="email" value={formData.email} onChange={(e: any) => setFormData({...formData, email: e.target.value})} disabled={isSubmitting} />
+                          <ContactInput label="Name" placeholder="Enter full name" value={formData.name} onChange={(e: any) => setFormData({...formData, name: e.target.value})} disabled={isSubmitting} required />
+                          <ContactInput label="Email" placeholder="name@domain.com" type="email" value={formData.email} onChange={(e: any) => setFormData({...formData, email: e.target.value})} disabled={isSubmitting} required />
                        </div>
                        <ContactInput label="Organization (Optional)" placeholder="Church, Brand, or Collective" value={formData.company} onChange={(e: any) => setFormData({...formData, company: e.target.value})} disabled={isSubmitting} />
                     </div>
@@ -213,13 +222,17 @@ export const ContactSection = () => {
 
                     {/* Message Section */}
                     <div className="space-y-4">
-                        <h4 className="text-xs font-bold text-accent uppercase tracking-widest flex items-center gap-2"><Clock size={14}/> The Signal</h4>
+                        <label htmlFor={messageId} className="text-xs font-bold text-accent uppercase tracking-widest flex items-center gap-2">
+                          <Clock size={14}/> The Signal <span className="text-accent ml-1" aria-hidden="true">*</span>
+                        </label>
                         <textarea 
+                          id={messageId}
                           value={formData.message}
                           onChange={e => setFormData({...formData, message: e.target.value})}
                           className="w-full bg-black/20 border border-white/10 rounded-xl p-4 focus:outline-none focus:border-accent/50 transition-colors h-32 resize-none text-sm text-white placeholder-gray-700" 
                           placeholder="Briefing on your vision..." 
                           disabled={isSubmitting}
+                          required
                         />
                     </div>
 
