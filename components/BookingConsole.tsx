@@ -238,7 +238,7 @@ Mission: ${projectContext || 'N/A'}`;
 
                   <div className="bg-black/40 border border-white/10 rounded-xl p-6 font-mono text-sm space-y-3 mb-6 relative overflow-hidden group">
                     <div className="absolute top-0 right-0 p-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                      <button onClick={handleCopyQuote} className="p-2 bg-black/50 hover:bg-white/10 rounded text-gray-400 hover:text-white transition-colors" title="Copy Details"><Copy size={14} /></button>
+                      <button onClick={handleCopyQuote} className="p-2 bg-black/50 hover:bg-white/10 rounded text-gray-400 hover:text-white transition-colors" title="Copy Details" aria-label="Copy booking details"><Copy size={14} /></button>
                     </div>
                     <div className="flex justify-between border-b border-white/10 pb-2 mb-2">
                       <span className="text-gray-500 uppercase tracking-widest text-[10px]">Reference</span>
@@ -358,11 +358,12 @@ Mission: ${projectContext || 'N/A'}`;
                     {(selectedService.hourly || selectedService.durationMinutes >= 60) && (
                       <div className="space-y-4">
                         <div className="flex justify-between items-center">
-                          <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2"><Clock size={12} /> Duration Scope</label>
+                          <label htmlFor="duration-slider" className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2"><Clock size={12} /> Duration Scope</label>
                           <span className="text-xs font-mono text-accent">{selectedService.durationMinutes * durationMultiplier} MIN</span>
                         </div>
                         <div className="relative h-6 flex items-center">
                           <input
+                            id="duration-slider"
                             type="range"
                             min="1"
                             max="8"
@@ -388,6 +389,7 @@ Mission: ${projectContext || 'N/A'}`;
                             <button
                               key={opt.id}
                               onClick={() => toggleOption(opt.id)}
+                              aria-pressed={selectedOptions.includes(opt.id)}
                               className={`flex items-center justify-between p-3 rounded-xl border transition-all text-sm ${selectedOptions.includes(opt.id) ? 'bg-accent/10 border-accent/50 text-white' : 'bg-white/5 border-white/5 text-gray-400 hover:border-white/20'}`}
                             >
                               <div className="flex items-center gap-2">
@@ -405,8 +407,9 @@ Mission: ${projectContext || 'N/A'}`;
 
                     {/* Project Context Form */}
                     <div className="space-y-3">
-                      <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2"><FileText size={12} /> Mission Context</label>
+                      <label htmlFor="project-context" className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2"><FileText size={12} /> Mission Context</label>
                       <textarea
+                        id="project-context"
                         value={projectContext}
                         onChange={(e) => setProjectContext(e.target.value)}
                         placeholder="Briefly describe your specific needs or vision..."
@@ -417,23 +420,53 @@ Mission: ${projectContext || 'N/A'}`;
 
                   {/* CALENDAR & CONFIRM */}
                   <div className="mb-6 bg-white/5 rounded-2xl p-4 border border-white/5 shrink-0">
-                    <div className="flex justify-between items-center mb-4"><h4 className="font-bold text-xs text-gray-300 uppercase tracking-widest">Select Target Date</h4><div className="flex gap-1"><button className="p-1 hover:bg-white/10 rounded"><ChevronRight className="rotate-180 w-4 h-4" /></button><button className="p-1 hover:bg-white/10 rounded"><ChevronRight className="w-4 h-4" /></button></div></div>
-                    <div className="grid grid-cols-7 gap-1 mb-2 text-center text-[9px] font-mono text-gray-600"><div>S</div><div>M</div><div>T</div><div>W</div><div>T</div><div>F</div><div>S</div></div>
+                    <div className="flex justify-between items-center mb-4">
+                      <h4 className="font-bold text-xs text-gray-300 uppercase tracking-widest">Select Target Date</h4>
+                      <div className="flex gap-1">
+                        <button className="p-1 hover:bg-white/10 rounded" aria-label="Previous month"><ChevronRight className="rotate-180 w-4 h-4" /></button>
+                        <button className="p-1 hover:bg-white/10 rounded" aria-label="Next month"><ChevronRight className="w-4 h-4" /></button>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-7 gap-1 mb-2 text-center text-[9px] font-mono text-gray-600" aria-hidden="true"><div>S</div><div>M</div><div>T</div><div>W</div><div>T</div><div>F</div><div>S</div></div>
                     <div className="grid grid-cols-7 gap-1">
                       {[...Array(1)].map((_, i) => <div key={`empty-${i}`} />)}
                       {days.slice(0, 28).map((day) => (
-                        <button key={day} onClick={() => !isBooked && setSelectedDate(day)} disabled={isBooked} className={`aspect-square rounded-md flex items-center justify-center text-xs transition-all relative overflow-hidden touch-manipulation ${selectedDate === day ? 'bg-accent text-void font-bold shadow-lg' : 'hover:bg-white/10 text-gray-400 hover:text-white'} ${isBooked ? 'opacity-50' : ''}`}>{day}</button>
+                        <button
+                          key={day}
+                          onClick={() => !isBooked && setSelectedDate(day)}
+                          disabled={isBooked}
+                          aria-label={`Select day ${day}`}
+                          aria-pressed={selectedDate === day}
+                          className={`aspect-square rounded-md flex items-center justify-center text-xs transition-all relative overflow-hidden touch-manipulation ${selectedDate === day ? 'bg-accent text-void font-bold shadow-lg' : 'hover:bg-white/10 text-gray-400 hover:text-white'} ${isBooked ? 'opacity-50' : ''}`}
+                        >
+                          {day}
+                        </button>
                       ))}
                     </div>
                   </div>
 
                   <div className="pt-4 border-t border-white/10 space-y-4 shrink-0">
                     <div className="relative touch-none">
-                      <button disabled={!selectedDate || isBooked || isSubmitting} onMouseDown={startHold} onMouseUp={endHold} onMouseLeave={endHold} onTouchStart={startHold} onTouchEnd={endHold} className={`relative w-full py-4 font-bold rounded-xl overflow-hidden transition-all select-none ${isBooked ? 'bg-green-500 text-black' : !selectedDate ? 'bg-white/10 text-gray-500 cursor-not-allowed' : isSubmitting ? 'bg-accent/50 text-black cursor-wait' : 'bg-white text-black active:scale-[0.98]'}`}>
+                      <button
+                        disabled={!selectedDate || isBooked || isSubmitting}
+                        onMouseDown={startHold}
+                        onMouseUp={endHold}
+                        onMouseLeave={endHold}
+                        onTouchStart={startHold}
+                        onTouchEnd={endHold}
+                        onKeyDown={(e) => {
+                          if (e.repeat) return;
+                          if (e.key === ' ' || e.key === 'Enter') startHold(e);
+                        }}
+                        onKeyUp={(e) => {
+                          if (e.key === ' ' || e.key === 'Enter') endHold(e);
+                        }}
+                        className={`relative w-full py-4 font-bold rounded-xl overflow-hidden transition-all select-none ${isBooked ? 'bg-green-500 text-black' : !selectedDate ? 'bg-white/10 text-gray-500 cursor-not-allowed' : isSubmitting ? 'bg-accent/50 text-black cursor-wait' : 'bg-white text-black active:scale-[0.98]'}`}
+                      >
                         <div className="absolute inset-0 bg-accent z-0 transition-all duration-75 ease-linear" style={{ width: `${holdProgress}%` }} />
                         <div className="relative z-10 flex items-center justify-center gap-2">{isBooked ? <><CheckCircle2 size={18} /> REQUEST TRANSMITTED</> : isSubmitting ? <><RefreshCw size={18} className="animate-spin" /> TRANSMITTING...</> : selectedDate ? <><Zap size={18} className={holdProgress > 0 ? "fill-void" : ""} /> HOLD TO INITIATE</> : 'SELECT DATE TO PROCEED'}</div>
                       </button>
-                      {selectedDate && !isBooked && !isSubmitting && <div className="text-center mt-2 text-[10px] font-mono text-gray-500 uppercase tracking-widest">{holdProgress > 0 ? `ENCRYPTING... ${holdProgress}%` : 'Hold to Confirm Configuration'}</div>}
+                      {selectedDate && !isBooked && !isSubmitting && <div className="text-center mt-2 text-[10px] font-mono text-gray-500 uppercase tracking-widest" aria-live="polite">{holdProgress > 0 ? `ENCRYPTING... ${holdProgress}%` : 'Hold to Confirm Configuration'}</div>}
                       {isSubmitting && <div className="text-center mt-2 text-[10px] font-mono text-accent uppercase tracking-widest animate-pulse">SAVING TO DATABASE...</div>}
                     </div>
                   </div>
