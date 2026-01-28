@@ -1,29 +1,34 @@
 
 
-import React, { useState } from 'react';
+import React, { useState, useId } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, CheckCircle2, Loader2, Mail, MapPin, Clock, Globe, ArrowRight, DollarSign, Calendar, AlertCircle } from 'lucide-react';
 import { useToast } from '../components/ToastSystem';
 import { submitContactMessage } from '../lib/supabase/contactService';
 
-const ContactInput = ({ label, value, onChange, placeholder, type = "text", disabled }: any) => (
-  <div className="group">
-    <label className="block text-[10px] font-mono text-gray-500 mb-2 uppercase tracking-widest group-focus-within:text-accent transition-colors">{label}</label>
-    <input 
-      type={type}
-      value={value}
-      onChange={onChange}
-      className="w-full bg-black/20 border border-white/10 rounded-xl py-3 px-4 focus:outline-none focus:border-accent/50 focus:bg-black/40 transition-all text-sm text-white placeholder-gray-700 hover:border-white/20" 
-      placeholder={placeholder}
-      disabled={disabled}
-    />
-  </div>
-);
+const ContactInput = ({ label, value, onChange, placeholder, type = "text", disabled }: any) => {
+  const id = useId();
+  return (
+    <div className="group">
+      <label htmlFor={id} className="block text-[10px] font-mono text-gray-500 mb-2 uppercase tracking-widest group-focus-within:text-accent transition-colors">{label}</label>
+      <input
+        id={id}
+        type={type}
+        value={value}
+        onChange={onChange}
+        className="w-full bg-black/20 border border-white/10 rounded-xl py-3 px-4 focus:outline-none focus:border-accent/50 focus:bg-black/40 transition-all text-sm text-white placeholder-gray-700 hover:border-white/20"
+        placeholder={placeholder}
+        disabled={disabled}
+      />
+    </div>
+  );
+};
 
 const SelectButton = ({ active, onClick, label, icon: Icon }: any) => (
   <button 
     type="button"
     onClick={onClick}
+    aria-pressed={active}
     className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl border text-xs font-bold transition-all ${active ? 'bg-white text-black border-white' : 'bg-black/20 text-gray-400 border-white/10 hover:border-white/30 hover:text-white'}`}
   >
     {Icon && <Icon size={14} />}
@@ -184,6 +189,7 @@ export const ContactSection = () => {
                        <div className="grid grid-cols-2 gap-2">
                            <div className="relative">
                               <select 
+                                aria-label="Timeline"
                                 value={formData.timeline}
                                 onChange={e => setFormData({...formData, timeline: e.target.value})}
                                 className="w-full bg-black/20 border border-white/10 rounded-xl py-3 px-4 appearance-none text-sm focus:border-accent/50 outline-none text-gray-300"
@@ -197,6 +203,7 @@ export const ContactSection = () => {
                            </div>
                            <div className="relative">
                               <select 
+                                aria-label="Category"
                                 value={formData.category}
                                 onChange={e => setFormData({...formData, category: e.target.value})}
                                 className="w-full bg-black/20 border border-white/10 rounded-xl py-3 px-4 appearance-none text-sm focus:border-accent/50 outline-none text-gray-300"
