@@ -1,0 +1,3 @@
+## 2024-05-23 - Accessibility in Custom Glass UI Components
+**Learning:** The application's custom "Glass UI" components (e.g., `ContactInput`, `SelectButton`) prioritize visual aesthetics (transparency, absolute positioning) which often leads to detached labels and missing state indicators for screen readers. Inputs wrapped in divs for styling lost their implicit label association.
+**Action:** When working with the "Glass UI" components, always verify semantic association (using `useId` for `htmlFor`/`id` pairs) and ensure interactive states (like selected buttons) have explicit ARIA attributes (`aria-pressed`, `aria-selected`), as visual cues like border color are insufficient for AT users.
