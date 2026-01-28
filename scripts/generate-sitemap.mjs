@@ -17,9 +17,15 @@ const BASE_URL = 'https://intervised.com';
 const TODAY = new Date().toISOString().split('T')[0];
 
 // Supabase client for fetching blog posts
-const supabaseUrl = process.env.VITE_PUBLIC_SUPABASE_URL || 'https://jnfnqtohljybohlcslnm.supabase.co';
-const supabaseAnonKey = process.env.VITE_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpuZm5xdG9obGp5Ym9obGNzbG5tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc2NjA1MDksImV4cCI6MjA4MzIzNjUwOX0.1z3v0yieVMz88w3oyccht2zJowHzFEUnfg2tB_5iYmc';
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+const supabaseUrl = process.env.VITE_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.VITE_PUBLIC_SUPABASE_ANON_KEY;
+
+let supabase;
+if (supabaseUrl && supabaseAnonKey) {
+  supabase = createClient(supabaseUrl, supabaseAnonKey);
+} else {
+  console.warn('⚠️  Missing Supabase credentials (VITE_PUBLIC_SUPABASE_URL, VITE_PUBLIC_SUPABASE_ANON_KEY). Blog posts will be skipped.');
+}
 
 // Static routes configuration
 const STATIC_ROUTES = [
@@ -58,23 +64,25 @@ async function main() {
 
   // Fetch published blog posts from Supabase
   try {
-    const { data: posts, error } = await supabase
-      .from('blog_posts')
-      .select('slug, updated_at')
-      .eq('status', 'published');
+    if (supabase) {
+      const { data: posts, error } = await supabase
+        .from('blog_posts')
+        .select('slug, updated_at')
+        .eq('status', 'published');
 
-    if (error) {
-      console.warn('⚠️  Could not fetch blog posts:', error.message);
-    } else if (posts && posts.length > 0) {
-      console.log(`📝 Found ${posts.length} published blog posts`);
-      posts.forEach(post => {
-        allRoutes.push({
-          path: `/blog/${post.slug}`,
-          changefreq: 'weekly',
-          priority: '0.6',
-          lastmod: post.updated_at?.split('T')[0] || TODAY,
+      if (error) {
+        console.warn('⚠️  Could not fetch blog posts:', error.message);
+      } else if (posts && posts.length > 0) {
+        console.log(`📝 Found ${posts.length} published blog posts`);
+        posts.forEach(post => {
+          allRoutes.push({
+            path: `/blog/${post.slug}`,
+            changefreq: 'weekly',
+            priority: '0.6',
+            lastmod: post.updated_at?.split('T')[0] || TODAY,
+          });
         });
-      });
+      }
     }
   } catch (err) {
     console.warn('⚠️  Blog fetch failed:', err.message);

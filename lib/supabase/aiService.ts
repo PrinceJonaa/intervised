@@ -205,8 +205,8 @@ export async function azureChat(request: AzureChatRequest): Promise<AzureChatRes
 
 
   // Get the Edge Function URL
-  // @ts-ignore - Vite injects env vars at build time
-  const supabaseUrl = (import.meta as any).env?.VITE_PUBLIC_SUPABASE_URL || 'https://jnfnqtohljybohlcslnm.supabase.co';
+  const supabaseUrl = import.meta.env.VITE_PUBLIC_SUPABASE_URL;
+  if (!supabaseUrl) throw new Error('Missing VITE_PUBLIC_SUPABASE_URL');
   const functionUrl = `${supabaseUrl}/functions/v1/azure-ai-chat`;
 
   const response = await fetchWithRetry(functionUrl, {
