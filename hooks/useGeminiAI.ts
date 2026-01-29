@@ -231,7 +231,7 @@ export const useGeminiAI = (setPage?: (page: Page) => void) => {
   // Initialize Google AI Client if needed
   useEffect(() => {
     if (settings.provider === 'google') {
-      const apiKey = settings.customApiKey || process.env.API_KEY;
+      const apiKey = settings.customApiKey;
       if (apiKey) {
         aiClientRef.current = new GoogleGenAI({ apiKey });
       }
