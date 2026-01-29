@@ -466,7 +466,19 @@ Mission: ${projectContext || 'N/A'}`;
                         <div className="absolute inset-0 bg-accent z-0 transition-all duration-75 ease-linear" style={{ width: `${holdProgress}%` }} />
                         <div className="relative z-10 flex items-center justify-center gap-2">{isBooked ? <><CheckCircle2 size={18} /> REQUEST TRANSMITTED</> : isSubmitting ? <><RefreshCw size={18} className="animate-spin" /> TRANSMITTING...</> : selectedDate ? <><Zap size={18} className={holdProgress > 0 ? "fill-void" : ""} /> HOLD TO INITIATE</> : 'SELECT DATE TO PROCEED'}</div>
                       </button>
-                      {selectedDate && !isBooked && !isSubmitting && <div className="text-center mt-2 text-[10px] font-mono text-gray-500 uppercase tracking-widest" aria-live="polite">{holdProgress > 0 ? `ENCRYPTING... ${holdProgress}%` : 'Hold to Confirm Configuration'}</div>}
+                      {selectedDate && !isBooked && !isSubmitting && (
+                        <div
+                          className="text-center mt-2 text-[10px] font-mono text-gray-500 uppercase tracking-widest"
+                          aria-live="polite"
+                        >
+                          <span className="sr-only">
+                            {holdProgress > 0 ? 'ENCRYPTING...' : 'Hold to Confirm Configuration'}
+                          </span>
+                          <span aria-hidden="true">
+                            {holdProgress > 0 ? `ENCRYPTING... ${holdProgress}%` : 'Hold to Confirm Configuration'}
+                          </span>
+                        </div>
+                      )}
                       {isSubmitting && <div className="text-center mt-2 text-[10px] font-mono text-accent uppercase tracking-widest animate-pulse">SAVING TO DATABASE...</div>}
                     </div>
                   </div>
