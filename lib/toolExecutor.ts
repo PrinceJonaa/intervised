@@ -3,7 +3,27 @@ import { db } from './mockDb';
 import * as frameworkEngine from './frameworkEngine';
 import { levenshteinDistance } from './aiTools';
 
-export const executeTool = (code: string, args: any) => {
+export const executeTool = (code: string, args: any, implementation?: (...args: any[]) => any) => {
+    // 1. Safe Direct Execution (Preferred)
+    if (implementation) {
+        try {
+            const result = implementation(args);
+            // Parse result if it's a string json (matches legacy behavior)
+            if (typeof result === 'string') {
+                try {
+                    return JSON.parse(result);
+                } catch {
+                    return { result };
+                }
+            }
+            return result;
+        } catch (err: any) {
+            console.error("Tool Execution Error (Direct):", err);
+            return { error: err.message };
+        }
+    }
+
+    // 2. Dynamic Execution (Legacy/Fallback)
     // Helper object containing all imports
     const utils = {
         analyzeJournalEntry: frameworkEngine.analyzeJournalEntry,
@@ -38,7 +58,7 @@ export const executeTool = (code: string, args: any) => {
         }
         return executionResult;
     } catch (err: any) {
-        console.error("Tool Execution Error:", err);
+        console.error("Tool Execution Error (Dynamic):", err);
         return { error: err.message };
     }
 };
