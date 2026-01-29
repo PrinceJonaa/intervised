@@ -423,8 +423,8 @@ Mission: ${projectContext || 'N/A'}`;
                     <div className="flex justify-between items-center mb-4">
                       <h4 className="font-bold text-xs text-gray-300 uppercase tracking-widest">Select Target Date</h4>
                       <div className="flex gap-1">
-                        <button className="p-1 hover:bg-white/10 rounded" aria-label="Previous month"><ChevronRight className="rotate-180 w-4 h-4" /></button>
-                        <button className="p-1 hover:bg-white/10 rounded" aria-label="Next month"><ChevronRight className="w-4 h-4" /></button>
+                        <button className="p-1 hover:bg-white/10 rounded" aria-hidden="true" tabIndex={-1}><ChevronRight className="rotate-180 w-4 h-4" /></button>
+                        <button className="p-1 hover:bg-white/10 rounded" aria-hidden="true" tabIndex={-1}><ChevronRight className="w-4 h-4" /></button>
                       </div>
                     </div>
                     <div className="grid grid-cols-7 gap-1 mb-2 text-center text-[9px] font-mono text-gray-600" aria-hidden="true"><div>S</div><div>M</div><div>T</div><div>W</div><div>T</div><div>F</div><div>S</div></div>
