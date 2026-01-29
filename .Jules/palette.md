@@ -1,3 +1,3 @@
-## 2026-01-27 - Accessibility Pattern: useId for Forms
-**Learning:** React's `useId` hook is the cleanest way to associate labels with inputs in this component-based architecture, especially when inputs are wrapped in custom components or reused. This avoids ID collisions and ensures screen reader support.
-**Action:** When refactoring existing form inputs or creating new ones, always use `useId` to generate unique IDs for `htmlFor` and `id` attributes instead of hardcoded strings or relying on implicit association.
+## 2024-05-22 - [Hold to Action Accessibility]
+**Learning:** The 'Hold to Action' interaction pattern, while visually engaging for 'console-like' UIs, is often implemented solely with mouse events, excluding keyboard users entirely.
+**Action:** When using hold interactions, always map Space/Enter keys to the start/end events using onKeyDown (with repeat check) and onKeyUp to ensure full keyboard parity.
