@@ -12,21 +12,18 @@ import type { Database } from './database.types';
 const supabaseUrl = import.meta.env.VITE_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_PUBLIC_SUPABASE_ANON_KEY;
 
-// Fallback for development (these are public anon keys, safe to expose)
-const FALLBACK_URL = 'https://jnfnqtohljybohlcslnm.supabase.co';
-const FALLBACK_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpuZm5xdG9obGp5Ym9obGNzbG5tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc2NjA1MDksImV4cCI6MjA4MzIzNjUwOX0.1z3v0yieVMz88w3oyccht2zJowHzFEUnfg2tB_5iYmc';
-
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn(
-    '⚠️ Missing Supabase environment variables. Using fallback for development.',
-    '\nExpected: VITE_PUBLIC_SUPABASE_URL, VITE_PUBLIC_SUPABASE_ANON_KEY'
+  throw new Error(
+    '🚨 Critical Security Error: Missing Supabase environment variables.\n' +
+    'The application cannot start without VITE_PUBLIC_SUPABASE_URL and VITE_PUBLIC_SUPABASE_ANON_KEY.\n' +
+    'Please verify your .env file or Vercel project settings.'
   );
 }
 
 // Create the Supabase client with type safety
 export const supabase = createClient<Database>(
-  supabaseUrl || FALLBACK_URL,
-  supabaseAnonKey || FALLBACK_ANON_KEY,
+  supabaseUrl,
+  supabaseAnonKey,
   {
     auth: {
       autoRefreshToken: true,
