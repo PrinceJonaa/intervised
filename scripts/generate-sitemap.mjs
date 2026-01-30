@@ -17,9 +17,17 @@ const BASE_URL = 'https://intervised.com';
 const TODAY = new Date().toISOString().split('T')[0];
 
 // Supabase client for fetching blog posts
-const supabaseUrl = process.env.VITE_PUBLIC_SUPABASE_URL || 'https://jnfnqtohljybohlcslnm.supabase.co';
-const supabaseAnonKey = process.env.VITE_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpuZm5xdG9obGp5Ym9obGNzbG5tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc2NjA1MDksImV4cCI6MjA4MzIzNjUwOX0.1z3v0yieVMz88w3oyccht2zJowHzFEUnfg2tB_5iYmc';
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+const supabaseUrl = process.env.VITE_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.VITE_PUBLIC_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.warn('⚠️ Missing Supabase environment variables. Skipping blog posts in sitemap.');
+}
+
+// Create client only if keys are available, otherwise null
+const supabase = (supabaseUrl && supabaseAnonKey)
+  ? createClient(supabaseUrl, supabaseAnonKey)
+  : null;
 
 // Static routes configuration
 const STATIC_ROUTES = [
@@ -56,39 +64,46 @@ async function main() {
   // Start with static routes
   const allRoutes = [...STATIC_ROUTES];
 
-  // Fetch published blog posts from Supabase
-  try {
-    const { data: posts, error } = await supabase
-      .from('blog_posts')
-      .select('slug, updated_at')
-      .eq('status', 'published');
+  // Fetch published blog posts from Supabase if client is available
+  if (supabase) {
+    try {
+      const { data: posts, error } = await supabase
+        .from('blog_posts')
+        .select('slug, updated_at')
+        .eq('status', 'published');
 
-    if (error) {
-      console.warn('⚠️  Could not fetch blog posts:', error.message);
-    } else if (posts && posts.length > 0) {
-      console.log(`📝 Found ${posts.length} published blog posts`);
-      posts.forEach(post => {
-        allRoutes.push({
-          path: `/blog/${post.slug}`,
-          changefreq: 'weekly',
-          priority: '0.6',
-          lastmod: post.updated_at?.split('T')[0] || TODAY,
+      if (error) {
+        console.warn('⚠️  Could not fetch blog posts:', error.message);
+      } else if (posts && posts.length > 0) {
+        console.log(`📝 Found ${posts.length} published blog posts`);
+        posts.forEach(post => {
+          allRoutes.push({
+            path: `/blog/${post.slug}`,
+            changefreq: 'weekly',
+            priority: '0.6',
+            lastmod: post.updated_at?.split('T')[0] || TODAY,
+          });
         });
-      });
+      }
+    } catch (err) {
+      console.warn('⚠️  Blog fetch failed:', err.message);
     }
-  } catch (err) {
-    console.warn('⚠️  Blog fetch failed:', err.message);
+  } else {
+    console.warn('⚠️  Supabase client not initialized. Skipping blog posts.');
   }
 
   const sitemap = generateSitemap(allRoutes);
 
   // Write to public folder
   const outputPath = path.resolve(__dirname, '../public/sitemap.xml');
-  fs.writeFileSync(outputPath, sitemap);
-
-  console.log(`✅ Sitemap generated with ${allRoutes.length} URLs`);
-  console.log(`📁 Output: ${outputPath}`);
+  try {
+    fs.writeFileSync(outputPath, sitemap);
+    console.log(`✅ Sitemap generated with ${allRoutes.length} URLs`);
+    console.log(`📁 Output: ${outputPath}`);
+  } catch (err) {
+    console.error(`❌ Failed to write sitemap: ${err.message}`);
+    process.exit(1);
+  }
 }
 
 main().catch(console.error);
-
