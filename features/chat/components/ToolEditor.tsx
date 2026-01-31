@@ -51,7 +51,7 @@ export const ToolEditor: React.FC<ToolEditorProps> = ({ tool, onSave, onCancel, 
             <span className="text-sm font-bold text-white font-mono">{form.name || 'Untitled_Tool'}</span>
             <span className="text-[10px] text-yellow-500 bg-yellow-500/10 px-2 py-0.5 rounded border border-yellow-500/20">JS ENV</span>
          </div>
-         <button onClick={() => onSave(form)} className="px-5 py-2 bg-secondary hover:bg-accent hover:text-void text-white text-xs font-bold rounded-lg flex items-center gap-2 transition-all shadow-lg"><Save size={14}/> SAVE CHANGES</button>
+         <button onClick={() => onSave({ ...form, isCustom: true })} className="px-5 py-2 bg-secondary hover:bg-accent hover:text-void text-white text-xs font-bold rounded-lg flex items-center gap-2 transition-all shadow-lg"><Save size={14}/> SAVE CHANGES</button>
       </div>
       
       {/* IDE Container */}
