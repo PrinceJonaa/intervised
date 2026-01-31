@@ -379,7 +379,7 @@ ${recentContext}
                     if (setPage) { setPage(dest as Page); result = { success: true }; }
                   } else {
                     const toolDef = activeTools.find(t => t.name === call.name);
-                    if (toolDef) result = executeTool(toolDef.code, call.args);
+                    if (toolDef) result = executeTool(toolDef.code, call.args, toolDef.name, toolDef.isCustom);
                   }
                   toolResultsRecord.push({ name: call.name, result });
                   toolOutputs.push({ functionResponse: { name: call.name, response: result } });

@@ -263,6 +263,7 @@ export interface ToolDefinition {
   code: string; // Function body string
   enabled: boolean;
   alwaysOn?: boolean;
+  isCustom?: boolean;
 }
 
 export interface ContactMessage {
