@@ -34,7 +34,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id));
-    }, 4000);
+    }, 5000);
   }, []);
 
   const removeToast = (id: string) => {
@@ -61,7 +61,8 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
               animate={{ opacity: 1, x: 0, scale: 1 }}
               exit={{ opacity: 0, x: 20, scale: 0.9 }}
               layout
-              className="pointer-events-auto min-w-[300px] max-w-sm glass-panel border border-white/10 p-4 rounded-xl shadow-2xl flex items-start gap-3 backdrop-blur-xl bg-[#001428]/90"
+              role={toast.type === 'error' ? 'alert' : 'status'}
+              className="relative overflow-hidden pointer-events-auto min-w-[300px] max-w-sm glass-panel border border-white/10 p-4 rounded-xl shadow-2xl flex items-start gap-3 backdrop-blur-xl bg-[#001428]/90"
             >
               <div className="mt-0.5">{getIcon(toast.type)}</div>
               <div className="flex-1">
@@ -77,6 +78,17 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
               >
                 <X size={14} aria-hidden="true" />
               </button>
+
+              {/* Progress Bar */}
+              <motion.div
+                initial={{ width: "100%" }}
+                animate={{ width: "0%" }}
+                transition={{ duration: 5, ease: "linear" }}
+                className={`absolute bottom-0 left-0 h-1 ${
+                  toast.type === 'error' ? 'bg-red-400' :
+                  toast.type === 'success' ? 'bg-green-400' : 'bg-accent'
+                }`}
+              />
             </motion.div>
           ))}
         </AnimatePresence>
