@@ -1,7 +1,7 @@
 /**
  * Login Page - Sign in with Google OAuth or Email
  */
-import React, { useState } from 'react';
+import React, { useState, useId } from 'react';
 import { motion } from 'framer-motion';
 import { Mail, Loader2, CheckCircle2, AlertCircle, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -26,6 +26,8 @@ export function LoginPage() {
   const [email, setEmail] = useState('');
   const [emailSent, setEmailSent] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const emailId = useId();
 
   // Redirect if already authenticated
   React.useEffect(() => {
@@ -142,12 +144,13 @@ export function LoginPage() {
               {/* Email Sign In */}
               <form onSubmit={handleEmailSignIn} className="space-y-4">
                 <div>
-                  <label className="block text-[10px] font-mono text-gray-500 mb-2 uppercase tracking-widest">
+                  <label htmlFor={emailId} className="block text-[10px] font-mono text-gray-500 mb-2 uppercase tracking-widest">
                     Email Address
                   </label>
                   <div className="relative">
                     <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
                     <input
+                      id={emailId}
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
