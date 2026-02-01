@@ -5,3 +5,7 @@
 ## 2024-05-24 - [Toast Accessibility & Visual Feedback]
 **Learning:** Standard toast notifications often lack intrinsic accessibility attributes (role, aria-live) and visual duration indicators, making them confusing for screen readers and cognitively demanding for sighted users who must guess when the message disappears.
 **Action:** Always couple auto-dismiss logic with a visual timer (progress bar) and strictly map toast types to semantic roles (error -> alert, info -> status) to ensure inclusive communication.
+
+## 2024-05-26 - [Form Input Association]
+**Learning:** Reusable input components often neglect the `htmlFor`/`id` connection, breaking accessibility for screen readers. Generating IDs manually is error-prone.
+**Action:** Use `React.useId()` in form components to automatically generate unique, stable IDs for connecting labels to inputs.
