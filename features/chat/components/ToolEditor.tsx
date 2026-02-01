@@ -32,7 +32,8 @@ export const ToolEditor: React.FC<ToolEditorProps> = ({ tool, onSave, onCancel, 
      const result = await generateRaw(prompt);
      if (result) {
         const clean = result.replace(/^```javascript|```$/g, '').replace(/^```|```$/g, '').trim();
-        setForm({...form, code: clean});
+        // Clear secure implementation when code is modified by AI
+        setForm({...form, code: clean, implementation: undefined});
         setStatus("Optimized!");
         setTimeout(() => setStatus(""), 2000);
      } else {
@@ -107,7 +108,8 @@ export const ToolEditor: React.FC<ToolEditorProps> = ({ tool, onSave, onCancel, 
                   <textarea 
                     className="w-full h-full bg-[#0d0d0d] p-6 text-green-400 font-mono text-sm leading-relaxed outline-none resize-none" 
                     value={form.code} 
-                    onChange={e => setForm({...form, code: e.target.value})} 
+                    // Clear secure implementation when code is manually modified
+                    onChange={e => setForm({...form, code: e.target.value, implementation: undefined})}
                     spellCheck={false} 
                   />
                </div>
