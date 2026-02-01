@@ -6,24 +6,29 @@ import { Send, CheckCircle2, Loader2, Mail, MapPin, Clock, Globe, ArrowRight, Do
 import { useToast } from '../components/ToastSystem';
 import { submitContactMessage } from '../lib/supabase/contactService';
 
-const ContactInput = ({ label, value, onChange, placeholder, type = "text", disabled }: any) => (
-  <div className="group">
-    <label className="block text-[10px] font-mono text-gray-500 mb-2 uppercase tracking-widest group-focus-within:text-accent transition-colors">{label}</label>
-    <input 
-      type={type}
-      value={value}
-      onChange={onChange}
-      className="w-full bg-black/20 border border-white/10 rounded-xl py-3 px-4 focus:outline-none focus:border-accent/50 focus:bg-black/40 transition-all text-sm text-white placeholder-gray-700 hover:border-white/20" 
-      placeholder={placeholder}
-      disabled={disabled}
-    />
-  </div>
-);
+const ContactInput = ({ label, value, onChange, placeholder, type = "text", disabled }: any) => {
+  const id = React.useId();
+  return (
+    <div className="group">
+      <label htmlFor={id} className="block text-[10px] font-mono text-gray-500 mb-2 uppercase tracking-widest group-focus-within:text-accent transition-colors">{label}</label>
+      <input
+        id={id}
+        type={type}
+        value={value}
+        onChange={onChange}
+        className="w-full bg-black/20 border border-white/10 rounded-xl py-3 px-4 focus:outline-none focus:border-accent/50 focus:bg-black/40 transition-all text-sm text-white placeholder-gray-700 hover:border-white/20"
+        placeholder={placeholder}
+        disabled={disabled}
+      />
+    </div>
+  );
+};
 
 const SelectButton = ({ active, onClick, label, icon: Icon }: any) => (
   <button 
     type="button"
     onClick={onClick}
+    aria-pressed={active}
     className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl border text-xs font-bold transition-all ${active ? 'bg-white text-black border-white' : 'bg-black/20 text-gray-400 border-white/10 hover:border-white/30 hover:text-white'}`}
   >
     {Icon && <Icon size={14} />}
@@ -170,7 +175,7 @@ export const ContactSection = () => {
                     <div className="space-y-4">
                        <h4 className="text-xs font-bold text-accent uppercase tracking-widest flex items-center gap-2"><DollarSign size={14}/> Parameters</h4>
                        
-                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                       <div role="group" aria-label="Budget Parameters" className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                           {['Seed', 'Growth', 'Scale', 'Enterprise'].map((b) => (
                              <SelectButton 
                                 key={b} 
@@ -184,6 +189,7 @@ export const ContactSection = () => {
                        <div className="grid grid-cols-2 gap-2">
                            <div className="relative">
                               <select 
+                                aria-label="Timeline Scope"
                                 value={formData.timeline}
                                 onChange={e => setFormData({...formData, timeline: e.target.value})}
                                 className="w-full bg-black/20 border border-white/10 rounded-xl py-3 px-4 appearance-none text-sm focus:border-accent/50 outline-none text-gray-300"
@@ -197,6 +203,7 @@ export const ContactSection = () => {
                            </div>
                            <div className="relative">
                               <select 
+                                aria-label="Service Category"
                                 value={formData.category}
                                 onChange={e => setFormData({...formData, category: e.target.value})}
                                 className="w-full bg-black/20 border border-white/10 rounded-xl py-3 px-4 appearance-none text-sm focus:border-accent/50 outline-none text-gray-300"
@@ -213,8 +220,9 @@ export const ContactSection = () => {
 
                     {/* Message Section */}
                     <div className="space-y-4">
-                        <h4 className="text-xs font-bold text-accent uppercase tracking-widest flex items-center gap-2"><Clock size={14}/> The Signal</h4>
+                        <label htmlFor="contact-message" className="text-xs font-bold text-accent uppercase tracking-widest flex items-center gap-2 cursor-pointer"><Clock size={14}/> The Signal</label>
                         <textarea 
+                          id="contact-message"
                           value={formData.message}
                           onChange={e => setFormData({...formData, message: e.target.value})}
                           className="w-full bg-black/20 border border-white/10 rounded-xl p-4 focus:outline-none focus:border-accent/50 transition-colors h-32 resize-none text-sm text-white placeholder-gray-700" 
