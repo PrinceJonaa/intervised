@@ -5,3 +5,7 @@
 ## 2024-05-24 - [Toast Accessibility & Visual Feedback]
 **Learning:** Standard toast notifications often lack intrinsic accessibility attributes (role, aria-live) and visual duration indicators, making them confusing for screen readers and cognitively demanding for sighted users who must guess when the message disappears.
 **Action:** Always couple auto-dismiss logic with a visual timer (progress bar) and strictly map toast types to semantic roles (error -> alert, info -> status) to ensure inclusive communication.
+
+## 2024-05-25 - [Contextual Action Buttons]
+**Learning:** Generic action buttons (like "Mark as read" or "Delete") in lists are ambiguous to screen reader users who navigate by interactive elements.
+**Action:** Always inject the item's name into the `aria-label` (e.g., "Mark [Item Title] as read") to provide necessary context without visual clutter.
