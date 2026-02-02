@@ -16,10 +16,9 @@ const __dirname = path.dirname(__filename);
 const BASE_URL = 'https://intervised.com';
 const TODAY = new Date().toISOString().split('T')[0];
 
-// Supabase client for fetching blog posts
-const supabaseUrl = process.env.VITE_PUBLIC_SUPABASE_URL || 'https://jnfnqtohljybohlcslnm.supabase.co';
-const supabaseAnonKey = process.env.VITE_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpuZm5xdG9obGp5Ym9obGNzbG5tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc2NjA1MDksImV4cCI6MjA4MzIzNjUwOX0.1z3v0yieVMz88w3oyccht2zJowHzFEUnfg2tB_5iYmc';
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Supabase configuration
+const supabaseUrl = process.env.VITE_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.VITE_PUBLIC_SUPABASE_ANON_KEY;
 
 // Static routes configuration
 const STATIC_ROUTES = [
@@ -56,28 +55,33 @@ async function main() {
   // Start with static routes
   const allRoutes = [...STATIC_ROUTES];
 
-  // Fetch published blog posts from Supabase
-  try {
-    const { data: posts, error } = await supabase
-      .from('blog_posts')
-      .select('slug, updated_at')
-      .eq('status', 'published');
+  // Fetch published blog posts from Supabase if credentials exist
+  if (supabaseUrl && supabaseAnonKey) {
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+    try {
+      const { data: posts, error } = await supabase
+        .from('blog_posts')
+        .select('slug, updated_at')
+        .eq('status', 'published');
 
-    if (error) {
-      console.warn('⚠️  Could not fetch blog posts:', error.message);
-    } else if (posts && posts.length > 0) {
-      console.log(`📝 Found ${posts.length} published blog posts`);
-      posts.forEach(post => {
-        allRoutes.push({
-          path: `/blog/${post.slug}`,
-          changefreq: 'weekly',
-          priority: '0.6',
-          lastmod: post.updated_at?.split('T')[0] || TODAY,
+      if (error) {
+        console.warn('⚠️  Could not fetch blog posts:', error.message);
+      } else if (posts && posts.length > 0) {
+        console.log(`📝 Found ${posts.length} published blog posts`);
+        posts.forEach(post => {
+          allRoutes.push({
+            path: `/blog/${post.slug}`,
+            changefreq: 'weekly',
+            priority: '0.6',
+            lastmod: post.updated_at?.split('T')[0] || TODAY,
+          });
         });
-      });
+      }
+    } catch (err) {
+      console.warn('⚠️  Blog fetch failed:', err.message);
     }
-  } catch (err) {
-    console.warn('⚠️  Blog fetch failed:', err.message);
+  } else {
+    console.warn('⚠️  Supabase environment variables missing. Skipping dynamic blog posts.');
   }
 
   const sitemap = generateSitemap(allRoutes);
@@ -91,4 +95,3 @@ async function main() {
 }
 
 main().catch(console.error);
-
