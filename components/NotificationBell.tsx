@@ -4,7 +4,7 @@
  * Shows unread count and recent notifications
  */
 import { useState, useEffect, useRef } from 'react';
-import { Bell, Check, X, ExternalLink } from 'lucide-react';
+import { Bell, Check, X, ExternalLink, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { notificationService, Notification } from '../lib/supabase/notificationService';
@@ -80,7 +80,7 @@ export function NotificationBell() {
             <button
                 onClick={() => setIsOpen(!isOpen)}
                 className="relative p-2 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-white/10"
-                aria-label="Notifications"
+                aria-label={unreadCount > 0 ? `Notifications, ${unreadCount} unread` : 'Notifications, no unread messages'}
             >
                 <Bell size={20} />
                 {unreadCount > 0 && (
@@ -106,8 +106,9 @@ export function NotificationBell() {
                                 <button
                                     onClick={handleMarkAllRead}
                                     disabled={loading}
-                                    className="text-xs text-accent hover:underline disabled:opacity-50"
+                                    className="text-xs text-accent hover:underline disabled:opacity-50 flex items-center gap-1"
                                 >
+                                    {loading && <Loader2 size={12} className="animate-spin" />}
                                     Mark all read
                                 </button>
                             )}
@@ -116,7 +117,7 @@ export function NotificationBell() {
                         {/* Notifications List */}
                         <div className="max-h-80 overflow-y-auto">
                             {notifications.length === 0 ? (
-                                <div className="py-8 text-center text-gray-500">
+                                <div className="py-8 text-center text-gray-500" role="status">
                                     <Bell className="w-8 h-8 mx-auto mb-2 opacity-50" />
                                     <p className="text-sm">No notifications yet</p>
                                 </div>
@@ -150,8 +151,8 @@ export function NotificationBell() {
                                                         to={notif.link}
                                                         onClick={() => setIsOpen(false)}
                                                         className="p-1 text-gray-500 hover:text-accent"
-                                                        aria-label="Open link"
-                                                        title="Open link"
+                                                        aria-label={`Open link for "${notif.title}"`}
+                                                        title={`Open link for "${notif.title}"`}
                                                     >
                                                         <ExternalLink size={14} aria-hidden="true" />
                                                     </Link>
@@ -161,7 +162,7 @@ export function NotificationBell() {
                                                         onClick={() => handleMarkAsRead(notif.id)}
                                                         className="p-1 text-gray-500 hover:text-green-400"
                                                         title="Mark as read"
-                                                        aria-label="Mark as read"
+                                                        aria-label={`Mark notification "${notif.title}" as read`}
                                                     >
                                                         <Check size={14} aria-hidden="true" />
                                                     </button>
