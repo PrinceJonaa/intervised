@@ -4,7 +4,7 @@
  * Shows unread count and recent notifications
  */
 import { useState, useEffect, useRef } from 'react';
-import { Bell, Check, X, ExternalLink } from 'lucide-react';
+import { Bell, Check, X, ExternalLink, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { notificationService, Notification } from '../lib/supabase/notificationService';
@@ -25,8 +25,21 @@ export function NotificationBell() {
                 setIsOpen(false);
             }
         }
+
+        // Close on Escape
+        function handleKeyDown(e: KeyboardEvent) {
+            if (e.key === 'Escape') {
+                setIsOpen(false);
+            }
+        }
+
         document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
+        document.addEventListener('keydown', handleKeyDown);
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+            document.removeEventListener('keydown', handleKeyDown);
+        };
     }, []);
 
     async function loadNotifications() {
@@ -106,8 +119,9 @@ export function NotificationBell() {
                                 <button
                                     onClick={handleMarkAllRead}
                                     disabled={loading}
-                                    className="text-xs text-accent hover:underline disabled:opacity-50"
+                                    className="text-xs text-accent hover:underline disabled:opacity-50 flex items-center gap-1"
                                 >
+                                    {loading && <Loader2 size={12} className="animate-spin" />}
                                     Mark all read
                                 </button>
                             )}
@@ -116,7 +130,7 @@ export function NotificationBell() {
                         {/* Notifications List */}
                         <div className="max-h-80 overflow-y-auto">
                             {notifications.length === 0 ? (
-                                <div className="py-8 text-center text-gray-500">
+                                <div className="py-8 text-center text-gray-500" role="status">
                                     <Bell className="w-8 h-8 mx-auto mb-2 opacity-50" />
                                     <p className="text-sm">No notifications yet</p>
                                 </div>
@@ -161,7 +175,7 @@ export function NotificationBell() {
                                                         onClick={() => handleMarkAsRead(notif.id)}
                                                         className="p-1 text-gray-500 hover:text-green-400"
                                                         title="Mark as read"
-                                                        aria-label="Mark as read"
+                                                        aria-label={`Mark ${notif.title} as read`}
                                                     >
                                                         <Check size={14} aria-hidden="true" />
                                                     </button>
