@@ -63,7 +63,7 @@ const AIPanelContent: React.FC<AIPanelContentProps> = ({ setPage, onClose }) => 
           </div>
           <span className="text-xs font-mono text-muted">Gemini 2.5 Flash /// Online</span>
         </div>
-        <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-colors text-gray-400 hover:text-white">
+        <button onClick={onClose} aria-label="Close AI Panel" className="p-2 hover:bg-white/10 rounded-full transition-colors text-gray-400 hover:text-white">
           <X size={20} />
         </button>
       </div>
@@ -150,6 +150,7 @@ const AIPanelContent: React.FC<AIPanelContentProps> = ({ setPage, onClose }) => 
               className={`p-2 rounded-xl transition-all ${isListening ? 'bg-red-500/20 text-red-400 animate-pulse' : 'hover:bg-white/10 text-gray-400 hover:text-accent'
                 }`}
               title="Voice Input"
+              aria-label="Start Voice Input"
             >
               <Mic size={18} />
             </button>
@@ -157,6 +158,7 @@ const AIPanelContent: React.FC<AIPanelContentProps> = ({ setPage, onClose }) => 
           {aiInput && (
             <button
               type="submit"
+              aria-label="Send message"
               className="p-2 bg-accent/20 hover:bg-accent rounded-xl text-accent hover:text-void transition-all border border-accent/30 hover:border-accent"
             >
               <Send size={16} />
