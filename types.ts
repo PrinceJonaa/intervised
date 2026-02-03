@@ -263,6 +263,7 @@ export interface ToolDefinition {
   code: string; // Function body string
   enabled: boolean;
   alwaysOn?: boolean;
+  implementation?: (args: any) => Promise<string> | string;
 }
 
 export interface ContactMessage {
