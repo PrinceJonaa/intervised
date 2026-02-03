@@ -2,8 +2,9 @@
 import { db } from './mockDb';
 import * as frameworkEngine from './frameworkEngine';
 import { levenshteinDistance } from './aiTools';
+import { ToolDefinition } from '../types';
 
-export const executeTool = (code: string, args: any) => {
+export const executeTool = (tool: ToolDefinition | string, args: any) => {
     // Helper object containing all imports
     const utils = {
         analyzeJournalEntry: frameworkEngine.analyzeJournalEntry,
@@ -13,20 +14,31 @@ export const executeTool = (code: string, args: any) => {
     };
 
     try {
-        // Dynamic Execution with extended scope
-        const fn = new Function(
-            'args', 'db', 'utils', 
-            'analyzeJournalEntry', 'detectChainsWithDetails', 'matchChains', 'levenshteinDistance',
-            code
-        );
-        
-        const executionResult = fn(
-            args, db, utils,
-            frameworkEngine.analyzeJournalEntry, 
-            frameworkEngine.detectChainsWithDetails, 
-            frameworkEngine.matchChains,
-            levenshteinDistance
-        );
+        let executionResult;
+
+        // Secure Execution Strategy: Use implementation reference if available
+        if (typeof tool !== 'string' && tool.implementation) {
+            executionResult = tool.implementation(args);
+        }
+        // Fallback: Dynamic Execution via new Function (Legacy/Custom/Edited tools)
+        else {
+            const code = typeof tool === 'string' ? tool : tool.code;
+
+            // Dynamic Execution with extended scope
+            const fn = new Function(
+                'args', 'db', 'utils',
+                'analyzeJournalEntry', 'detectChainsWithDetails', 'matchChains', 'levenshteinDistance',
+                code
+            );
+
+            executionResult = fn(
+                args, db, utils,
+                frameworkEngine.analyzeJournalEntry,
+                frameworkEngine.detectChainsWithDetails,
+                frameworkEngine.matchChains,
+                levenshteinDistance
+            );
+        }
 
         // Parse result if it's a string json
         if (typeof executionResult === 'string') {
