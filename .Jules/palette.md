@@ -5,3 +5,7 @@
 ## 2024-05-24 - [Toast Accessibility & Visual Feedback]
 **Learning:** Standard toast notifications often lack intrinsic accessibility attributes (role, aria-live) and visual duration indicators, making them confusing for screen readers and cognitively demanding for sighted users who must guess when the message disappears.
 **Action:** Always couple auto-dismiss logic with a visual timer (progress bar) and strictly map toast types to semantic roles (error -> alert, info -> status) to ensure inclusive communication.
+
+## 2024-05-25 - [Dropdown Keyboard Accessibility]
+**Learning:** Custom dropdowns often trap keyboard users or force them to navigate away to close the menu, disrupting the flow.
+**Action:** Always implement a "Close on Escape" handler that restores focus to the trigger button, and ensure ARIA attributes (`aria-expanded`, `aria-haspopup`) are dynamically updated.
