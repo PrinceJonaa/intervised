@@ -2,8 +2,9 @@
 import { db } from './mockDb';
 import * as frameworkEngine from './frameworkEngine';
 import { levenshteinDistance } from './aiTools';
+import { ToolDefinition } from '../types';
 
-export const executeTool = (code: string, args: any) => {
+export const executeTool = (tool: ToolDefinition | string, args: any) => {
     // Helper object containing all imports
     const utils = {
         analyzeJournalEntry: frameworkEngine.analyzeJournalEntry,
@@ -11,6 +12,28 @@ export const executeTool = (code: string, args: any) => {
         matchChains: frameworkEngine.matchChains,
         levenshteinDistance: levenshteinDistance
     };
+
+    // SECURE PATH: Use implementation if available
+    if (typeof tool === 'object' && tool.implementation) {
+        try {
+            const result = tool.implementation(args);
+            // Parse result if it's a string json (legacy behavior match)
+            if (typeof result === 'string') {
+                try {
+                    return JSON.parse(result);
+                } catch {
+                    return { result };
+                }
+            }
+            return result;
+        } catch (err: any) {
+            console.error("Tool Execution Error (Secure):", err);
+            return { error: err.message };
+        }
+    }
+
+    // LEGACY PATH: Dynamic Execution (new Function)
+    const code = typeof tool === 'string' ? tool : tool.code;
 
     try {
         // Dynamic Execution with extended scope
