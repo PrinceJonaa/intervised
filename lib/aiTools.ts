@@ -884,6 +884,7 @@ export function getInitialTools(): ToolDefinition[] {
       description: decl.description || '',
       parameters: JSON.stringify(decl.parameters, null, 2),
       code: code,
+      implementation: fn,
       enabled: true,
       alwaysOn: false
     };
