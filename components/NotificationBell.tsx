@@ -15,19 +15,36 @@ export function NotificationBell() {
     const [unreadCount, setUnreadCount] = useState(0);
     const [loading, setLoading] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
+    const buttonRef = useRef<HTMLButtonElement>(null);
 
     useEffect(() => {
         loadNotifications();
+    }, []);
 
+    useEffect(() => {
         // Close on outside click
         function handleClickOutside(e: MouseEvent) {
             if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
                 setIsOpen(false);
             }
         }
+
+        // Close on Escape key
+        function handleKeyDown(e: KeyboardEvent) {
+            if (e.key === 'Escape' && isOpen) {
+                setIsOpen(false);
+                buttonRef.current?.focus();
+            }
+        }
+
         document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
+        document.addEventListener('keydown', handleKeyDown);
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+            document.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [isOpen]);
 
     async function loadNotifications() {
         try {
@@ -78,9 +95,12 @@ export function NotificationBell() {
     return (
         <div className="relative" ref={dropdownRef}>
             <button
+                ref={buttonRef}
                 onClick={() => setIsOpen(!isOpen)}
                 className="relative p-2 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-white/10"
                 aria-label="Notifications"
+                aria-expanded={isOpen}
+                aria-haspopup="true"
             >
                 <Bell size={20} />
                 {unreadCount > 0 && (
