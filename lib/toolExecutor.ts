@@ -2,8 +2,38 @@
 import { db } from './mockDb';
 import * as frameworkEngine from './frameworkEngine';
 import { levenshteinDistance } from './aiTools';
+import { ToolDefinition } from '../types';
 
-export const executeTool = (code: string, args: any) => {
+export const executeTool = (tool: ToolDefinition | string, args: any) => {
+    let code: string;
+    let implementation: Function | undefined;
+
+    if (typeof tool === 'string') {
+        code = tool;
+    } else {
+        code = tool.code;
+        implementation = tool.implementation;
+    }
+
+    // Prioritize secure implementation if available
+    if (implementation) {
+        try {
+            const result = implementation(args);
+            // Parse result if it's a string json
+            if (typeof result === 'string') {
+                try {
+                    return JSON.parse(result);
+                } catch {
+                    return { result };
+                }
+            }
+            return result;
+        } catch (err: any) {
+            console.error("Tool Implementation Error:", err);
+            return { error: err.message };
+        }
+    }
+
     // Helper object containing all imports
     const utils = {
         analyzeJournalEntry: frameworkEngine.analyzeJournalEntry,
