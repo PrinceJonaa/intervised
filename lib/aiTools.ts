@@ -885,7 +885,8 @@ export function getInitialTools(): ToolDefinition[] {
       parameters: JSON.stringify(decl.parameters, null, 2),
       code: code,
       enabled: true,
-      alwaysOn: false
+      alwaysOn: false,
+      implementation: fn ? (args: any) => fn(args) : undefined
     };
   });
 }
