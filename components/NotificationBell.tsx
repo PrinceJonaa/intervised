@@ -25,8 +25,20 @@ export function NotificationBell() {
                 setIsOpen(false);
             }
         }
+
+        // Close on Escape key
+        function handleKeyDown(e: KeyboardEvent) {
+            if (e.key === 'Escape') {
+                setIsOpen(false);
+            }
+        }
+
         document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
+        document.addEventListener('keydown', handleKeyDown);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+            document.removeEventListener('keydown', handleKeyDown);
+        };
     }, []);
 
     async function loadNotifications() {
@@ -116,7 +128,7 @@ export function NotificationBell() {
                         {/* Notifications List */}
                         <div className="max-h-80 overflow-y-auto">
                             {notifications.length === 0 ? (
-                                <div className="py-8 text-center text-gray-500">
+                                <div className="py-8 text-center text-gray-500" role="status">
                                     <Bell className="w-8 h-8 mx-auto mb-2 opacity-50" />
                                     <p className="text-sm">No notifications yet</p>
                                 </div>
@@ -150,8 +162,8 @@ export function NotificationBell() {
                                                         to={notif.link}
                                                         onClick={() => setIsOpen(false)}
                                                         className="p-1 text-gray-500 hover:text-accent"
-                                                        aria-label="Open link"
-                                                        title="Open link"
+                                                        aria-label={`Open link for ${notif.title}`}
+                                                        title={`Open link for ${notif.title}`}
                                                     >
                                                         <ExternalLink size={14} aria-hidden="true" />
                                                     </Link>
@@ -160,8 +172,8 @@ export function NotificationBell() {
                                                     <button
                                                         onClick={() => handleMarkAsRead(notif.id)}
                                                         className="p-1 text-gray-500 hover:text-green-400"
-                                                        title="Mark as read"
-                                                        aria-label="Mark as read"
+                                                        title={`Mark "${notif.title}" as read`}
+                                                        aria-label={`Mark "${notif.title}" as read`}
                                                     >
                                                         <Check size={14} aria-hidden="true" />
                                                     </button>
