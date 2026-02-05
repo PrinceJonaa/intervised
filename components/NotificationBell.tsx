@@ -4,7 +4,7 @@
  * Shows unread count and recent notifications
  */
 import { useState, useEffect, useRef } from 'react';
-import { Bell, Check, X, ExternalLink } from 'lucide-react';
+import { Bell, Check, X, ExternalLink, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { notificationService, Notification } from '../lib/supabase/notificationService';
@@ -28,6 +28,18 @@ export function NotificationBell() {
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
+
+    // Close on Escape key
+    useEffect(() => {
+        if (!isOpen) return;
+        function handleKeyDown(e: KeyboardEvent) {
+            if (e.key === 'Escape') {
+                setIsOpen(false);
+            }
+        }
+        document.addEventListener('keydown', handleKeyDown);
+        return () => document.removeEventListener('keydown', handleKeyDown);
+    }, [isOpen]);
 
     async function loadNotifications() {
         try {
@@ -81,6 +93,8 @@ export function NotificationBell() {
                 onClick={() => setIsOpen(!isOpen)}
                 className="relative p-2 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-white/10"
                 aria-label="Notifications"
+                aria-expanded={isOpen}
+                aria-haspopup="dialog"
             >
                 <Bell size={20} />
                 {unreadCount > 0 && (
@@ -98,6 +112,8 @@ export function NotificationBell() {
                         exit={{ opacity: 0, y: -10, scale: 0.95 }}
                         transition={{ duration: 0.15 }}
                         className="absolute right-0 mt-2 w-80 bg-void border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden"
+                        role="dialog"
+                        aria-label="Notifications"
                     >
                         {/* Header */}
                         <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
@@ -106,8 +122,9 @@ export function NotificationBell() {
                                 <button
                                     onClick={handleMarkAllRead}
                                     disabled={loading}
-                                    className="text-xs text-accent hover:underline disabled:opacity-50"
+                                    className="text-xs text-accent hover:underline disabled:opacity-50 flex items-center gap-1"
                                 >
+                                    {loading && <Loader2 size={12} className="animate-spin" />}
                                     Mark all read
                                 </button>
                             )}
@@ -150,7 +167,7 @@ export function NotificationBell() {
                                                         to={notif.link}
                                                         onClick={() => setIsOpen(false)}
                                                         className="p-1 text-gray-500 hover:text-accent"
-                                                        aria-label="Open link"
+                                                        aria-label={`Open link for ${notif.title}`}
                                                         title="Open link"
                                                     >
                                                         <ExternalLink size={14} aria-hidden="true" />
@@ -161,7 +178,7 @@ export function NotificationBell() {
                                                         onClick={() => handleMarkAsRead(notif.id)}
                                                         className="p-1 text-gray-500 hover:text-green-400"
                                                         title="Mark as read"
-                                                        aria-label="Mark as read"
+                                                        aria-label={`Mark ${notif.title} as read`}
                                                     >
                                                         <Check size={14} aria-hidden="true" />
                                                     </button>
