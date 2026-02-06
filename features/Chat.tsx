@@ -402,6 +402,7 @@ export const ChatPage = ({ setPage }: { setPage: (p: Page) => void }) => {
             <button
               onClick={() => setMobileView('HISTORY')}
               className="md:hidden p-2 -ml-2 text-gray-400 hover:text-white transition-colors touch-target"
+              aria-label="View history"
             >
               <History size={20} />
             </button>
@@ -427,8 +428,8 @@ export const ChatPage = ({ setPage }: { setPage: (p: Page) => void }) => {
           </div>
 
           <div className="flex items-center gap-1 shrink-0">
-            <button onClick={createNewSession} className="md:hidden p-2 text-gray-400 hover:text-white transition-colors touch-target"><Plus size={20} /></button>
-            <button onClick={() => setSettingsOpen(true)} className="p-2 hover:bg-white/10 rounded-lg text-gray-400 hover:text-accent transition-colors touch-target"><Settings size={20} /></button>
+            <button onClick={createNewSession} className="md:hidden p-2 text-gray-400 hover:text-white transition-colors touch-target" aria-label="New session"><Plus size={20} /></button>
+            <button onClick={() => setSettingsOpen(true)} className="p-2 hover:bg-white/10 rounded-lg text-gray-400 hover:text-accent transition-colors touch-target" aria-label="Open settings"><Settings size={20} /></button>
           </div>
         </div>
 
@@ -483,6 +484,7 @@ export const ChatPage = ({ setPage }: { setPage: (p: Page) => void }) => {
                         type="button"
                         onClick={() => handleRemoveAttachment(attachment.id)}
                         className="p-1 text-gray-500 hover:text-white transition-colors"
+                        aria-label={`Remove ${attachment.name}`}
                       >
                         <X size={12} />
                       </button>
@@ -503,6 +505,7 @@ export const ChatPage = ({ setPage }: { setPage: (p: Page) => void }) => {
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
                   className="p-2 rounded-lg text-gray-400 hover:text-accent hover:bg-white/10 transition-colors"
+                  aria-label="Attach file"
                 >
                   <Paperclip size={18} />
                 </button>
@@ -512,6 +515,7 @@ export const ChatPage = ({ setPage }: { setPage: (p: Page) => void }) => {
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
                   placeholder="Transmitting..."
+                  aria-label="Message input"
                   className="flex-1 bg-transparent border-none focus:ring-0 text-white placeholder:text-gray-500 text-sm md:text-base font-mono resize-none max-h-[150px] py-3 custom-scrollbar"
                   rows={1}
                 />
@@ -520,11 +524,13 @@ export const ChatPage = ({ setPage }: { setPage: (p: Page) => void }) => {
                     type="button"
                     onClick={() => startListening(setInput)}
                     className={`p-2 rounded-lg transition-all ${isListening ? 'bg-red-500/20 text-red-400 animate-pulse border border-red-500/50' : 'hover:bg-white/10 text-gray-400 hover:text-accent'}`}
+                    aria-label="Voice input"
+                    aria-pressed={isListening}
                   >
                     <Mic size={18} />
                   </button>
                   {isProcessing ? (
-                    <button type="button" onClick={stopGenerating} className="p-2 bg-red-500/20 text-red-400 rounded-lg border border-red-500/50">
+                    <button type="button" onClick={stopGenerating} className="p-2 bg-red-500/20 text-red-400 rounded-lg border border-red-500/50" aria-label="Stop generating">
                       <Square size={18} fill="currentColor" />
                     </button>
                   ) : (
@@ -532,6 +538,7 @@ export const ChatPage = ({ setPage }: { setPage: (p: Page) => void }) => {
                       type="submit"
                       disabled={!canSend}
                       className={`p-2 rounded-lg transition-all ${canSend ? 'bg-white/10 text-white hover:bg-accent hover:text-void' : 'bg-white/5 text-gray-500 cursor-not-allowed'}`}
+                      aria-label="Send message"
                     >
                       <Send size={18} />
                     </button>
