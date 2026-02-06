@@ -2,8 +2,9 @@
 import { db } from './mockDb';
 import * as frameworkEngine from './frameworkEngine';
 import { levenshteinDistance } from './aiTools';
+import { ToolDefinition } from '../types';
 
-export const executeTool = (code: string, args: any) => {
+export const executeTool = (tool: string | ToolDefinition, args: any) => {
     // Helper object containing all imports
     const utils = {
         analyzeJournalEntry: frameworkEngine.analyzeJournalEntry,
@@ -11,6 +12,32 @@ export const executeTool = (code: string, args: any) => {
         matchChains: frameworkEngine.matchChains,
         levenshteinDistance: levenshteinDistance
     };
+
+    // 1. Secure Path: Direct Implementation
+    if (typeof tool !== 'string' && tool.implementation) {
+        try {
+            // Execute the implementation directly.
+            // Note: The implementation functions in aiTools.ts utilize closure scope
+            // to access 'db' and 'frameworkEngine' functions, so we don't need to inject them.
+            const result = tool.implementation(args);
+
+             // Parse result if it's a string json (keeping compatibility with existing tools that return JSON strings)
+            if (typeof result === 'string') {
+                try {
+                    return JSON.parse(result);
+                } catch {
+                    return { result: result };
+                }
+            }
+            return result;
+        } catch (err: any) {
+             console.error("Tool Execution Error (Secure):", err);
+             return { error: err.message };
+        }
+    }
+
+    // 2. Legacy/Dynamic Path: New Function (for custom tools or if implementation is missing)
+    const code = typeof tool === 'string' ? tool : tool.code;
 
     try {
         // Dynamic Execution with extended scope
