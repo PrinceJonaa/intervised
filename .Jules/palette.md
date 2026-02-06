@@ -5,3 +5,7 @@
 ## 2024-05-24 - [Toast Accessibility & Visual Feedback]
 **Learning:** Standard toast notifications often lack intrinsic accessibility attributes (role, aria-live) and visual duration indicators, making them confusing for screen readers and cognitively demanding for sighted users who must guess when the message disappears.
 **Action:** Always couple auto-dismiss logic with a visual timer (progress bar) and strictly map toast types to semantic roles (error -> alert, info -> status) to ensure inclusive communication.
+
+## 2024-05-25 - [Icon-Only Button Accessibility]
+**Learning:** The codebase frequently utilizes icon-only buttons for primary actions (e.g., in chat interfaces) without intrinsic text labels, rendering them invisible to screen readers by default.
+**Action:** Establish a strict rule for the component library: every button rendering only an icon must accept and mandate an `aria-label` prop to ensure semantic clarity.

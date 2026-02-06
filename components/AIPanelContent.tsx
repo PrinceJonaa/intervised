@@ -63,7 +63,7 @@ const AIPanelContent: React.FC<AIPanelContentProps> = ({ setPage, onClose }) => 
           </div>
           <span className="text-xs font-mono text-muted">Gemini 2.5 Flash /// Online</span>
         </div>
-        <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-colors text-gray-400 hover:text-white">
+        <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-colors text-gray-400 hover:text-white" aria-label="Close AI Panel">
           <X size={20} />
         </button>
       </div>
@@ -77,6 +77,7 @@ const AIPanelContent: React.FC<AIPanelContentProps> = ({ setPage, onClose }) => 
 
         <button
           onClick={() => toggleModule('navigation')}
+          aria-pressed={modules.navigation}
           className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 py-1.5 rounded-full border text-xs transition-all ${modules.navigation
               ? 'bg-accent/20 border-accent/50 text-accent'
               : 'bg-white/5 border-white/10 text-muted hover:border-white/30'
@@ -88,6 +89,7 @@ const AIPanelContent: React.FC<AIPanelContentProps> = ({ setPage, onClose }) => 
 
         <button
           onClick={() => toggleModule('knowledge')}
+          aria-pressed={modules.knowledge}
           className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 py-1.5 rounded-full border text-xs transition-all ${modules.knowledge
               ? 'bg-secondary/20 border-secondary/50 text-white'
               : 'bg-white/5 border-white/10 text-muted hover:border-white/30'
@@ -99,6 +101,7 @@ const AIPanelContent: React.FC<AIPanelContentProps> = ({ setPage, onClose }) => 
 
         <button
           onClick={() => toggleModule('actions')}
+          aria-pressed={modules.actions}
           className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 py-1.5 rounded-full border text-xs transition-all ${modules.actions
               ? 'bg-accent/20 border-accent/50 text-accent font-bold'
               : 'bg-white/5 border-white/10 text-muted hover:border-white/30'
@@ -141,6 +144,7 @@ const AIPanelContent: React.FC<AIPanelContentProps> = ({ setPage, onClose }) => 
           placeholder="Ask about services..."
           className="w-full bg-black/40 border border-white/10 rounded-2xl py-3 sm:py-4 px-5 pr-14 text-sm focus:outline-none focus:border-accent/50 transition-all placeholder:text-gray-600"
           autoFocus
+          aria-label="Ask about services"
         />
         <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-1">
           {!aiInput && (
@@ -150,6 +154,8 @@ const AIPanelContent: React.FC<AIPanelContentProps> = ({ setPage, onClose }) => 
               className={`p-2 rounded-xl transition-all ${isListening ? 'bg-red-500/20 text-red-400 animate-pulse' : 'hover:bg-white/10 text-gray-400 hover:text-accent'
                 }`}
               title="Voice Input"
+              aria-label="Voice Input"
+              aria-pressed={isListening}
             >
               <Mic size={18} />
             </button>
@@ -158,6 +164,7 @@ const AIPanelContent: React.FC<AIPanelContentProps> = ({ setPage, onClose }) => 
             <button
               type="submit"
               className="p-2 bg-accent/20 hover:bg-accent rounded-xl text-accent hover:text-void transition-all border border-accent/30 hover:border-accent"
+              aria-label="Send Message"
             >
               <Send size={16} />
             </button>
