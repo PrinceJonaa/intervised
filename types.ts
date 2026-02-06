@@ -261,6 +261,7 @@ export interface ToolDefinition {
   description: string;
   parameters: string; // JSON schema string
   code: string; // Function body string
+  implementation?: (...args: any[]) => any; // Actual function reference (safer execution)
   enabled: boolean;
   alwaysOn?: boolean;
 }
