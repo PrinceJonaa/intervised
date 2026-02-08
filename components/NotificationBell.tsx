@@ -29,6 +29,17 @@ export function NotificationBell() {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
+    // Close on Escape key
+    useEffect(() => {
+        function handleKeyDown(e: KeyboardEvent) {
+            if (e.key === 'Escape' && isOpen) {
+                setIsOpen(false);
+            }
+        }
+        document.addEventListener('keydown', handleKeyDown);
+        return () => document.removeEventListener('keydown', handleKeyDown);
+    }, [isOpen]);
+
     async function loadNotifications() {
         try {
             const [notifs, count] = await Promise.all([
@@ -81,6 +92,9 @@ export function NotificationBell() {
                 onClick={() => setIsOpen(!isOpen)}
                 className="relative p-2 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-white/10"
                 aria-label="Notifications"
+                aria-expanded={isOpen}
+                aria-haspopup="dialog"
+                aria-controls="notification-panel"
             >
                 <Bell size={20} />
                 {unreadCount > 0 && (
@@ -93,6 +107,10 @@ export function NotificationBell() {
             <AnimatePresence>
                 {isOpen && (
                     <motion.div
+                        id="notification-panel"
+                        role="dialog"
+                        aria-label="Notifications"
+                        aria-modal="true"
                         initial={{ opacity: 0, y: -10, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: -10, scale: 0.95 }}
@@ -150,8 +168,8 @@ export function NotificationBell() {
                                                         to={notif.link}
                                                         onClick={() => setIsOpen(false)}
                                                         className="p-1 text-gray-500 hover:text-accent"
-                                                        aria-label="Open link"
-                                                        title="Open link"
+                                                        aria-label={`Open link for ${notif.title}`}
+                                                        title={`Open link for ${notif.title}`}
                                                     >
                                                         <ExternalLink size={14} aria-hidden="true" />
                                                     </Link>
@@ -161,7 +179,7 @@ export function NotificationBell() {
                                                         onClick={() => handleMarkAsRead(notif.id)}
                                                         className="p-1 text-gray-500 hover:text-green-400"
                                                         title="Mark as read"
-                                                        aria-label="Mark as read"
+                                                        aria-label={`Mark ${notif.title} as read`}
                                                     >
                                                         <Check size={14} aria-hidden="true" />
                                                     </button>
