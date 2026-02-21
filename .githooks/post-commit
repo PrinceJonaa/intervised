@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+set -u
+
+# Keep production deploys in sync by immediately pushing local main commits.
+if [ "${CI:-}" = "true" ]; then
+  exit 0
+fi
+
+branch="$(git branch --show-current 2>/dev/null || true)"
+if [ "$branch" != "main" ]; then
+  exit 0
+fi
+
+if ! git remote get-url origin >/dev/null 2>&1; then
+  echo "[post-commit] No 'origin' remote found; skipping auto-push." >&2
+  exit 0
+fi
+
+echo "[post-commit] Auto-pushing 'main' to origin..."
+if git push origin main; then
+  echo "[post-commit] Push complete."
+else
+  echo "[post-commit] Auto-push failed. Run: git push origin main" >&2
+fi
