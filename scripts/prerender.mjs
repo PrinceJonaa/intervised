@@ -21,11 +21,13 @@ const ROUTES_TO_PRERENDER = [
   '/team',
   '/blog',
   '/contact',
+  '/privacy',
+  '/terms',
   // Don't prerender /chat - it's dynamic and noindex
 ];
 
 async function prerender() {
-  const distPath = path.resolve(__dirname, 'dist');
+  const distPath = path.resolve(__dirname, '../dist');
   
   // Check if dist folder exists
   if (!fs.existsSync(distPath)) {
@@ -57,7 +59,7 @@ async function prerender() {
 
     // Write prerendered HTML files
     for (const route of renderedRoutes) {
-      const routePath = route.route === '/' ? '/index' : route.route;
+      const routePath = route.route === '/' ? 'index' : route.route.replace(/^\//, '');
       const outputPath = path.join(distPath, `${routePath}.html`);
       const outputDir = path.dirname(outputPath);
 

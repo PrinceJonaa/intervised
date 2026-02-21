@@ -25,9 +25,37 @@ interface SEOProps {
 }
 
 const BASE_URL = 'https://intervised.com';
-const DEFAULT_TITLE = 'Intervised | Mutually Envisioned - Creative & Technology Studio';
+const DEFAULT_TITLE = 'Intervised LLC | Mutually Envisioned - Creative & Technology Studio';
 const DEFAULT_DESCRIPTION = 'Premium creative and technology studio offering web development, brand design, AI integration, and digital strategy services.';
 const DEFAULT_OG_IMAGE = `${BASE_URL}/og-image.png`;
+
+const normalizePath = (pathname: string): string => {
+  if (!pathname || pathname === '/') return '/';
+  return pathname.endsWith('/') ? pathname.slice(0, -1) : pathname;
+};
+
+const normalizeCanonicalUrl = (url: string): string => {
+  try {
+    const parsed = new URL(url);
+    const normalizedPath = normalizePath(parsed.pathname);
+    return `${parsed.origin}${normalizedPath}${parsed.search}`;
+  } catch {
+    return url;
+  }
+};
+
+const resolveCanonicalUrl = (canonical?: string): string => {
+  if (canonical) return normalizeCanonicalUrl(canonical);
+  if (typeof window === 'undefined') return BASE_URL;
+  return `${BASE_URL}${normalizePath(window.location.pathname)}`;
+};
+
+const toIsoDate = (value?: string): string | undefined => {
+  if (!value) return undefined;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return undefined;
+  return date.toISOString();
+};
 
 /**
  * Custom hook for managing dynamic SEO meta tags
@@ -54,6 +82,8 @@ export function useSEO({
   ogLocale?: string;
 } = {}) {
   useEffect(() => {
+    const canonicalUrl = resolveCanonicalUrl(canonical);
+
     // Update title
     document.title = title;
 
@@ -84,6 +114,18 @@ export function useSEO({
       element.setAttribute('href', href);
     };
 
+    // Helper to set multiple property meta tags (e.g., article:tag)
+    const setMultiPropertyMeta = (property: string, values: string[] = []) => {
+      document.querySelectorAll(`meta[property="${property}"][data-seo-managed="true"]`).forEach((el) => el.remove());
+      values.filter(Boolean).forEach((value) => {
+        const element = document.createElement('meta');
+        element.setAttribute('property', property);
+        element.setAttribute('content', value);
+        element.setAttribute('data-seo-managed', 'true');
+        document.head.appendChild(element);
+      });
+    };
+
     // Helper to inject JSON-LD script with ID
     const injectJsonLd = (id: string, data: object) => {
       let ldScript = document.querySelector(`script[data-seo-id="${id}"]`) as HTMLScriptElement;
@@ -99,33 +141,40 @@ export function useSEO({
     // Primary meta tags
     setMetaTag('title', title);
     setMetaTag('description', description);
-    setMetaTag('robots', noIndex ? 'noindex, nofollow' : 'index, follow');
+    const robots = noIndex
+      ? 'noindex, nofollow, noarchive'
+      : 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1';
+    setMetaTag('robots', robots);
+    setMetaTag('googlebot', robots);
+    setMetaTag('author', 'Intervised LLC');
+    setMetaTag('application-name', 'Intervised');
 
     // Open Graph
     setMetaTag('og:title', title, true);
     setMetaTag('og:description', description, true);
-    setMetaTag('og:url', canonical || window.location.href, true);
+    setMetaTag('og:url', canonicalUrl, true);
     setMetaTag('og:site_name', ogSiteName, true);
     setMetaTag('og:locale', ogLocale, true);
     setMetaTag('og:type', ogType, true);
 
     // OG Image Structured Properties
     setMetaTag('og:image', ogImage, true);
+    setMetaTag('og:image:secure_url', ogImage, true);
     setMetaTag('og:image:alt', ogImageAlt, true);
     // Standard social card size
     setMetaTag('og:image:width', '1200', true);
     setMetaTag('og:image:height', '630', true);
     setMetaTag('og:image:type', 'image/png', true);
 
-    if (canonical) {
-      setLinkTag('canonical', canonical);
-    }
+    setLinkTag('canonical', canonicalUrl);
 
     // Twitter Card
     setMetaTag('twitter:card', 'summary_large_image', false); // Use standard name for twitter:card
+    setMetaTag('twitter:url', canonicalUrl, false);
     setMetaTag('twitter:title', title, false);
     setMetaTag('twitter:description', description, false);
     setMetaTag('twitter:image', ogImage, false);
+    setMetaTag('twitter:image:alt', ogImageAlt, false);
 
     // Breadcrumb Schema (Internal Linking Structure)
     if (breadcrumbs && breadcrumbs.length > 0) {
@@ -175,20 +224,19 @@ export function useSEO({
 
     // Article-specific meta
     if (ogType === 'article' && article) {
-      if (article.publishedTime) {
-        setMetaTag('article:published_time', article.publishedTime, true);
+      const publishedTime = toIsoDate(article.publishedTime);
+      const modifiedTime = toIsoDate(article.modifiedTime) || publishedTime;
+
+      if (publishedTime) {
+        setMetaTag('article:published_time', publishedTime, true);
       }
-      if (article.modifiedTime) {
-        setMetaTag('article:modified_time', article.modifiedTime, true);
+      if (modifiedTime) {
+        setMetaTag('article:modified_time', modifiedTime, true);
       }
       if (article.author) {
         setMetaTag('article:author', article.author, true);
       }
-      if (article.tags) {
-        article.tags.forEach((tag, index) => {
-          setMetaTag(`article:tag`, tag, true); // Multiple tags support
-        });
-      }
+      setMultiPropertyMeta('article:tag', article.tags || []);
 
       // JSON-LD Structured Data for Rich Snippets
       const structuredData = {
@@ -197,8 +245,8 @@ export function useSEO({
         "headline": title,
         "description": description,
         "image": ogImage,
-        "datePublished": article.publishedTime,
-        "dateModified": article.modifiedTime || article.publishedTime,
+        "datePublished": publishedTime,
+        "dateModified": modifiedTime || publishedTime,
         "author": {
           "@type": "Person",
           "name": article.author || "Intervised Team"
@@ -208,16 +256,19 @@ export function useSEO({
           "name": "Intervised",
           "logo": {
             "@type": "ImageObject",
-            "url": `${BASE_URL}/logo.png`
+            "url": DEFAULT_OG_IMAGE
           }
         },
         "mainEntityOfPage": {
           "@type": "WebPage",
-          "@id": canonical || window.location.href
+          "@id": canonicalUrl
         }
       };
 
       injectJsonLd('article-schema', structuredData);
+    } else {
+      setMultiPropertyMeta('article:tag', []);
+      document.querySelector('script[data-seo-id="article-schema"]')?.remove();
     }
 
     // Cleanup
@@ -232,7 +283,7 @@ export function useSEO({
 // Pre-defined SEO configs for each page
 export const SEO_CONFIG = {
   home: {
-    title: 'Intervised | Mutually Envisioned - Creative & Technology Studio',
+    title: 'Intervised LLC | Mutually Envisioned - Creative & Technology Studio',
     description: 'Premium creative and technology studio offering web development, brand design, AI integration, and digital strategy services. Transform your vision into reality.',
     canonical: BASE_URL,
     breadcrumbs: [
@@ -313,4 +364,3 @@ export function getBlogPostSEO(post: {
 }
 
 export default useSEO;
-

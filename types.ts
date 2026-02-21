@@ -60,6 +60,8 @@ export interface BlogPost {
   author: string;
   authorRole?: string; // New: For author bio
   date: string;
+  publishedAtISO?: string;
+  updatedAtISO?: string;
   timestamp: number;
   lastModified: number;
   category: string; // New: Primary category

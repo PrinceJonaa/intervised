@@ -59,6 +59,7 @@ const routeToPage: Record<string, Page> = {
   '/team': Page.TEAM,
   '/blog': Page.BLOG,
   '/contact': Page.CONTACT,
+  '/booking': Page.CONTACT,
   '/chat': Page.CHAT,
   '/login': Page.HOME, // Map to HOME for NavDock (no specific login page in enum)
   '/admin': Page.HOME, // Map to HOME for NavDock (no specific admin page in enum)
@@ -123,7 +124,18 @@ function TeamPage() {
 }
 
 function BlogPage() {
-  useSEO(SEO_CONFIG.blog);
+  const location = useLocation();
+
+  useSEO(
+    location.pathname === '/blog'
+      ? SEO_CONFIG.blog
+      : {
+        title: 'Intervised Blog | Intervised',
+        description: 'Read insights from Intervised on creative systems, web development, AI integration, and digital strategy.',
+        canonical: `https://intervised.com${location.pathname}`
+      }
+  );
+
   return (
     <PageWrapper>
       <BlogSection />
@@ -263,6 +275,7 @@ function AppContent() {
               <Route path="/blog" element={<BlogPage />} />
               <Route path="/blog/:slug" element={<BlogPage />} />
               <Route path="/contact" element={<ContactPage />} />
+              <Route path="/booking" element={<ContactPage />} />
               <Route path="/chat" element={<ChatPageWrapper setPage={setPage} />} />
               <Route path="/login" element={<LoginPageWrapper />} />
               <Route path="/admin" element={

@@ -82,13 +82,40 @@ src/
 Ask questions, get answers. Trained on our services and approach. Not here to convert you, just help.
 
 **Blog + Real-Time Comments**  
-Markdown support. Comments appear instantly via Supabase subscriptions. SEO optimized with structured data.
+Markdown support. Comments appear instantly via Supabase subscriptions. SEO optimized with structured data and canonical post URLs (`/blog/:slug`).
 
 **Admin Dashboard**  
 Manage posts, chat sessions, bookings. No third-party CMS. We built what we needed.
 
 **Performance**  
 Lazy-loaded images, code splitting, Lighthouse 95+, Core Web Vitals green.
+
+---
+
+## SEO & Search Architecture
+
+- Canonical host is `https://intervised.com` (with a permanent redirect from `www.intervised.com`).
+- Core pages use normalized canonical URLs and Open Graph/Twitter metadata.
+- Blog posts are directly addressable at `/blog/:slug` for proper crawlability and sharing.
+- JSON-LD is implemented for `Organization`, `WebSite`, `WebPage`, `ProfessionalService`, and `BlogPosting`.
+- Sitemap includes static pages plus published blog posts and is generated from source + Supabase.
+- Legacy booking paths are redirected to `/contact` to preserve link equity.
+
+### SEO Maintenance Commands
+
+```bash
+# Refresh sitemap.xml from static routes + published posts
+npm run generate-sitemap
+
+# Production build
+npm run build
+
+# Prerender SEO-critical pages into dist/*.html
+npm run prerender
+
+# Build + prerender in one command
+npm run build:ssg
+```
 
 ---
 

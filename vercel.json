@@ -1,4 +1,27 @@
 {
+    "redirects": [
+        {
+            "source": "/:path*",
+            "has": [
+                {
+                    "type": "host",
+                    "value": "www.intervised.com"
+                }
+            ],
+            "destination": "https://intervised.com/:path*",
+            "permanent": true
+        },
+        {
+            "source": "/booking",
+            "destination": "/contact",
+            "permanent": true
+        },
+        {
+            "source": "/booking/:path*",
+            "destination": "/contact",
+            "permanent": true
+        }
+    ],
     "headers": [
         {
             "source": "/assets/(.*)",

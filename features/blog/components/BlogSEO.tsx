@@ -33,8 +33,17 @@ export const BlogSEO: React.FC<BlogSEOProps> = ({
     const siteUrl = 'https://intervised.com';
     const postUrl = `${siteUrl}/blog/${slug}`;
     const defaultImage = `${siteUrl}/og-image.png`;
+    const toIsoDate = (value?: string): string | null => {
+        if (!value) return null;
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return null;
+        return date.toISOString();
+    };
 
     useEffect(() => {
+        const publishedIso = toIsoDate(publishedAt);
+        const updatedIso = toIsoDate(updatedAt) || publishedIso;
+
         // Update document title
         document.title = `${title} | Intervised Blog`;
 
@@ -53,8 +62,7 @@ export const BlogSEO: React.FC<BlogSEOProps> = ({
         }
         canonical.href = postUrl;
 
-        // Update OG/Twitter meta tags
-        const updateMeta = (property: string, content: string) => {
+        const updatePropertyMeta = (property: string, content: string) => {
             let meta = document.querySelector(`meta[property="${property}"]`) as HTMLMetaElement;
             if (!meta) {
                 meta = document.createElement('meta');
@@ -64,15 +72,41 @@ export const BlogSEO: React.FC<BlogSEOProps> = ({
             meta.content = content;
         };
 
-        updateMeta('og:type', 'article');
-        updateMeta('og:url', postUrl);
-        updateMeta('og:title', title);
-        updateMeta('og:description', description);
-        updateMeta('og:image', imageUrl || defaultImage);
-        updateMeta('article:published_time', publishedAt);
-        if (updatedAt) updateMeta('article:modified_time', updatedAt);
-        if (author) updateMeta('article:author', author);
-        tags.forEach((tag, i) => updateMeta(`article:tag:${i}`, tag));
+        const updateNameMeta = (name: string, content: string) => {
+            let meta = document.querySelector(`meta[name="${name}"]`) as HTMLMetaElement;
+            if (!meta) {
+                meta = document.createElement('meta');
+                meta.setAttribute('name', name);
+                document.head.appendChild(meta);
+            }
+            meta.content = content;
+        };
+
+        // Update OG/Twitter meta tags
+        updatePropertyMeta('og:type', 'article');
+        updatePropertyMeta('og:url', postUrl);
+        updatePropertyMeta('og:title', title);
+        updatePropertyMeta('og:description', description);
+        updatePropertyMeta('og:image', imageUrl || defaultImage);
+        updatePropertyMeta('og:image:alt', title);
+        updateNameMeta('twitter:card', 'summary_large_image');
+        updateNameMeta('twitter:url', postUrl);
+        updateNameMeta('twitter:title', title);
+        updateNameMeta('twitter:description', description);
+        updateNameMeta('twitter:image', imageUrl || defaultImage);
+
+        if (publishedIso) updatePropertyMeta('article:published_time', publishedIso);
+        if (updatedIso) updatePropertyMeta('article:modified_time', updatedIso);
+        if (author) updatePropertyMeta('article:author', author);
+
+        document.querySelectorAll('meta[property="article:tag"][data-blog-seo-tag="true"]').forEach((el) => el.remove());
+        tags.filter(Boolean).forEach((tag) => {
+            const tagMeta = document.createElement('meta');
+            tagMeta.setAttribute('property', 'article:tag');
+            tagMeta.setAttribute('content', tag);
+            tagMeta.setAttribute('data-blog-seo-tag', 'true');
+            document.head.appendChild(tagMeta);
+        });
 
         // Inject Article JSON-LD
         const existingLD = document.querySelector('script[data-blog-seo]');
@@ -80,23 +114,22 @@ export const BlogSEO: React.FC<BlogSEOProps> = ({
 
         const jsonLD = {
             "@context": "https://schema.org",
-            "@type": "Article",
+            "@type": "BlogPosting",
             "headline": title,
             "description": description,
             "image": imageUrl || defaultImage,
-            "datePublished": publishedAt,
-            "dateModified": updatedAt || publishedAt,
+            "datePublished": publishedIso,
+            "dateModified": updatedIso || publishedIso,
             "author": {
                 "@type": "Person",
-                "name": author,
-                "url": siteUrl
+                "name": author
             },
             "publisher": {
                 "@type": "Organization",
-                "name": "Intervised",
+                "name": "Intervised LLC",
                 "logo": {
                     "@type": "ImageObject",
-                    "url": `${siteUrl}/logo.png`
+                    "url": defaultImage
                 }
             },
             "mainEntityOfPage": {
@@ -115,9 +148,10 @@ export const BlogSEO: React.FC<BlogSEOProps> = ({
 
         // Cleanup on unmount
         return () => {
-            document.title = 'Intervised | Mutually Envisioned';
+            document.title = 'Intervised LLC | Mutually Envisioned - Creative & Technology Studio';
             const blogLD = document.querySelector('script[data-blog-seo]');
             if (blogLD) blogLD.remove();
+            document.querySelectorAll('meta[property="article:tag"][data-blog-seo-tag="true"]').forEach((el) => el.remove());
         };
     }, [title, description, slug, author, publishedAt, updatedAt, imageUrl, tags, category]);
 

@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { User, Plus, X, Mail, Loader2 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { User as UserType, BlogPost, Comment } from '../types';
 import { useBlogPosts, useBlogPost } from '../hooks/useBlog';
-import { blogService, BlogPost as SupabaseBlogPost } from '../lib/supabase/blogService';
+import { BlogPost as SupabaseBlogPost } from '../lib/supabase/blogService';
 import { useAuthContext } from '../components/AuthProvider';
 
 // Modular Components
@@ -24,6 +24,8 @@ const transformPost = (post: SupabaseBlogPost): BlogPost => ({
   author: post.author_name || 'Anonymous',
   authorRole: post.author_role || '',
   date: formatDate(post.published_at || post.created_at || new Date().toISOString()),
+  publishedAtISO: post.published_at || post.created_at || undefined,
+  updatedAtISO: post.updated_at || post.published_at || post.created_at || undefined,
   timestamp: new Date(post.published_at || post.created_at || Date.now()).getTime(),
   lastModified: new Date(post.updated_at || post.created_at || Date.now()).getTime(),
   readTime: post.read_time || 5,
@@ -47,10 +49,12 @@ const formatDate = (dateString: string): string => {
 
 export const BlogSection = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { slug: routeSlug } = useParams<{ slug?: string }>();
   const { user: authUser, profile, isAdmin, signOut, isAuthenticated } = useAuthContext();
 
-  const [mode, setMode] = useState<'LIST' | 'READ' | 'EDIT'>('LIST');
-  const [activePostSlug, setActivePostSlug] = useState<string | null>(null);
+  const [mode, setMode] = useState<'LIST' | 'READ' | 'EDIT'>(routeSlug ? 'READ' : 'LIST');
+  const [activePostSlug, setActivePostSlug] = useState<string | null>(routeSlug || null);
 
   // Filter & Sort States
   const [searchQuery, setSearchQuery] = useState('');
@@ -80,6 +84,18 @@ export const BlogSection = () => {
     return supabasePosts.map(transformPost);
   }, [supabasePosts, error]);
 
+  // Keep blog UI state synced with URL so /blog/:slug pages are crawlable and shareable.
+  useEffect(() => {
+    if (routeSlug) {
+      setMode('READ');
+      setActivePostSlug(routeSlug);
+      return;
+    }
+
+    setActivePostSlug(null);
+    setMode((prev) => (prev === 'EDIT' ? prev : 'LIST'));
+  }, [routeSlug]);
+
   const handleLogin = async () => {
     if (user) {
       await signOut();
@@ -88,16 +104,19 @@ export const BlogSection = () => {
     }
   };
 
-  const navigateToRead = async (post: BlogPost) => {
+  const navigateToRead = (post: BlogPost) => {
     if (post.slug) {
-      await blogService.incrementViews(post.id);
       setActivePostSlug(post.slug);
       setMode('READ');
+      navigate(`/blog/${post.slug}`);
       window.scrollTo(0, 0);
     }
   };
 
   const navigateToEdit = (post?: BlogPost) => {
+    if (location.pathname !== '/blog') {
+      navigate('/blog');
+    }
     setActivePostSlug(post?.slug || null);
     setMode('EDIT');
   };
@@ -105,6 +124,9 @@ export const BlogSection = () => {
   const navigateToList = () => {
     setMode('LIST');
     setActivePostSlug(null);
+    if (location.pathname !== '/blog') {
+      navigate('/blog');
+    }
     refetch();
   };
 
