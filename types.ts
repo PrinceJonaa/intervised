@@ -3,6 +3,7 @@ export enum Page {
   HOME = 'HOME',
   SERVICES = 'SERVICES',
   TEAM = 'TEAM',
+  ABOUT = 'ABOUT',
   BLOG = 'BLOG',
   CONTACT = 'CONTACT',
   CHAT = 'CHAT'

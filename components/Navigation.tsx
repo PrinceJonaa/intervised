@@ -2,7 +2,7 @@
 import React, { useState, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-import { Layout, Cpu, User, Mail, Sparkles, X, Send, Settings2, CheckCircle2, Circle, Mic, MessageSquare, BookOpen, Zap } from 'lucide-react';
+import { Layout, Cpu, User, Mail, Sparkles, X, Send, Settings2, CheckCircle2, Circle, Mic, MessageSquare, BookOpen, Zap, Info } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Page } from '../types';
 
@@ -12,6 +12,7 @@ const AIPanelContent = lazy(() => import('./AIPanelContent'));
 export const NavDock = ({ currentPage, setPage }: { currentPage: Page; setPage: (p: Page) => void }) => {
   const [isAiActive, setIsAiActive] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const navItems = [
     { page: Page.HOME, icon: Layout, label: 'Home' },
@@ -99,6 +100,21 @@ export const NavDock = ({ currentPage, setPage }: { currentPage: Page; setPage: 
           {navItems.slice(3, 6).map((item) => (
             <DockItem key={item.label} item={item} isActive={currentPage === item.page || (item.label === 'Profile' && location.pathname === '/profile')} onClick={() => item.label === 'Profile' ? navigate('/profile') : setPage(item.page)} />
           ))}
+
+          <button
+            onClick={() => setPage(Page.ABOUT)}
+            aria-label="About Intervised"
+            aria-current={currentPage === Page.ABOUT ? 'page' : undefined}
+            className={`relative p-2.5 sm:p-3 rounded-full transition-all duration-300 group flex-shrink-0 ${currentPage === Page.ABOUT
+              ? 'bg-white/10 text-white scale-110 shadow-[0_0_15px_rgba(255,255,255,0.1)]'
+              : 'text-gray-400 hover:text-white hover:bg-white/5'
+              }`}
+          >
+            <Info size={18} className="sm:w-6 sm:h-6" aria-hidden="true" />
+            <span className="absolute -top-12 left-1/2 -translate-x-1/2 bg-surface px-2 py-1 rounded text-[10px] opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap border border-white/10 pointer-events-none hidden md:block font-mono tracking-widest backdrop-blur-md text-accent">
+              ABOUT
+            </span>
+          </button>
 
           <button
             onClick={() => setPage(Page.CONTACT)}

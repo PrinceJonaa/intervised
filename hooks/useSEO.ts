@@ -6,12 +6,15 @@ interface SEOProps {
   canonical?: string;
   ogImage?: string;
   ogType?: 'website' | 'article';
+  pageType?: 'WebPage' | 'AboutPage' | 'ContactPage' | 'CollectionPage' | 'FAQPage';
   article?: {
     publishedTime?: string;
     modifiedTime?: string;
     author?: string;
     tags?: string[];
   };
+  faq?: Array<{ question: string; answer: string }>;
+  customSchemas?: object[];
   noIndex?: boolean;
   // New schema support
   breadcrumbs?: readonly { readonly name: string; readonly url: string }[];
@@ -70,9 +73,12 @@ export function useSEO({
   ogImage = DEFAULT_OG_IMAGE,
   ogImageAlt = 'Intervised - Mutually Envisioned',
   ogType = 'website',
+  pageType = 'WebPage',
   ogSiteName = 'Intervised',
   ogLocale = 'en_US',
   article,
+  faq,
+  customSchemas,
   noIndex = false,
   breadcrumbs,
   service,
@@ -176,6 +182,19 @@ export function useSEO({
     setMetaTag('twitter:image', ogImage, false);
     setMetaTag('twitter:image:alt', ogImageAlt, false);
 
+    // Core page schema for all indexable pages.
+    const webPageSchema = {
+      "@context": "https://schema.org",
+      "@type": pageType,
+      "@id": `${canonicalUrl}#webpage`,
+      "url": canonicalUrl,
+      "name": title,
+      "description": description,
+      "isPartOf": { "@id": `${BASE_URL}/#website` },
+      "about": { "@id": `${BASE_URL}/#organization` },
+    };
+    injectJsonLd('webpage-schema', webPageSchema);
+
     // Breadcrumb Schema (Internal Linking Structure)
     if (breadcrumbs && breadcrumbs.length > 0) {
       const breadcrumbSchema = {
@@ -220,6 +239,43 @@ export function useSEO({
         })
       };
       injectJsonLd('service-schema', serviceSchema);
+    } else {
+      document.querySelector('script[data-seo-id="service-schema"]')?.remove();
+    }
+
+    // FAQ schema for eligible pages.
+    if (faq && faq.length > 0) {
+      const faqSchema = {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": faq.map((item) => ({
+          "@type": "Question",
+          "name": item.question,
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": item.answer,
+          },
+        })),
+      };
+      injectJsonLd('faq-schema', faqSchema);
+    } else {
+      document.querySelector('script[data-seo-id="faq-schema"]')?.remove();
+    }
+
+    // Any additional page-specific schemas.
+    if (customSchemas && customSchemas.length > 0) {
+      customSchemas.forEach((schema, index) => {
+        injectJsonLd(`custom-schema-${index}`, schema);
+      });
+      document.querySelectorAll('script[data-seo-id^="custom-schema-"]').forEach((el) => {
+        const id = el.getAttribute('data-seo-id') || '';
+        const index = Number(id.replace('custom-schema-', ''));
+        if (Number.isNaN(index) || index >= customSchemas.length) {
+          el.remove();
+        }
+      });
+    } else {
+      document.querySelectorAll('script[data-seo-id^="custom-schema-"]').forEach((el) => el.remove());
     }
 
     // Article-specific meta
@@ -277,7 +333,7 @@ export function useSEO({
       // Remove dynamic JSON-LD on cleanup
       document.querySelectorAll('script[data-seo-id]').forEach(el => el.remove());
     };
-  }, [title, description, canonical, ogImage, ogType, ogSiteName, ogLocale, article, noIndex, breadcrumbs, service]);
+  }, [title, description, canonical, ogImage, ogType, pageType, ogSiteName, ogLocale, article, faq, customSchemas, noIndex, breadcrumbs, service]);
 }
 
 // Pre-defined SEO configs for each page
@@ -286,6 +342,7 @@ export const SEO_CONFIG = {
     title: 'Intervised LLC | Mutually Envisioned - Creative & Technology Studio',
     description: 'Premium creative and technology studio offering web development, brand design, AI integration, and digital strategy services. Transform your vision into reality.',
     canonical: BASE_URL,
+    pageType: 'WebPage',
     breadcrumbs: [
       { name: 'Home', url: BASE_URL }
     ],
@@ -294,33 +351,90 @@ export const SEO_CONFIG = {
     title: 'Services | Intervised - Web Development, Brand Design & AI Integration',
     description: 'Explore our comprehensive digital services including custom web development, brand design, AI chatbot integration, content creation, and growth strategy.',
     canonical: `${BASE_URL}/services`,
+    pageType: 'CollectionPage',
     breadcrumbs: [
       { name: 'Home', url: BASE_URL },
       { name: 'Services', url: `${BASE_URL}/services` }
     ],
+    service: {
+      name: 'Intervised Services',
+      description: 'Creative and technology services for brands, creators, and ministries.',
+      provider: 'Intervised LLC',
+      areaServed: ['United States', 'Worldwide'],
+      offers: [
+        { name: 'Web Development' },
+        { name: 'Brand Design' },
+        { name: 'AI Integration' },
+        { name: 'Digital Strategy' },
+      ],
+    },
   },
   team: {
     title: 'Our Team | Intervised - Meet the Creators Behind Your Vision',
     description: 'Meet the talented team at Intervised. Creative directors, developers, and strategists dedicated to transforming your digital presence.',
     canonical: `${BASE_URL}/team`,
+    pageType: 'AboutPage',
     breadcrumbs: [
       { name: 'Home', url: BASE_URL },
       { name: 'Team', url: `${BASE_URL}/team` }
+    ],
+    customSchemas: [
+      {
+        "@context": "https://schema.org",
+        "@type": "ItemList",
+        "name": "Intervised Team",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "item": { "@type": "Person", "name": "Prince Jona" },
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "item": { "@type": "Person", "name": "Reina Hondo" },
+          },
+        ],
+      },
     ],
   },
   about: {
     title: 'About Intervised | A Shared Vision for Creative Space',
     description: 'Learn why Intervised exists: to give creators, ministries, and teams a grounded space to do their best work with strong systems and honest collaboration.',
     canonical: `${BASE_URL}/about`,
+    pageType: 'AboutPage',
     breadcrumbs: [
       { name: 'Home', url: BASE_URL },
       { name: 'About', url: `${BASE_URL}/about` }
+    ],
+    customSchemas: [
+      {
+        "@context": "https://schema.org",
+        "@type": "AboutPage",
+        "@id": `${BASE_URL}/about#about`,
+        "url": `${BASE_URL}/about`,
+        "name": "About Intervised",
+        "description": "Intervised is a shared creative and technology studio vision focused on helping people do their best work.",
+        "about": { "@id": `${BASE_URL}/#organization` },
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "CreativeWork",
+        "@id": `${BASE_URL}/about#vision`,
+        "name": "Intervised Vision",
+        "creator": [
+          { "@type": "Person", "name": "Prince Jona" },
+          { "@type": "Person", "name": "Reina Hondo" },
+        ],
+        "publisher": { "@id": `${BASE_URL}/#organization` },
+      },
     ],
   },
   blog: {
     title: 'Blog | Intervised - Insights on Design, Technology & Strategy',
     description: 'Read our latest insights on web development, brand design, AI integration, and digital strategy. Expert articles from the Intervised team.',
     canonical: `${BASE_URL}/blog`,
+    pageType: 'CollectionPage',
     breadcrumbs: [
       { name: 'Home', url: BASE_URL },
       { name: 'Blog', url: `${BASE_URL}/blog` }
@@ -330,15 +444,40 @@ export const SEO_CONFIG = {
     title: 'Contact Us | Intervised - Start Your Project Today',
     description: 'Get in touch with Intervised to discuss your project. We\'re here to help transform your vision into a stunning digital reality.',
     canonical: `${BASE_URL}/contact`,
+    pageType: 'ContactPage',
     breadcrumbs: [
       { name: 'Home', url: BASE_URL },
       { name: 'Contact', url: `${BASE_URL}/contact` }
+    ],
+    customSchemas: [
+      {
+        "@context": "https://schema.org",
+        "@type": "ContactPage",
+        "@id": `${BASE_URL}/contact#contact-page`,
+        "url": `${BASE_URL}/contact`,
+        "name": "Contact Intervised",
+        "description": "Contact Intervised for creative and technology projects.",
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "@id": `${BASE_URL}/#organization`,
+        "contactPoint": [
+          {
+            "@type": "ContactPoint",
+            "contactType": "sales",
+            "email": "contact@intervised.com",
+            "availableLanguage": ["en"],
+          },
+        ],
+      },
     ],
   },
   chat: {
     title: 'AI Chat | Intervised - Ask Our AI Assistant',
     description: 'Chat with our AI assistant to learn more about our services, get recommendations, and start your project journey.',
     canonical: `${BASE_URL}/chat`,
+    pageType: 'WebPage',
     noIndex: true, // Don't index the chat page
   },
 } as const;
