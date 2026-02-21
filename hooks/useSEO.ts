@@ -308,6 +308,15 @@ export const SEO_CONFIG = {
       { name: 'Team', url: `${BASE_URL}/team` }
     ],
   },
+  about: {
+    title: 'About Intervised | A Shared Vision for Creative Space',
+    description: 'Learn why Intervised exists: to give creators, ministries, and teams a grounded space to do their best work with strong systems and honest collaboration.',
+    canonical: `${BASE_URL}/about`,
+    breadcrumbs: [
+      { name: 'Home', url: BASE_URL },
+      { name: 'About', url: `${BASE_URL}/about` }
+    ],
+  },
   blog: {
     title: 'Blog | Intervised - Insights on Design, Technology & Strategy',
     description: 'Read our latest insights on web development, brand design, AI integration, and digital strategy. Expert articles from the Intervised team.',

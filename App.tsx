@@ -11,6 +11,7 @@ const HomeView = lazy(() => import('./features/Home').then(m => ({ default: m.Ho
 const ServicesSection = lazy(() => import('./features/Services').then(m => ({ default: m.ServicesSection })));
 const TeamSection = lazy(() => import('./features/Team').then(m => ({ default: m.TeamSection })));
 const BlogSection = lazy(() => import('./features/Blog').then(m => ({ default: m.BlogSection })));
+const AboutPage = lazy(() => import('./features/About').then(m => ({ default: m.AboutPage })));
 const ContactSection = lazy(() => import('./features/Contact').then(m => ({ default: m.ContactSection })));
 const ChatPage = lazy(() => import('./features/Chat').then(m => ({ default: m.ChatPage })));
 const LoginPage = lazy(() => import('./features/Login').then(m => ({ default: m.LoginPage })));
@@ -57,6 +58,7 @@ const routeToPage: Record<string, Page> = {
   '/': Page.HOME,
   '/services': Page.SERVICES,
   '/team': Page.TEAM,
+  '/about': Page.HOME,
   '/blog': Page.BLOG,
   '/contact': Page.CONTACT,
   '/booking': Page.CONTACT,
@@ -119,6 +121,15 @@ function TeamPage() {
   return (
     <PageWrapper>
       <TeamSection />
+    </PageWrapper>
+  );
+}
+
+function AboutPageWrapper() {
+  useSEO(SEO_CONFIG.about);
+  return (
+    <PageWrapper>
+      <AboutPage />
     </PageWrapper>
   );
 }
@@ -272,6 +283,7 @@ function AppContent() {
                 element={<ServicesPage setPage={setPage} onCategoryChange={setActiveCategory} />}
               />
               <Route path="/team" element={<TeamPage />} />
+              <Route path="/about" element={<AboutPageWrapper />} />
               <Route path="/blog" element={<BlogPage />} />
               <Route path="/blog/:slug" element={<BlogPage />} />
               <Route path="/contact" element={<ContactPage />} />

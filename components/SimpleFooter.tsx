@@ -20,6 +20,13 @@ export const SimpleFooter = () => {
                 {/* Links */}
                 <nav className="flex items-center gap-6" aria-label="Footer navigation">
                     <Link
+                        to="/about"
+                        className="hover:text-accent transition-colors"
+                    >
+                        About
+                    </Link>
+                    <div className="w-1 h-1 bg-gray-700 rounded-full" aria-hidden="true" />
+                    <Link
                         to="/privacy"
                         className="hover:text-accent transition-colors"
                     >
