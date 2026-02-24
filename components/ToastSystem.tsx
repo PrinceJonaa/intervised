@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle2, AlertCircle, Info, X } from 'lucide-react';
 
 export type ToastType = 'success' | 'error' | 'info';
@@ -52,46 +51,37 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     <ToastContext.Provider value={{ addToast }}>
       {children}
       <div className="fixed top-24 right-4 sm:right-8 z-[100] flex flex-col gap-3 pointer-events-none">
-        <AnimatePresence>
-          {toasts.map((toast) => (
-            <motion.div
-              key={toast.id}
-              initial={{ opacity: 0, x: 50, scale: 0.9 }}
-              animate={{ opacity: 1, x: 0, scale: 1 }}
-              exit={{ opacity: 0, x: 20, scale: 0.9 }}
-              layout
-              role={toast.type === 'error' ? 'alert' : 'status'}
-              aria-live={toast.type === 'error' ? 'assertive' : 'polite'}
-              className="pointer-events-auto min-w-[300px] max-w-sm glass-panel border border-white/10 p-4 rounded-xl shadow-2xl flex items-start gap-3 backdrop-blur-xl bg-[#001428]/90 relative overflow-hidden"
+        {toasts.map((toast) => (
+          <div
+            key={toast.id}
+            role={toast.type === 'error' ? 'alert' : 'status'}
+            aria-live={toast.type === 'error' ? 'assertive' : 'polite'}
+            className="pointer-events-auto min-w-[300px] max-w-sm glass-panel border border-white/10 p-4 rounded-xl shadow-2xl flex items-start gap-3 backdrop-blur-xl bg-[#001428]/90 relative overflow-hidden animate-slideIn"
+          >
+            <div className="mt-0.5 relative z-10">{getIcon(toast.type)}</div>
+            <div className="flex-1 relative z-10">
+              <h4 className="text-xs font-bold uppercase tracking-widest mb-1 opacity-70">
+                {toast.type === 'success' ? 'System Success' : toast.type === 'error' ? 'System Error' : 'Notification'}
+              </h4>
+              <p className="text-sm text-white leading-tight">{toast.message}</p>
+            </div>
+            <button
+              onClick={() => removeToast(toast.id)}
+              className="text-gray-500 hover:text-white transition-colors relative z-10"
+              aria-label="Close notification"
             >
-              <div className="mt-0.5 relative z-10">{getIcon(toast.type)}</div>
-              <div className="flex-1 relative z-10">
-                <h4 className="text-xs font-bold uppercase tracking-widest mb-1 opacity-70">
-                  {toast.type === 'success' ? 'System Success' : toast.type === 'error' ? 'System Error' : 'Notification'}
-                </h4>
-                <p className="text-sm text-white leading-tight">{toast.message}</p>
-              </div>
-              <button 
-                onClick={() => removeToast(toast.id)}
-                className="text-gray-500 hover:text-white transition-colors relative z-10"
-                aria-label="Close notification"
-              >
-                <X size={14} aria-hidden="true" />
-              </button>
+              <X size={14} aria-hidden="true" />
+            </button>
 
-              {/* Progress Bar */}
-              <motion.div
-                initial={{ width: "100%" }}
-                animate={{ width: "0%" }}
-                transition={{ duration: 5, ease: "linear" }}
-                className={`absolute bottom-0 left-0 h-1 ${
-                  toast.type === 'success' ? 'bg-green-400/50' :
-                  toast.type === 'error' ? 'bg-red-400/50' : 'bg-accent/50'
-                }`}
-              />
-            </motion.div>
-          ))}
-        </AnimatePresence>
+            {/* Progress Bar */}
+            <div
+              className={`absolute bottom-0 left-0 h-1 w-full ${
+                toast.type === 'success' ? 'bg-green-400/50' :
+                toast.type === 'error' ? 'bg-red-400/50' : 'bg-accent/50'
+              }`}
+            />
+          </div>
+        ))}
       </div>
     </ToastContext.Provider>
   );

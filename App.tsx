@@ -1,6 +1,5 @@
 
 import React, { useState, useEffect, lazy, Suspense } from 'react';
-import { motion, AnimatePresence, } from 'framer-motion';
 import { BrowserRouter, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 
@@ -26,12 +25,14 @@ const GuestAuthorApplication = lazy(() => import('./features/blog/components/Gue
 
 // Lazy load heavy 3D background (1MB+ Three.js bundle)
 const BackgroundScene = lazy(() => import('./components/Background3D').then(m => ({ default: m.BackgroundScene })));
+// Lazy load auth context only for routes that need it
+const LazyAuthProvider = lazy(() => import('./components/AuthProvider').then(m => ({ default: m.AuthProvider })));
+const LazyProtectedRoute = lazy(() => import('./components/AuthProvider').then(m => ({ default: m.ProtectedRoute })));
 
 // Components (keep Navigation eager for critical UI)
 import { NavDock, Header } from './components/Navigation';
 import { ToastProvider } from './components/ToastSystem';
 import { ScrollToTop } from './components/ScrollToTop';
-import { AuthProvider, ProtectedRoute } from './components/AuthProvider';
 import { SimpleFooter } from './components/SimpleFooter';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
@@ -49,6 +50,34 @@ const PageSkeleton = () => (
 const BackgroundPlaceholder = () => (
   <div className="fixed inset-0 bg-void -z-10" />
 );
+
+function AuthContextRoute({ children }: { children: React.ReactNode }) {
+  return (
+    <Suspense fallback={<PageSkeleton />}>
+      <LazyAuthProvider>{children}</LazyAuthProvider>
+    </Suspense>
+  );
+}
+
+function ProtectedAuthContextRoute({
+  children,
+  requiredRole,
+  fallback = null,
+}: {
+  children: React.ReactNode;
+  requiredRole?: 'admin' | 'contributor' | 'member';
+  fallback?: React.ReactNode;
+}) {
+  return (
+    <Suspense fallback={<PageSkeleton />}>
+      <LazyAuthProvider>
+        <LazyProtectedRoute requiredRole={requiredRole} fallback={fallback}>
+          {children}
+        </LazyProtectedRoute>
+      </LazyAuthProvider>
+    </Suspense>
+  );
+}
 
 // SEO Hook
 import { useSEO, SEO_CONFIG } from './hooks/useSEO';
@@ -81,14 +110,9 @@ const pageToRoute: Record<Page, string> = {
 // Animated page wrapper component
 function PageWrapper({ children }: { children: React.ReactNode }) {
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0, filter: 'blur(10px)' }}
-      transition={{ duration: 0.5 }}
-    >
+    <div>
       {children}
-    </motion.div>
+    </div>
   );
 }
 
@@ -243,6 +267,7 @@ function AppContent() {
   const location = useLocation();
   const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [shouldRenderBackground, setShouldRenderBackground] = useState(false);
 
   // Get current page enum from route for NavDock compatibility
   const currentPage = routeToPage[location.pathname] || Page.HOME;
@@ -260,6 +285,34 @@ function AppContent() {
     }
   }, [location.pathname]);
 
+  // Defer heavy 3D background off the critical path; skip on mobile/reduced-motion
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const isDesktop = window.matchMedia('(min-width: 1024px)').matches;
+    if (prefersReducedMotion || !isDesktop) return;
+
+    let timeoutId: number | null = null;
+    let idleId: number | null = null;
+    const enableBackground = () => setShouldRenderBackground(true);
+
+    if (typeof (window as any).requestIdleCallback === 'function') {
+      idleId = (window as any).requestIdleCallback(enableBackground, { timeout: 2500 });
+    } else {
+      timeoutId = window.setTimeout(enableBackground, 1200);
+    }
+
+    return () => {
+      if (idleId !== null && typeof (window as any).cancelIdleCallback === 'function') {
+        (window as any).cancelIdleCallback(idleId);
+      }
+      if (timeoutId !== null) {
+        window.clearTimeout(timeoutId);
+      }
+    };
+  }, []);
+
   return (
     <div className="relative min-h-screen text-white font-sans selection:bg-accent/30 selection:text-accent">
       {/* Skip Link for Accessibility */}
@@ -269,61 +322,63 @@ function AppContent() {
       >
         Skip to main content
       </a>
-      <Suspense fallback={<BackgroundPlaceholder />}>
-        <BackgroundScene activeCategory={activeCategory} />
-      </Suspense>
+      {shouldRenderBackground ? (
+        <Suspense fallback={<BackgroundPlaceholder />}>
+          <BackgroundScene activeCategory={activeCategory} />
+        </Suspense>
+      ) : (
+        <BackgroundPlaceholder />
+      )}
       <Header />
 
       <main id="main-content" className="relative">
-        <AnimatePresence mode="wait">
-          <Suspense fallback={<PageSkeleton />}>
-            <Routes location={location} key={location.pathname}>
-              <Route path="/" element={<HomePage setPage={setPage} />} />
-              <Route
-                path="/services"
-                element={<ServicesPage setPage={setPage} onCategoryChange={setActiveCategory} />}
-              />
-              <Route path="/team" element={<TeamPage />} />
-              <Route path="/about" element={<AboutPageWrapper />} />
-              <Route path="/blog" element={<BlogPage />} />
-              <Route path="/blog/:slug" element={<BlogPage />} />
-              <Route path="/contact" element={<ContactPage />} />
-              <Route path="/booking" element={<ContactPage />} />
-              <Route path="/chat" element={<ChatPageWrapper setPage={setPage} />} />
-              <Route path="/login" element={<LoginPageWrapper />} />
-              <Route path="/admin" element={
-                <ProtectedRoute requiredRole="admin" fallback={<LoginPageWrapper />}>
-                  <AdminPageWrapper />
-                </ProtectedRoute>
-              } />
-              <Route path="/profile" element={
-                <ProtectedRoute fallback={<LoginPageWrapper />}>
-                  <ProfilePageWrapper />
-                </ProtectedRoute>
-              } />
-              <Route path="/user/:id" element={<UserProfile />} />
-              <Route path="/settings/profile" element={
-                <ProtectedRoute fallback={<LoginPageWrapper />}>
-                  <ProfileSettings />
-                </ProtectedRoute>
-              } />
-              <Route path="/settings/notifications" element={
-                <ProtectedRoute fallback={<LoginPageWrapper />}>
-                  <ProfileSettings />
-                </ProtectedRoute>
-              } />
-              <Route path="/apply/author" element={
-                <ProtectedRoute fallback={<LoginPageWrapper />}>
-                  <GuestAuthorApplication />
-                </ProtectedRoute>
-              } />
-              <Route path="/privacy" element={<PrivacyPageWrapper />} />
-              <Route path="/terms" element={<TermsPageWrapper />} />
-              {/* 404 Not Found */}
-              <Route path="*" element={<NotFoundPage />} />
-            </Routes>
-          </Suspense>
-        </AnimatePresence>
+        <Suspense fallback={<PageSkeleton />}>
+          <Routes location={location} key={location.pathname}>
+            <Route path="/" element={<HomePage setPage={setPage} />} />
+            <Route
+              path="/services"
+              element={<ServicesPage setPage={setPage} onCategoryChange={setActiveCategory} />}
+            />
+            <Route path="/team" element={<TeamPage />} />
+            <Route path="/about" element={<AboutPageWrapper />} />
+            <Route path="/blog" element={<AuthContextRoute><BlogPage /></AuthContextRoute>} />
+            <Route path="/blog/:slug" element={<AuthContextRoute><BlogPage /></AuthContextRoute>} />
+            <Route path="/contact" element={<ContactPage />} />
+            <Route path="/booking" element={<ContactPage />} />
+            <Route path="/chat" element={<AuthContextRoute><ChatPageWrapper setPage={setPage} /></AuthContextRoute>} />
+            <Route path="/login" element={<AuthContextRoute><LoginPageWrapper /></AuthContextRoute>} />
+            <Route path="/admin" element={
+              <ProtectedAuthContextRoute requiredRole="admin" fallback={<LoginPageWrapper />}>
+                <AdminPageWrapper />
+              </ProtectedAuthContextRoute>
+            } />
+            <Route path="/profile" element={
+              <ProtectedAuthContextRoute fallback={<LoginPageWrapper />}>
+                <ProfilePageWrapper />
+              </ProtectedAuthContextRoute>
+            } />
+            <Route path="/user/:id" element={<AuthContextRoute><UserProfile /></AuthContextRoute>} />
+            <Route path="/settings/profile" element={
+              <ProtectedAuthContextRoute fallback={<LoginPageWrapper />}>
+                <ProfileSettings />
+              </ProtectedAuthContextRoute>
+            } />
+            <Route path="/settings/notifications" element={
+              <ProtectedAuthContextRoute fallback={<LoginPageWrapper />}>
+                <ProfileSettings />
+              </ProtectedAuthContextRoute>
+            } />
+            <Route path="/apply/author" element={
+              <ProtectedAuthContextRoute fallback={<LoginPageWrapper />}>
+                <GuestAuthorApplication />
+              </ProtectedAuthContextRoute>
+            } />
+            <Route path="/privacy" element={<PrivacyPageWrapper />} />
+            <Route path="/terms" element={<TermsPageWrapper />} />
+            {/* 404 Not Found */}
+            <Route path="*" element={<NotFoundPage />} />
+          </Routes>
+        </Suspense>
       </main>
 
       <SimpleFooter />
@@ -357,11 +412,9 @@ export default function App() {
   return (
     <BrowserRouter>
       <ErrorBoundary>
-        <AuthProvider>
-          <ToastProvider>
-            <AppContent />
-          </ToastProvider>
-        </AuthProvider>
+        <ToastProvider>
+          <AppContent />
+        </ToastProvider>
       </ErrorBoundary>
       <SpeedInsights debug={import.meta.env.DEV} />
     </BrowserRouter>

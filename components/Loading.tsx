@@ -1,12 +1,7 @@
 import React from 'react';
-import { motion } from 'framer-motion';
 
 export const SkeletonPulse = ({ className }: { className?: string }) => (
-  <motion.div 
-    className={`bg-white/5 rounded-lg ${className}`}
-    animate={{ opacity: [0.3, 0.6, 0.3] }}
-    transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-  />
+  <div className={`bg-white/5 rounded-lg animate-pulse ${className}`} />
 );
 
 export const ServiceSkeleton = () => (

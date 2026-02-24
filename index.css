@@ -8,8 +8,8 @@
   --color-surface: #0A1628;
   --color-muted: #6B7280;
 
-  --font-display: "Space Grotesk", sans-serif;
-  --font-sans: "Inter", sans-serif;
+  --font-display: "Avenir Next", "Segoe UI", "Trebuchet MS", sans-serif;
+  --font-sans: "Avenir", "Helvetica Neue", "Segoe UI", sans-serif;
 }
 
 /* Base body styles with safe area support */

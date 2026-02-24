@@ -1,13 +1,14 @@
 
-import React, { useState, lazy, Suspense } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 
-import { Layout, Cpu, User, Mail, Sparkles, X, Send, Settings2, CheckCircle2, Circle, Mic, MessageSquare, BookOpen, Zap, Info } from 'lucide-react';
+import { Layout, Cpu, User, Mail, Sparkles, X, Send, Settings2, CheckCircle2, Circle, Mic, MessageSquare, BookOpen, Zap, Info, Bell } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Page } from '../types';
 
 // Lazy load the AI panel content to defer loading the heavy useGeminiAI hook
 const AIPanelContent = lazy(() => import('./AIPanelContent'));
+// Defer notification module off the critical path
+const NotificationBell = lazy(() => import('./NotificationBell').then(m => ({ default: m.NotificationBell })));
 
 export const NavDock = ({ currentPage, setPage }: { currentPage: Page; setPage: (p: Page) => void }) => {
   const [isAiActive, setIsAiActive] = useState(false);
@@ -25,47 +26,39 @@ export const NavDock = ({ currentPage, setPage }: { currentPage: Page; setPage: 
 
   return (
     <>
-      <AnimatePresence>
-        {isAiActive && (
-          <Suspense fallback={
-            <motion.div
-              id="ai-panel"
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="ai-panel-title"
-              initial={{ opacity: 0, y: 20, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              className="fixed bottom-28 left-2 right-2 md:bottom-28 md:left-1/2 md:-translate-x-1/2 md:w-[600px] glass-panel rounded-3xl p-4 sm:p-6 z-[150] border-t border-accent/30 shadow-[0_0_50px_rgba(244,201,93,0.15)] flex flex-col gap-4"
-            >
-              <div className="flex justify-between items-start">
-                <div className="flex flex-col">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Sparkles size={18} className="text-accent animate-pulse" aria-hidden="true" />
-                    <span id="ai-panel-title" className="font-display font-bold text-lg text-white tracking-tight">INTERVISED AI</span>
-                  </div>
-                  <span className="text-xs font-mono text-muted">Loading...</span>
+      {isAiActive && (
+        <Suspense fallback={
+          <div
+            id="ai-panel"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="ai-panel-title"
+            className="fixed bottom-28 left-2 right-2 md:bottom-28 md:left-1/2 md:-translate-x-1/2 md:w-[600px] glass-panel rounded-3xl p-4 sm:p-6 z-[150] border-t border-accent/30 shadow-[0_0_50px_rgba(244,201,93,0.15)] flex flex-col gap-4"
+          >
+            <div className="flex justify-between items-start">
+              <div className="flex flex-col">
+                <div className="flex items-center gap-2 mb-1">
+                  <Sparkles size={18} className="text-accent animate-pulse" aria-hidden="true" />
+                  <span id="ai-panel-title" className="font-display font-bold text-lg text-white tracking-tight">INTERVISED AI</span>
                 </div>
-                <button onClick={() => setIsAiActive(false)} aria-label="Close AI Assistant" className="p-2 hover:bg-white/10 rounded-full transition-colors text-gray-400 hover:text-white">
-                  <X size={20} aria-hidden="true" />
-                </button>
+                <span className="text-xs font-mono text-muted">Loading...</span>
               </div>
-              <div className="min-h-[80px] flex items-center justify-center">
-                <div className="animate-pulse text-accent">Initializing AI...</div>
-              </div>
-            </motion.div>
-          }>
-            <AIPanelContent setPage={setPage} onClose={() => setIsAiActive(false)} />
-          </Suspense>
-        )}
-      </AnimatePresence>
+              <button onClick={() => setIsAiActive(false)} aria-label="Close AI Assistant" className="p-2 hover:bg-white/10 rounded-full transition-colors text-gray-400 hover:text-white">
+                <X size={20} aria-hidden="true" />
+              </button>
+            </div>
+            <div className="min-h-[80px] flex items-center justify-center">
+              <div className="animate-pulse text-accent">Initializing AI...</div>
+            </div>
+          </div>
+        }>
+          <AIPanelContent setPage={setPage} onClose={() => setIsAiActive(false)} />
+        </Suspense>
+      )}
 
       {/* Main Dock */}
       <nav className="fixed bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-[100] w-auto max-w-[calc(100vw-32px)]" aria-label="Main Navigation">
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="glass-panel px-3 sm:px-4 py-2 sm:py-2.5 rounded-full flex items-center justify-between gap-1 sm:gap-3 shadow-2xl border border-white/10 backdrop-blur-xl bg-void/80"
-        >
+        <div className="glass-panel px-3 sm:px-4 py-2 sm:py-2.5 rounded-full flex items-center justify-between gap-1 sm:gap-3 shadow-2xl border border-white/10 backdrop-blur-xl bg-void/80">
           {/* Navigation Items - Split by AI Button */}
           {navItems.slice(0, 3).map((item) => (
             <DockItem key={item.page} item={item} isActive={currentPage === item.page} onClick={() => setPage(item.page)} />
@@ -128,7 +121,7 @@ export const NavDock = ({ currentPage, setPage }: { currentPage: Page; setPage: 
             <Mail size={18} className="sm:w-6 sm:h-6" aria-hidden="true" />
           </button>
 
-        </motion.div>
+        </div>
       </nav>
     </>
   );
@@ -161,30 +154,75 @@ const DockItem: React.FC<DockItemProps> = ({ item, isActive, onClick }) => (
   </button>
 );
 
-import { NotificationBell } from './NotificationBell';
+const NotificationBellFallback = () => (
+  <button
+    className="relative p-2 text-gray-400 rounded-lg"
+    aria-label="Notifications loading"
+    disabled
+  >
+    <Bell size={20} aria-hidden="true" />
+  </button>
+);
 
-export const Header = () => (
-  <header className="fixed top-0 left-0 right-0 z-40 p-4 sm:p-6 flex justify-between items-center pointer-events-none">
-    <Link to="/" className="flex items-center gap-3 pointer-events-auto cursor-pointer group" aria-label="Intervised Home">
-      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border border-white/30 flex items-center justify-center relative overflow-hidden bg-black/20 backdrop-blur-sm group-hover:border-accent/50 transition-colors">
-        <div className="absolute inset-0 bg-gradient-to-tr from-secondary to-accent opacity-50 group-hover:opacity-80 transition-opacity"></div>
-        <span className="relative font-bold text-xs sm:text-sm text-white font-display">IV</span>
-      </div>
-      <div className="flex flex-col">
-        <span className="font-display font-bold text-lg sm:text-xl tracking-tight text-white leading-none">INTERVISED</span>
-        <span className="text-[10px] font-mono text-white/50 tracking-[0.2em] hidden sm:block">MUTUALLY ENVISIONED</span>
-      </div>
-    </Link>
+export const Header = () => {
+  const location = useLocation();
+  const [showNotificationBell, setShowNotificationBell] = useState(false);
+  const showNotificationArea = ['/chat', '/profile', '/settings', '/admin', '/blog', '/user', '/apply/author']
+    .some((basePath) => location.pathname === basePath || location.pathname.startsWith(`${basePath}/`));
 
-    <div className="pointer-events-auto flex items-center gap-4">
-      <NotificationBell />
+  useEffect(() => {
+    if (!showNotificationArea || typeof window === 'undefined') {
+      setShowNotificationBell(false);
+      return;
+    }
 
-      <div className="hidden sm:block">
-        <div className="flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/10 bg-black/20 backdrop-blur-md">
-          <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse"></div>
-          <span className="text-[10px] font-mono text-white/80">SYSTEM OPTIMAL</span>
+    let timeoutId: number | null = null;
+    const enableBell = () => setShowNotificationBell(true);
+
+    window.addEventListener('pointerdown', enableBell, { once: true, passive: true });
+    window.addEventListener('keydown', enableBell, { once: true });
+    timeoutId = window.setTimeout(enableBell, 6000);
+
+    return () => {
+      window.removeEventListener('pointerdown', enableBell);
+      window.removeEventListener('keydown', enableBell);
+      if (timeoutId !== null) {
+        window.clearTimeout(timeoutId);
+      }
+    };
+  }, [showNotificationArea]);
+
+  return (
+    <header className="fixed top-0 left-0 right-0 z-40 p-4 sm:p-6 flex justify-between items-center pointer-events-none">
+      <Link to="/" className="flex items-center gap-3 pointer-events-auto cursor-pointer group">
+        <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border border-white/30 flex items-center justify-center relative overflow-hidden bg-black/20 backdrop-blur-sm group-hover:border-accent/50 transition-colors">
+          <div className="absolute inset-0 bg-gradient-to-tr from-secondary to-accent opacity-50 group-hover:opacity-80 transition-opacity"></div>
+          <span className="relative font-bold text-xs sm:text-sm text-white font-display">IV</span>
+        </div>
+        <div className="flex flex-col">
+          <span className="font-display font-bold text-lg sm:text-xl tracking-tight text-white leading-none">INTERVISED</span>
+          <span className="text-[10px] font-mono text-white/80 tracking-[0.2em] hidden sm:block">MUTUALLY ENVISIONED</span>
+        </div>
+      </Link>
+
+      <div className="pointer-events-auto flex items-center gap-4">
+        {showNotificationArea && (
+          showNotificationBell ? (
+            <Suspense fallback={<NotificationBellFallback />}>
+              <NotificationBell />
+            </Suspense>
+          ) : (
+            <NotificationBellFallback />
+          )
+        )}
+
+        <div className="hidden sm:block">
+          <div className="flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/10 bg-black/20 backdrop-blur-md">
+            <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse"></div>
+            <span className="text-[10px] font-mono text-white/80">SYSTEM OPTIMAL</span>
+          </div>
         </div>
       </div>
-    </div>
-  </header>
-);
+    </header>
+  );
+};
