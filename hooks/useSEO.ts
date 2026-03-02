@@ -27,7 +27,7 @@ interface SEOProps {
   };
 }
 
-const BASE_URL = 'https://intervised.com';
+const BASE_URL = 'https://www.intervised.com';
 const DEFAULT_TITLE = 'Intervised LLC | Mutually Envisioned - Creative & Technology Studio';
 const DEFAULT_DESCRIPTION = 'Premium creative and technology studio offering web development, brand design, AI integration, and digital strategy services.';
 const DEFAULT_OG_IMAGE = `${BASE_URL}/og-image.png`;

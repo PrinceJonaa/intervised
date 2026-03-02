@@ -5,4 +5,4 @@ Disallow: /admin/
 Disallow: /chat
 Disallow: /chat/
 
-Sitemap: https://intervised.com/sitemap.xml
+Sitemap: https://www.intervised.com/sitemap.xml

@@ -1,61 +1,61 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://intervised.com/</loc>
-    <lastmod>2026-02-21</lastmod>
+    <loc>https://www.intervised.com/</loc>
+    <lastmod>2026-03-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://intervised.com/services</loc>
-    <lastmod>2026-02-21</lastmod>
+    <loc>https://www.intervised.com/services</loc>
+    <lastmod>2026-03-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://intervised.com/team</loc>
-    <lastmod>2026-02-21</lastmod>
+    <loc>https://www.intervised.com/team</loc>
+    <lastmod>2026-03-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://intervised.com/about</loc>
-    <lastmod>2026-02-21</lastmod>
+    <loc>https://www.intervised.com/about</loc>
+    <lastmod>2026-03-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.75</priority>
   </url>
   <url>
-    <loc>https://intervised.com/blog</loc>
-    <lastmod>2026-02-21</lastmod>
+    <loc>https://www.intervised.com/blog</loc>
+    <lastmod>2026-03-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
-    <loc>https://intervised.com/contact</loc>
-    <lastmod>2026-02-21</lastmod>
+    <loc>https://www.intervised.com/contact</loc>
+    <lastmod>2026-03-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://intervised.com/privacy</loc>
-    <lastmod>2026-02-21</lastmod>
+    <loc>https://www.intervised.com/privacy</loc>
+    <lastmod>2026-03-02</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.4</priority>
   </url>
   <url>
-    <loc>https://intervised.com/terms</loc>
-    <lastmod>2026-02-21</lastmod>
+    <loc>https://www.intervised.com/terms</loc>
+    <lastmod>2026-03-02</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.4</priority>
   </url>
   <url>
-    <loc>https://intervised.com/blog/the-theology-of-automation</loc>
+    <loc>https://www.intervised.com/blog/the-theology-of-automation</loc>
     <lastmod>2026-01-17</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://intervised.com/blog/sonic-architecture-for-worship</loc>
+    <loc>https://www.intervised.com/blog/sonic-architecture-for-worship</loc>
     <lastmod>2026-01-17</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>

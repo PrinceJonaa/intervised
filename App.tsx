@@ -168,7 +168,7 @@ function BlogPage() {
       : {
         title: 'Intervised Blog | Intervised',
         description: 'Read insights from Intervised on creative systems, web development, AI integration, and digital strategy.',
-        canonical: `https://intervised.com${location.pathname}`
+        canonical: `https://www.intervised.com${location.pathname}`
       }
   );
 
@@ -214,7 +214,7 @@ function AdminPageWrapper() {
     title: 'Admin Dashboard | Intervised',
     description: 'Command Center for Intervised administrators.',
     noIndex: true, // Admin page shouldn't be indexed
-    canonical: 'https://intervised.com/admin'
+    canonical: 'https://www.intervised.com/admin'
   });
   return (
     <PageWrapper>
@@ -240,7 +240,7 @@ function PrivacyPageWrapper() {
   useSEO({
     title: 'Privacy Policy | Intervised',
     description: 'Read our Privacy Policy to understand how we collect, use, and protect your data.',
-    canonical: 'https://intervised.com/privacy'
+    canonical: 'https://www.intervised.com/privacy'
   });
   return (
     <PageWrapper>
@@ -253,7 +253,7 @@ function TermsPageWrapper() {
   useSEO({
     title: 'Terms of Service | Intervised',
     description: 'Read our Terms of Service regarding your use of the Intervised website and services.',
-    canonical: 'https://intervised.com/terms'
+    canonical: 'https://www.intervised.com/terms'
   });
   return (
     <PageWrapper>
