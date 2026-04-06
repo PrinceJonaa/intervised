@@ -16,6 +16,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthContext, ProtectedRoute } from '../components/AuthProvider';
 import { useToast } from '../components/ToastSystem';
 import { getContactMessages, updateMessageStatus, type ContactMessage, type ContactStatus } from '../lib/supabase/contactService';
+import { checkDatabaseConnection } from '../lib/supabase/client';
 import { getBookings, updateBookingStatus, type Booking, type BookingStatus } from '../lib/supabase/bookingService';
 import { ServiceManager } from './admin/ServiceManager';
 import { ProjectManager } from './admin/ProjectManager';
@@ -210,6 +211,7 @@ function SystemHealth() {
   const { user, profile } = useAuthContext();
   const [dbStatus, setDbStatus] = useState<'checking' | 'connected' | 'error'>('checking');
   const [dbLatency, setDbLatency] = useState<number | null>(null);
+  const [dbError, setDbError] = useState<string | null>(null);
 
   useEffect(() => {
     checkConnection();
@@ -217,14 +219,18 @@ function SystemHealth() {
 
   const checkConnection = async () => {
     setDbStatus('checking');
-    const start = performance.now();
+    setDbError(null);
     try {
-      // Simple query to check connection
-      await getContactMessages({ limit: 1 });
-      const end = performance.now();
-      setDbLatency(Math.round(end - start));
-      setDbStatus('connected');
+      const result = await checkDatabaseConnection();
+      if (result.connected) {
+        setDbLatency(result.latencyMs);
+        setDbStatus('connected');
+      } else {
+        setDbError(result.error);
+        setDbStatus('error');
+      }
     } catch (error) {
+      setDbError('Connection failed');
       setDbStatus('error');
     }
   };
@@ -262,6 +268,16 @@ function SystemHealth() {
               {dbStatus === 'error' && <AlertCircle size={16} className="text-red-400" />}
             </div>
           </div>
+
+          {dbStatus === 'error' && dbError && (
+            <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl">
+              <p className="text-xs text-red-300">
+                {dbError === 'PROJECT_PAUSED'
+                  ? 'Your Supabase project appears to be paused. Visit supabase.com/dashboard to restore it.'
+                  : `Database error: ${dbError}`}
+              </p>
+            </div>
+          )}
 
           <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl">
             <div className="flex items-center gap-3">

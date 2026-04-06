@@ -1,6 +1,6 @@
 /**
  * Supabase Client Configuration
- * 
+ *
  * This module initializes and exports the Supabase client for use throughout the app.
  * Environment variables are injected at build time by Vite (synced via Vercel Integration).
  */
@@ -13,17 +13,16 @@ const supabaseUrl = import.meta.env.VITE_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_PUBLIC_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error(
-    '🚨 Critical Security Error: Missing Supabase environment variables.\n' +
-    'The application cannot start without VITE_PUBLIC_SUPABASE_URL and VITE_PUBLIC_SUPABASE_ANON_KEY.\n' +
-    'Please verify your .env file or Vercel project settings.'
+  console.error(
+    'Missing Supabase environment variables. ' +
+    'Please ensure VITE_PUBLIC_SUPABASE_URL and VITE_PUBLIC_SUPABASE_ANON_KEY are set in your .env file or Vercel project settings.'
   );
 }
 
 // Create the Supabase client with type safety
 export const supabase = createClient<Database>(
-  supabaseUrl,
-  supabaseAnonKey,
+  supabaseUrl || '',
+  supabaseAnonKey || '',
   {
     auth: {
       autoRefreshToken: true,
@@ -43,6 +42,28 @@ export const supabase = createClient<Database>(
     },
   }
 );
+
+/**
+ * Test the database connection. Returns true if connected, false otherwise.
+ * Useful for health checks and detecting paused Supabase projects.
+ */
+export async function checkDatabaseConnection(): Promise<{ connected: boolean; latencyMs: number | null; error: string | null }> {
+  const start = performance.now();
+  try {
+    const { error } = await supabase.from('profiles').select('id', { count: 'exact', head: true });
+    const latencyMs = Math.round(performance.now() - start);
+    if (error) {
+      // Supabase returns 503 or specific messages for paused projects
+      if (error.message?.includes('project has been paused') || error.code === '503') {
+        return { connected: false, latencyMs: null, error: 'PROJECT_PAUSED' };
+      }
+      return { connected: false, latencyMs: null, error: error.message };
+    }
+    return { connected: true, latencyMs, error: null };
+  } catch (err: any) {
+    return { connected: false, latencyMs: null, error: err?.message || 'Connection failed' };
+  }
+}
 
 // Export typed helpers
 export type { Database };
